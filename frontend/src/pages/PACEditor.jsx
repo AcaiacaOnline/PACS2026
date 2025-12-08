@@ -12,6 +12,9 @@ const PACEditor = () => {
 
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [pacOwner, setPacOwner] = useState(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   
   // PAC Header Data
   const [headerData, setHeaderData] = useState({
