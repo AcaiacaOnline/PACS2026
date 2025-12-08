@@ -418,9 +418,12 @@ async def create_pac_item(pac_id: str, item_data: PACItemCreate, request: Reques
 @api_router.put("/pacs/{pac_id}/items/{item_id}", response_model=PACItem)
 async def update_pac_item(pac_id: str, item_id: str, item_update: PACItemUpdate, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id})
+    pac = await db.pacs.find_one({'pac_id': pac_id})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
+    # Apenas admin ou dono pode editar
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
     item = await db.pac_items.find_one({'item_id': item_id, 'pac_id': pac_id}, {'_id': 0})
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
