@@ -393,7 +393,7 @@ async def delete_pac(pac_id: str, request: Request):
 @api_router.get("/pacs/{pac_id}/items", response_model=List[PACItem])
 async def get_pac_items(pac_id: str, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id})
+    pac = await db.pacs.find_one({'pac_id': pac_id})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
     items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
@@ -402,9 +402,12 @@ async def get_pac_items(pac_id: str, request: Request):
 @api_router.post("/pacs/{pac_id}/items", response_model=PACItem)
 async def create_pac_item(pac_id: str, item_data: PACItemCreate, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id}, {'_id': 0})
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
+    # Apenas admin ou dono pode adicionar itens
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
     item_id = f"item_{uuid.uuid4().hex[:12]}"
     valorTotal = item_data.quantidade * item_data.valorUnitario
     item_doc = {'item_id': item_id, 'pac_id': pac_id, **item_data.model_dump(), 'valorTotal': valorTotal, 'created_at': datetime.now(timezone.utc)}
