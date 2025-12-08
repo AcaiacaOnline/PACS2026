@@ -275,6 +275,69 @@ async def logout(request: Request, response: Response):
     response.delete_cookie('session_token', path='/')
     return {'message': 'Logged out'}
 
+# ============ USER MANAGEMENT ROUTES (ADMIN ONLY) ============
+
+async def require_admin(request: Request) -> User:
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+@api_router.get("/users", response_model=List[UserListItem])
+async def get_users(request: Request):
+    await require_admin(request)
+    users = await db.users.find({}, {'_id': 0, 'password_hash': 0}).to_list(1000)
+    return [UserListItem(**u) for u in users]
+
+@api_router.post("/users", response_model=UserListItem)
+async def create_user_admin(user_data: UserCreate, request: Request):
+    await require_admin(request)
+    existing = await db.users.find_one({'email': user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    user_doc = {
+        'user_id': user_id,
+        'email': user_data.email,
+        'name': user_data.name,
+        'password_hash': hash_password(user_data.password),
+        'is_admin': user_data.is_admin,
+        'is_active': True,
+        'picture': None,
+        'created_at': datetime.now(timezone.utc)
+    }
+    await db.users.insert_one(user_doc)
+    user_doc.pop('password_hash')
+    return UserListItem(**user_doc)
+
+@api_router.put("/users/{user_id}", response_model=UserListItem)
+async def update_user_admin(user_id: str, user_update: UserUpdate, request: Request):
+    admin = await require_admin(request)
+    if user_id == admin.user_id and user_update.is_admin is False:
+        raise HTTPException(status_code=400, detail="Cannot remove your own admin rights")
+    user = await db.users.find_one({'user_id': user_id}, {'_id': 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    update_data = {k: v for k, v in user_update.model_dump().items() if v is not None}
+    if 'password' in update_data:
+        update_data['password_hash'] = hash_password(update_data.pop('password'))
+    await db.users.update_one({'user_id': user_id}, {'$set': update_data})
+    updated_user = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password_hash': 0})
+    return UserListItem(**updated_user)
+
+@api_router.delete("/users/{user_id}")
+async def delete_user_admin(user_id: str, request: Request):
+    admin = await require_admin(request)
+    if user_id == admin.user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    result = await db.users.delete_one({'user_id': user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    await db.user_sessions.delete_many({'user_id': user_id})
+    return {'message': 'User deleted'}
+
+# ============ PAC ROUTES (WITH PERMISSIONS) ============
+
 @api_router.get("/pacs", response_model=List[PAC])
 async def get_pacs(request: Request):
     user = await get_current_user(request)
