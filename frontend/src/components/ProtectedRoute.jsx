@@ -17,6 +17,14 @@ const ProtectedRoute = ({ children }) => {
         return;
       }
 
+      const token = localStorage.getItem('token');
+      if (!token) {
+        if (isMounted.current) {
+          setIsAuthenticated(false);
+        }
+        return;
+      }
+
       const justAuth = sessionStorage.getItem('just_authenticated');
       if (!justAuth) {
         await new Promise(r => setTimeout(r, 150));
@@ -31,6 +39,8 @@ const ProtectedRoute = ({ children }) => {
         }
       } catch (error) {
         if (isMounted.current) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setIsAuthenticated(false);
         }
       }
