@@ -650,35 +650,194 @@ async def export_xlsx(pac_id: str, request: Request):
 @api_router.get("/pacs/{pac_id}/export/pdf")
 async def export_pdf(pac_id: str, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id}, {'_id': 0})
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
     items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
+    
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        leftMargin=15*mm, 
+        rightMargin=15*mm, 
+        topMargin=15*mm, 
+        bottomMargin=15*mm,
+        title=f'PAC {pac["secretaria"]} 2026'
+    )
+    
     elements = []
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=16, alignment=TA_CENTER, spaceAfter=12)
+    
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=14,
+        textColor=colors.HexColor('#1F4E78'),
+        alignment=TA_CENTER,
+        spaceAfter=6,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=12,
+        textColor=colors.HexColor('#1F4E78'),
+        alignment=TA_CENTER,
+        spaceAfter=4,
+        fontName='Helvetica-Bold'
+    )
+    
+    info_label_style = ParagraphStyle(
+        'InfoLabel',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica-Bold',
+        spaceAfter=2
+    )
+    
+    info_value_style = ParagraphStyle(
+        'InfoValue',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=2
+    )
+    
+    # Cabeçalho
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('Plano Anual de Contratações - Exercício 2026', title_style))
-    elements.append(Paragraph('Lei Federal nº 14.133/2021', styles['Normal']))
-    elements.append(Spacer(1, 0.5*cm))
-    info_style = ParagraphStyle('Info', parent=styles['Normal'], fontSize=9)
-    elements.append(Paragraph(f"<b>Secretaria:</b> {pac['secretaria']}", info_style))
-    elements.append(Paragraph(f"<b>Secretário(a):</b> {pac['secretario']}", info_style))
-    elements.append(Paragraph(f"<b>Fiscal:</b> {pac['fiscal']}", info_style))
-    elements.append(Spacer(1, 0.5*cm))
-    table_data = [['Tipo', 'Cód', 'Descrição', 'Und', 'Qtd', 'Valor Unit', 'Total', 'Prior']]
-    for item in items:
-        table_data.append([Paragraph(item['tipo'][:15], styles['Normal']), item['catmat'][:10], Paragraph(item['descricao'][:60], styles['Normal']), item['unidade'][:5], str(item['quantidade']), f"R$ {item['valorUnitario']:.2f}", f"R$ {item['valorTotal']:.2f}", item['prioridade'][:1]])
+    elements.append(Paragraph('PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026', subtitle_style))
+    elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
+    elements.append(Spacer(1, 8*mm))
+    
+    # Informações da Secretaria em box
+    info_data = [
+        [Paragraph('<b>DADOS DA UNIDADE REQUISITANTE</b>', info_label_style)],
+        [Paragraph(f'<b>Secretaria:</b> {pac["secretaria"]}', info_value_style)],
+        [Paragraph(f'<b>Secretário(a):</b> {pac["secretario"]}', info_value_style)],
+        [Paragraph(f'<b>Fiscal do Contrato:</b> {pac["fiscal"]}', info_value_style)],
+        [Paragraph(f'<b>Telefone:</b> {pac["telefone"]} | <b>E-mail:</b> {pac["email"]}', info_value_style)],
+        [Paragraph(f'<b>Endereço:</b> {pac["endereco"]}', info_value_style)],
+        [Paragraph(f'<b>Ano de Referência:</b> {pac["ano"]}', info_value_style)]
+    ]
+    
+    info_table = Table(info_data, colWidths=[18*cm])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#E7E6E6')),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    
+    elements.append(info_table)
+    elements.append(Spacer(1, 8*mm))
+    
+    # Tabela de itens
+    elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', info_label_style))
+    elements.append(Spacer(1, 3*mm))
+    
+    table_data = [['#', 'Tipo', 'Cód', 'Descrição/Justificativa', 'Und', 'Qtd', 'Valor Unit', 'Total', 'Prior']]
+    
+    for idx, item in enumerate(items, start=1):
+        desc_just = f"<b>{item['descricao'][:80]}</b><br/><font size=7><i>{item['justificativa'][:100] if item['justificativa'] else ''}</i></font>"
+        
+        table_data.append([
+            str(idx),
+            Paragraph(item['tipo'][:18], styles['Normal']),
+            item['catmat'][:8],
+            Paragraph(desc_just, styles['Normal']),
+            item['unidade'][:5],
+            str(int(item['quantidade'])),
+            f"R$ {item['valorUnitario']:.2f}",
+            f"R$ {item['valorTotal']:.2f}",
+            item['prioridade'][0]
+        ])
+    
+    # Linha de total
     total = sum(item['valorTotal'] for item in items)
-    table_data.append(['', '', '', '', '', 'TOTAL:', f"R$ {total:.2f}", ''])
-    table = Table(table_data, colWidths=[3*cm, 2*cm, 7*cm, 1.5*cm, 1.5*cm, 2.5*cm, 2.5*cm, 1.5*cm])
-    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey), ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), ('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTSIZE', (0, 0), (-1, 0), 8), ('FONTSIZE', (0, 1), (-1, -1), 7), ('BOTTOMPADDING', (0, 0), (-1, 0), 8), ('BACKGROUND', (0, 1), (-1, -1), colors.beige), ('GRID', (0, 0), (-1, -1), 1, colors.black), ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey), ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold')]))
+    table_data.append(['', '', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", ''])
+    
+    # Larguras das colunas ajustadas para A4 retrato
+    col_widths = [0.8*cm, 2.5*cm, 1.2*cm, 7*cm, 1*cm, 1*cm, 1.8*cm, 1.8*cm, 0.9*cm]
+    
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        # Cabeçalho
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+        
+        # Corpo
+        ('FONTSIZE', (0, 1), (-1, -2), 7),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+        ('ALIGN', (4, 1), (5, -1), 'CENTER'),
+        ('ALIGN', (6, 1), (7, -1), 'RIGHT'),
+        ('ALIGN', (8, 1), (8, -1), 'CENTER'),
+        ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+        
+        # Linhas alternadas
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F2F2F2')]),
+        
+        # Total
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFC000')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 9),
+        ('ALIGN', (0, -1), (7, -1), 'RIGHT'),
+        
+        # Bordas
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.black),
+        
+        # Padding
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    
     elements.append(table)
+    elements.append(Spacer(1, 10*mm))
+    
+    # Assinaturas
+    elements.append(PageBreak())
+    elements.append(Spacer(1, 40*mm))
+    
+    sig_data = [
+        ['', ''],
+        ['_' * 50, '_' * 50],
+        [pac['secretario'], pac['fiscal']],
+        ['Secretário(a) Responsável', 'Fiscal do Contrato']
+    ]
+    
+    sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 3), (-1, 3), 8),
+        ('TOPPADDING', (0, 1), (-1, 1), 0),
+        ('BOTTOMPADDING', (0, 1), (-1, 1), 2),
+    ]))
+    
+    elements.append(sig_table)
+    elements.append(Spacer(1, 20*mm))
+    
+    # Rodapé
+    footer_text = f'<font size=7><i>Documento gerado eletronicamente pelo Sistema PAC Acaiaca 2026 em {datetime.now().strftime("%d/%m/%Y às %H:%M")}<br/>Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística</i></font>'
+    elements.append(Paragraph(footer_text, ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, textColor=colors.grey)))
+    
     doc.build(elements)
     buffer.seek(0)
-    return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}.pdf'})
+    
+    return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf'})
 
 @api_router.get("/template/download")
 async def download_template():
