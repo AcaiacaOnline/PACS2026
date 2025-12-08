@@ -77,10 +77,30 @@ const Layout = ({ children }) => {
               <Plus size={18} />
               <span className="hidden md:inline">Novo PAC</span>
             </Link>
+            {user?.is_admin && (
+              <>
+                <div className="h-6 w-px bg-primary-foreground/20 mx-2"></div>
+                <Link
+                  to="/users"
+                  data-testid="nav-users-btn"
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                    isActive('/users') ? 'bg-primary/80' : 'hover:bg-primary/80'
+                  }`}
+                >
+                  <Users size={18} />
+                  <span className="hidden md:inline">Usuários</span>
+                </Link>
+              </>
+            )}
             <div className="h-6 w-px bg-primary-foreground/20 mx-2"></div>
             {user && (
               <div className="hidden md:block text-sm">
-                <div className="font-medium">{user.name}</div>
+                <div className="font-medium flex items-center gap-1">
+                  {user.name}
+                  {user.is_admin && (
+                    <Shield size={14} className="text-amber-400" title="Administrador" />
+                  )}
+                </div>
                 <div className="text-xs opacity-75">{user.email}</div>
               </div>
             )}
