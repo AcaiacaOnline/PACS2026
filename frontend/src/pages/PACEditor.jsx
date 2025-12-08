@@ -378,6 +378,7 @@ const PACEditor = () => {
                 value={headerData.fiscal}
                 onChange={(e) => setHeaderData({ ...headerData, fiscal: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                data-testid="fiscal-input"
               />
             </div>
             <div>
