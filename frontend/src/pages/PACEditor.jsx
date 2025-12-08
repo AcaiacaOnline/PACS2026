@@ -46,10 +46,20 @@ const PACEditor = () => {
   });
 
   useEffect(() => {
+    fetchCurrentUser();
     if (isEditing) {
       fetchPACData();
     }
   }, [id]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
 
   const fetchPACData = async () => {
     try {
@@ -59,6 +69,13 @@ const PACEditor = () => {
       ]);
       setHeaderData(pacResponse.data);
       setItems(itemsResponse.data);
+      setPacOwner(pacResponse.data.user_id);
+      
+      // Verificar se é read-only
+      const userResponse = await api.get('/auth/me');
+      const user = userResponse.data;
+      const isOwner = pacResponse.data.user_id === user.user_id;
+      setIsReadOnly(!user.is_admin && !isOwner);
     } catch (error) {
       toast.error('Erro ao carregar dados do PAC');
       navigate('/pacs');
