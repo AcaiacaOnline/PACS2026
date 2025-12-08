@@ -341,7 +341,9 @@ async def delete_user_admin(user_id: str, request: Request):
 @api_router.get("/pacs", response_model=List[PAC])
 async def get_pacs(request: Request):
     user = await get_current_user(request)
-    pacs = await db.pacs.find({'user_id': user.user_id}, {'_id': 0}).to_list(1000)
+    # Usuários padrão veem todos os PACs (mas só podem editar os seus)
+    # Admin vê e pode editar todos
+    pacs = await db.pacs.find({}, {'_id': 0}).to_list(1000)
     return [PAC(**p) for p in pacs]
 
 @api_router.post("/pacs", response_model=PAC)
