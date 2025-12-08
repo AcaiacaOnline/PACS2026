@@ -119,7 +119,7 @@ const Layout = ({ children }) => {
         {children}
       </main>
       <footer className="bg-muted py-4 text-center text-sm text-muted-foreground no-print">
-        <p>Made por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística</p>
+        <p>Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística</p>
         <p className="text-xs mt-1">PAC Acaiaca 2026 &copy; {new Date().getFullYear()}</p>
       </footer>
     </div>
