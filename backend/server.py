@@ -260,7 +260,7 @@ async def oauth_session(request: Request, response: Response):
     user_doc = await db.users.find_one({'email': data['email']}, {'_id': 0})
     if not user_doc:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
-        user_doc = {'user_id': user_id, 'email': data['email'], 'name': data['name'], 'password_hash': None, 'is_admin': False, 'picture': data.get('picture'), 'created_at': datetime.now(timezone.utc)}
+        user_doc = {'user_id': user_id, 'email': data['email'], 'name': data['name'], 'password_hash': None, 'is_admin': False, 'is_active': True, 'picture': data.get('picture'), 'created_at': datetime.now(timezone.utc)}
         await db.users.insert_one(user_doc)
     session_doc = {'user_id': user_doc['user_id'], 'session_token': data['session_token'], 'expires_at': datetime.now(timezone.utc)+timedelta(days=7), 'created_at': datetime.now(timezone.utc)}
     await db.user_sessions.insert_one(session_doc)
