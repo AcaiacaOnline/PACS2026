@@ -223,6 +223,7 @@ async def register(user_data: UserCreate):
         'name': user_data.name,
         'password_hash': hash_password(user_data.password),
         'is_admin': False,
+        'is_active': True,
         'picture': None,
         'created_at': datetime.now(timezone.utc)
     }
