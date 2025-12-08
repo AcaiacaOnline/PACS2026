@@ -365,9 +365,12 @@ async def get_pac(pac_id: str, request: Request):
 @api_router.put("/pacs/{pac_id}", response_model=PAC)
 async def update_pac(pac_id: str, pac_update: PACUpdate, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id}, {'_id': 0})
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
+    # Apenas admin ou dono pode editar
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
     update_data = {k: v for k, v in pac_update.model_dump().items() if v is not None}
     update_data['updated_at'] = datetime.now(timezone.utc)
     await db.pacs.update_one({'pac_id': pac_id}, {'$set': update_data})
@@ -377,9 +380,13 @@ async def update_pac(pac_id: str, pac_update: PACUpdate, request: Request):
 @api_router.delete("/pacs/{pac_id}")
 async def delete_pac(pac_id: str, request: Request):
     user = await get_current_user(request)
-    result = await db.pacs.delete_one({'pac_id': pac_id, 'user_id': user.user_id})
-    if result.deleted_count == 0:
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
+    if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
+    # Apenas admin ou dono pode excluir
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    await db.pacs.delete_one({'pac_id': pac_id})
     await db.pac_items.delete_many({'pac_id': pac_id})
     return {'message': 'PAC deleted'}
 
