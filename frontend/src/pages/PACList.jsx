@@ -9,10 +9,21 @@ const PACList = () => {
   const navigate = useNavigate();
   const [pacs, setPacs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchPACs();
   }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
 
   const fetchPACs = async () => {
     try {
