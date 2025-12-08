@@ -43,6 +43,7 @@ class User(BaseModel):
     email: EmailStr
     name: str
     is_admin: bool = False
+    is_active: bool = True
     picture: Optional[str] = None
     created_at: datetime
 
