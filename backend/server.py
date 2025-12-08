@@ -440,9 +440,12 @@ async def update_pac_item(pac_id: str, item_id: str, item_update: PACItemUpdate,
 @api_router.delete("/pacs/{pac_id}/items/{item_id}")
 async def delete_pac_item(pac_id: str, item_id: str, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id})
+    pac = await db.pacs.find_one({'pac_id': pac_id})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
+    # Apenas admin ou dono pode excluir
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
     result = await db.pac_items.delete_one({'item_id': item_id, 'pac_id': pac_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
