@@ -1,0 +1,139 @@
+{
+  "identity": {
+    "name": "E1: The Anti-AI Designer",
+    "mission": "Create a government system that feels like a fintech tool. Trustworthy, efficient, and aesthetically superior to standard public sector software.",
+    "principles": [
+      "Fusion: Swiss Authority + Fintech Precision",
+      "Emotion: Trust & Efficiency",
+      "Content is King: Data clarity above all",
+      "Negative Space: Breathing room for complex forms",
+      "Contrast: High legibility for accessibility"
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Manrope",
+        "weights": ["600", "700", "800"],
+        "usage": "Page titles, Section headers, KPI values"
+      },
+      "body": {
+        "family": "IBM Plex Sans",
+        "weights": ["400", "500"],
+        "usage": "Form labels, Table data, Paragraphs"
+      },
+      "mono": {
+        "family": "JetBrains Mono",
+        "weights": ["400"],
+        "usage": "Codes (CATMAT/CATSER), IDs, Financial values in tables"
+      }
+    },
+    "rules": [
+      "Never use Inter for headings.",
+      "Use tight tracking (tracking-tight) for headings above 24px.",
+      "Use wide tracking (tracking-wide) for uppercase labels."
+    ]
+  },
+  "colors": {
+    "palette_name": "The Glass Citadel",
+    "primary": {
+      "name": "Authority Blue",
+      "hex": "#0f172a",
+      "tailwind": "slate-900",
+      "usage": "Primary buttons, Sidebar, Headings"
+    },
+    "secondary": {
+      "name": "Public Emerald",
+      "hex": "#059669",
+      "tailwind": "emerald-600",
+      "usage": "Success states, Financial growth, 'Add' actions"
+    },
+    "accent": {
+      "name": "Clarity Sky",
+      "hex": "#0ea5e9",
+      "tailwind": "sky-500",
+      "usage": "Links, Active states, Focus rings"
+    },
+    "background": {
+      "light": "#f8fafc",
+      "dark": "#020617",
+      "paper": "#ffffff"
+    },
+    "status": {
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#3b82f6"
+    }
+  },
+  "layout": {
+    "grid_system": {
+      "dashboard": "Control Room Grid (Dense, Data-heavy)",
+      "marketing": "Tetris Grid (Asymmetrical, Visual)",
+      "form": "Single Column Mobile, Two Column Desktop (max-w-3xl)"
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-12",
+      "element_gap": "gap-4 md:gap-6",
+      "section_gap": "gap-12 md:gap-16"
+    },
+    "border_radius": {
+      "default": "rounded-md",
+      "card": "rounded-lg",
+      "button": "rounded-md"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "Flat with subtle border, no shadow by default. Hover lifts slightly.",
+      "classes": "bg-card border border-border/60 shadow-sm hover:shadow-md transition-all duration-200"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+      "ghost": "hover:bg-accent hover:text-accent-foreground"
+    },
+    "tables": {
+      "style": "Fintech Precision. Sticky headers, dense rows.",
+      "classes": "w-full caption-bottom text-sm border-collapse"
+    },
+    "inputs": {
+      "style": "High contrast borders for accessibility.",
+      "classes": "border-input bg-transparent shadow-sm focus-visible:ring-1 focus-visible:ring-ring"
+    }
+  },
+  "assets": {
+    "images": [
+      {
+        "category": "login_background",
+        "url": "https://images.unsplash.com/photo-1714859343414-9f235a0f9fb2?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Abstract blue/green geometric shapes, professional and modern."
+      },
+      {
+        "category": "dashboard_empty_state",
+        "url": "https://images.unsplash.com/photo-1666618207644-4de0226a3f85?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Clean minimalist office desk."
+      }
+    ],
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px for elegance, 2px for active states."
+    }
+  },
+  "universal_guidelines": [
+    "Avoid 'AI Slop': No generic gradients, no centered text blocks without purpose.",
+    "Dark Mode Strategy: Use 'Slate' grays, never pure black.",
+    "Micro-Interactions: Every button click, hover, and focus must have visual feedback.",
+    "Accessibility: Ensure WCAG AA contrast. Use data-testid on all interactive elements.",
+    "Glassmorphism: Use sparingly (headers, toasts) with backdrop-blur-md.",
+    "No 'Teal' for primary actions. Use the defined Emerald or Sky blue."
+  ],
+  "instructions_to_main_agent": [
+    "1. Install dependencies: `npm install @fontsource/manrope @fontsource/ibm-plex-sans @fontsource/jetbrains-mono lucide-react clsx tailwind-merge`",
+    "2. Configure Tailwind: Update `tailwind.config.js` with the 'Glass Citadel' palette and fonts.",
+    "3. Create Layouts: Build the 'DashboardLayout' with a sidebar and the 'AuthLayout' with the abstract background.",
+    "4. Build Components: Customize Shadcn components (Card, Table, Button, Input) to match the guidelines.",
+    "5. Implement Pages: Login, Dashboard (with Bento grid), PAC List, PAC Editor (Form + Table).",
+    "6. Add Polish: Add 'sonner' for toasts, loading states, and empty states using the provided images."
+  ]
+}
