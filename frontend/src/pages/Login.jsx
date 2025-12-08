@@ -15,15 +15,19 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await api.get('/auth/me');
-        navigate('/dashboard', { replace: true });
-      } catch (error) {
-        // Not authenticated
-      }
-    };
-    checkAuth();
+    const token = localStorage.getItem('token');
+    if (token) {
+      const checkAuth = async () => {
+        try {
+          await api.get('/auth/me');
+          navigate('/dashboard', { replace: true });
+        } catch (error) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      };
+      checkAuth();
+    }
   }, [navigate]);
 
   const handleSubmit = async (e) => {
