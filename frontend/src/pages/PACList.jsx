@@ -117,8 +117,13 @@ const PACList = () => {
               >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex-grow">
-                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-2 flex items-center gap-2">
                       {pac.secretaria || 'Sem Nome'}
+                      {currentUser && pac.user_id !== currentUser.user_id && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-normal">
+                          Somente Leitura
+                        </span>
+                      )}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                       <div>
@@ -138,22 +143,35 @@ const PACList = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => navigate(`/pacs/${pac.pac_id}/edit`)}
-                      data-testid={`edit-pac-${pac.pac_id}`}
-                      className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                      <Edit size={16} />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(pac.pac_id)}
-                      data-testid={`delete-pac-${pac.pac_id}`}
-                      className="flex items-center gap-2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg hover:bg-destructive/90 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                      Excluir
-                    </button>
+                    {(currentUser?.is_admin || pac.user_id === currentUser?.user_id) ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/pacs/${pac.pac_id}/edit`)}
+                          data-testid={`edit-pac-${pac.pac_id}`}
+                          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                          <Edit size={16} />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(pac.pac_id)}
+                          data-testid={`delete-pac-${pac.pac_id}`}
+                          className="flex items-center gap-2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg hover:bg-destructive/90 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                          Excluir
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/pacs/${pac.pac_id}/edit`)}
+                        data-testid={`view-pac-${pac.pac_id}`}
+                        className="flex items-center gap-2 bg-muted text-foreground px-4 py-2 rounded-lg hover:bg-muted/80 transition-colors"
+                      >
+                        <FolderOpen size={16} />
+                        Visualizar
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
