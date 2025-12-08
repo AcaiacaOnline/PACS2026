@@ -498,21 +498,154 @@ async def get_dashboard_stats(request: Request):
 @api_router.get("/pacs/{pac_id}/export/xlsx")
 async def export_xlsx(pac_id: str, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id}, {'_id': 0})
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
     items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
+    
     wb = Workbook()
     ws = wb.active
-    ws.title = "PAC"
-    headers = ['Secretaria', 'Secretário', 'Tipo', 'Código', 'Descrição', 'Unidade', 'Quantidade', 'Valor Unit (R$)', 'Valor Total (R$)', 'Prioridade', 'Justificativa']
-    ws.append(headers)
-    for item in items:
-        ws.append([pac['secretaria'], pac['secretario'], item['tipo'], item['catmat'], item['descricao'], item['unidade'], item['quantidade'], item['valorUnitario'], item['valorTotal'], item['prioridade'], item['justificativa']])
+    ws.title = "PAC 2026"
+    
+    # Estilos
+    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    subheader_font = Font(name='Arial', size=11, bold=True)
+    normal_font = Font(name='Arial', size=10)
+    bold_font = Font(name='Arial', size=10, bold=True)
+    
+    header_fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
+    subheader_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+    total_fill = PatternFill(start_color='FFC000', end_color='FFC000', fill_type='solid')
+    
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Cabeçalho
+    ws.merge_cells('A1:K1')
+    ws['A1'] = 'PREFEITURA MUNICIPAL DE ACAIACA - MG'
+    ws['A1'].font = Font(name='Arial', size=16, bold=True)
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 25
+    
+    ws.merge_cells('A2:K2')
+    ws['A2'] = 'PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026'
+    ws['A2'].font = Font(name='Arial', size=14, bold=True)
+    ws['A2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[2].height = 20
+    
+    ws.merge_cells('A3:K3')
+    ws['A3'] = 'Lei Federal nº 14.133/2021'
+    ws['A3'].font = Font(name='Arial', size=10, italic=True)
+    ws['A3'].alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Informações do PAC
+    current_row = 5
+    ws[f'A{current_row}'] = 'DADOS DA SECRETARIA'
+    ws[f'A{current_row}'].font = subheader_font
+    ws.merge_cells(f'A{current_row}:K{current_row}')
+    
+    current_row += 1
+    info_data = [
+        ('Secretaria:', pac['secretaria']),
+        ('Secretário(a):', pac['secretario']),
+        ('Fiscal do Contrato:', pac['fiscal']),
+        ('Telefone:', pac['telefone']),
+        ('E-mail:', pac['email']),
+        ('Endereço:', pac['endereco']),
+        ('Ano:', pac['ano'])
+    ]
+    
+    for label, value in info_data:
+        ws[f'A{current_row}'] = label
+        ws[f'A{current_row}'].font = bold_font
+        ws[f'B{current_row}'] = value
+        ws[f'B{current_row}'].font = normal_font
+        ws.merge_cells(f'B{current_row}:K{current_row}')
+        current_row += 1
+    
+    # Tabela de itens
+    current_row += 1
+    headers = ['#', 'Tipo', 'Código', 'Descrição', 'Unidade', 'Qtd', 'Valor Unit (R$)', 'Valor Total (R$)', 'Prioridade', 'Justificativa']
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=current_row, column=col, value=header)
+        cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = border
+    
+    ws.row_dimensions[current_row].height = 30
+    
+    # Dados dos itens
+    for idx, item in enumerate(items, start=1):
+        current_row += 1
+        row_data = [
+            idx,
+            item['tipo'],
+            item['catmat'],
+            item['descricao'],
+            item['unidade'],
+            item['quantidade'],
+            item['valorUnitario'],
+            item['valorTotal'],
+            item['prioridade'],
+            item['justificativa']
+        ]
+        
+        for col, value in enumerate(row_data, start=1):
+            cell = ws.cell(row=current_row, column=col, value=value)
+            cell.font = normal_font
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center' if col in [1,2,5,6,9] else 'left', vertical='center', wrap_text=True)
+            if col in [7, 8]:
+                cell.number_format = 'R$ #,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+    
+    # Totais
+    current_row += 1
+    total = sum(item['valorTotal'] for item in items)
+    
+    ws.merge_cells(f'A{current_row}:G{current_row}')
+    ws[f'A{current_row}'] = 'TOTAL GERAL ESTIMADO:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'A{current_row}'].fill = total_fill
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='right', vertical='center')
+    ws[f'A{current_row}'].border = border
+    
+    ws[f'H{current_row}'] = total
+    ws[f'H{current_row}'].font = Font(name='Arial', size=12, bold=True)
+    ws[f'H{current_row}'].fill = total_fill
+    ws[f'H{current_row}'].number_format = 'R$ #,##0.00'
+    ws[f'H{current_row}'].alignment = Alignment(horizontal='right', vertical='center')
+    ws[f'H{current_row}'].border = border
+    
+    # Ajustar largura das colunas
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 40
+    ws.column_dimensions['E'].width = 10
+    ws.column_dimensions['F'].width = 8
+    ws.column_dimensions['G'].width = 15
+    ws.column_dimensions['H'].width = 15
+    ws.column_dimensions['I'].width = 12
+    ws.column_dimensions['J'].width = 40
+    
+    # Configurar impressão
+    ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToPage = True
+    ws.page_setup.fitToHeight = False
+    ws.page_setup.fitToWidth = 1
+    ws.print_options.horizontalCentered = True
+    
     output = BytesIO()
     wb.save(output)
     output.seek(0)
-    return StreamingResponse(output, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}.xlsx'})
+    return StreamingResponse(output, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.xlsx'})
 
 @api_router.get("/pacs/{pac_id}/export/pdf")
 async def export_pdf(pac_id: str, request: Request):
