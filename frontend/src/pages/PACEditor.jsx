@@ -291,25 +291,29 @@ const PACEditor = () => {
               <ArrowLeft size={16} />
               Voltar
             </button>
-            <button
-              onClick={handleSaveHeader}
-              disabled={saving}
-              data-testid="save-header-btn"
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <Save size={16} />
-              Salvar Dados
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={handleSaveHeader}
+                disabled={saving}
+                data-testid="save-header-btn"
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <Save size={16} />
+                Salvar Dados
+              </button>
+            )}
             {isEditing && (
               <>
-                <button
-                  onClick={() => openModal()}
-                  data-testid="add-item-btn"
-                  className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
-                >
-                  <Plus size={16} />
-                  Adicionar Item
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={() => openModal()}
+                    data-testid="add-item-btn"
+                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+                  >
+                    <Plus size={16} />
+                    Adicionar Item
+                  </button>
+                )}
                 <button
                   onClick={handleDownloadTemplate}
                   data-testid="download-template-btn"
