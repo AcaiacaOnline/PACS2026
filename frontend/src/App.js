@@ -26,6 +26,7 @@ function App() {
           <Route path="/pacs" element={<ProtectedRoute><PACList /></ProtectedRoute>} />
           <Route path="/pacs/:id/edit" element={<ProtectedRoute><PACEditor /></ProtectedRoute>} />
           <Route path="/pacs/new" element={<ProtectedRoute><PACEditor /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
