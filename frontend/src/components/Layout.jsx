@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, Plus, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
