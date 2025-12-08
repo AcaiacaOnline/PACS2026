@@ -276,10 +276,14 @@ const PACEditor = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-lg border border-border shadow-sm no-print">
           <div>
             <h2 className="text-2xl font-heading font-bold text-foreground flex items-center gap-2">
-              {isEditing ? `Editando: ${headerData.secretaria}` : 'Novo PAC'}
+              {isEditing ? `${isReadOnly ? 'Visualizando' : 'Editando'}: ${headerData.secretaria}` : 'Novo PAC'}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isEditing ? 'Altere os dados abaixo ou adicione itens.' : 'Preencha os dados da secretaria e clique em Salvar.'}
+              {isReadOnly 
+                ? 'Você está visualizando este PAC. Apenas o criador ou administradores podem editar.' 
+                : isEditing 
+                  ? 'Altere os dados abaixo ou adicione itens.' 
+                  : 'Preencha os dados da secretaria e clique em Salvar.'}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
