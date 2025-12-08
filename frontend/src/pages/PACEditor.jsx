@@ -511,22 +511,24 @@ const PACEditor = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 no-print">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => openModal(item)}
-                              data-testid={`edit-item-${item.item_id}`}
-                              className="text-accent hover:text-accent/80 transition-colors p-1"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteItem(item.item_id)}
-                              data-testid={`delete-item-${item.item_id}`}
-                              className="text-destructive hover:text-destructive/80 transition-colors p-1"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                          {!isReadOnly && (
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={() => openModal(item)}
+                                data-testid={`edit-item-${item.item_id}`}
+                                className="text-accent hover:text-accent/80 transition-colors p-1"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem(item.item_id)}
+                                data-testid={`delete-item-${item.item_id}`}
+                                className="text-destructive hover:text-destructive/80 transition-colors p-1"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
