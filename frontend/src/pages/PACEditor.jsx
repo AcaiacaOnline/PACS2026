@@ -396,8 +396,9 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.secretario}
                 onChange={(e) => setHeaderData({ ...headerData, secretario: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="secretario-input"
+                disabled={isReadOnly}
               />
             </div>
             <div>
@@ -406,8 +407,9 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.fiscal}
                 onChange={(e) => setHeaderData({ ...headerData, fiscal: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="fiscal-input"
+                disabled={isReadOnly}
               />
             </div>
             <div>
@@ -416,8 +418,9 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.telefone}
                 onChange={(e) => setHeaderData({ ...headerData, telefone: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="telefone-input"
+                disabled={isReadOnly}
               />
             </div>
             <div>
@@ -426,7 +429,8 @@ const PACEditor = () => {
                 type="email"
                 value={headerData.email}
                 onChange={(e) => setHeaderData({ ...headerData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isReadOnly}
               />
             </div>
             <div className="lg:col-span-1">
@@ -435,7 +439,8 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.ano}
                 onChange={(e) => setHeaderData({ ...headerData, ano: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isReadOnly}
               />
             </div>
             <div className="lg:col-span-3">
@@ -444,8 +449,9 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.endereco}
                 onChange={(e) => setHeaderData({ ...headerData, endereco: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="endereco-input"
+                disabled={isReadOnly}
               />
             </div>
           </div>
