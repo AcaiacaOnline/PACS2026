@@ -186,7 +186,7 @@ const Login = () => {
         </form>
 
         <div className="mt-6 text-center text-xs text-muted-foreground border-t border-border pt-4">
-          <p>Made por Cristiano Abdo de Souza</p>
+          <p>Desenvolvido por Cristiano Abdo de Souza</p>
           <p>Assessor de Planejamento, Compras e Logística</p>
         </div>
       </div>
