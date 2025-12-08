@@ -385,8 +385,9 @@ const PACEditor = () => {
                 type="text"
                 value={headerData.secretaria}
                 onChange={(e) => setHeaderData({ ...headerData, secretaria: e.target.value })}
-                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="secretaria-input"
+                disabled={isReadOnly}
               />
             </div>
             <div>
