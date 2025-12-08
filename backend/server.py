@@ -50,10 +50,27 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
+    is_admin: bool = False
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_active: bool = True
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class UserListItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    user_id: str
+    email: EmailStr
+    name: str
+    is_admin: bool
+    is_active: bool = True
+    created_at: datetime
 
 class PAC(BaseModel):
     model_config = ConfigDict(extra="ignore")
