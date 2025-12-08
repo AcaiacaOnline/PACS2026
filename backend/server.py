@@ -205,6 +205,7 @@ async def create_admin_user():
             'name': "Cristiano Abdo de Souza",
             'password_hash': hash_password("Cris@820906"),
             'is_admin': True,
+            'is_active': True,
             'picture': None,
             'created_at': datetime.now(timezone.utc)
         }
