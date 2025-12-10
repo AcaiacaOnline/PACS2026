@@ -112,6 +112,8 @@ class PACUpdate(BaseModel):
     email: Optional[str] = None
     endereco: Optional[str] = None
     ano: Optional[str] = None
+    codigo_classificacao: Optional[str] = None  # NOVO
+    subitem_classificacao: Optional[str] = None  # NOVO
 
 class PACItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
