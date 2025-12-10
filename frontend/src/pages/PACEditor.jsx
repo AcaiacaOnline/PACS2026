@@ -704,6 +704,17 @@ const PACEditor = () => {
                   data-testid="item-justificativa-input"
                 />
               </div>
+              
+              {/* Classificação Orçamentária */}
+              <div className="md:col-span-2">
+                <ClassificacaoSelector
+                  codigoSelecionado={tempItem.codigo_classificacao}
+                  subitemSelecionado={tempItem.subitem_classificacao}
+                  onCodigoChange={(codigo) => setTempItem({ ...tempItem, codigo_classificacao: codigo })}
+                  onSubitemChange={(subitem) => setTempItem({ ...tempItem, subitem_classificacao: subitem })}
+                  disabled={false}
+                />
+              </div>
             </div>
             <div className="p-6 border-t border-border bg-muted/50 rounded-b-xl flex justify-end gap-3">
               <button
