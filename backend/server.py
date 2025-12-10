@@ -86,6 +86,8 @@ class PAC(BaseModel):
     email: str
     endereco: str
     ano: str = "2026"
+    codigo_classificacao: Optional[str] = None  # NOVO: Código de classificação orçamentária
+    subitem_classificacao: Optional[str] = None  # NOVO: Subitem da classificação
     total_value: float = 0.0
     stats: Optional[Dict] = None
     created_at: datetime
