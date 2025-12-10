@@ -470,12 +470,12 @@ const PACEditor = () => {
                     <th className="px-4 py-3 text-left">Tipo</th>
                     <th className="px-4 py-3 text-left">Código</th>
                     <th className="px-4 py-3 text-left">Descrição</th>
-                    <th className="px-4 py-3 text-center no-print">Img</th>
                     <th className="px-4 py-3 text-center">Und</th>
                     <th className="px-4 py-3 text-center">Qtd</th>
                     <th className="px-4 py-3 text-right">Valor Unit</th>
                     <th className="px-4 py-3 text-right">Total</th>
                     <th className="px-4 py-3 text-center">Prior</th>
+                    <th className="px-4 py-3 text-left">Classificação</th>
                     <th className="px-4 py-3 text-center no-print">Ações</th>
                   </tr>
                 </thead>
