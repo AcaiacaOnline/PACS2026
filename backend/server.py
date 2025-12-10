@@ -765,7 +765,8 @@ async def export_xlsx(pac_id: str, request: Request):
     ws.column_dimensions['G'].width = 15
     ws.column_dimensions['H'].width = 15
     ws.column_dimensions['I'].width = 12
-    ws.column_dimensions['J'].width = 40
+    ws.column_dimensions['J'].width = 35
+    ws.column_dimensions['K'].width = 30
     
     # Configurar impressão
     ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
