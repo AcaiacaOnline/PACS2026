@@ -163,7 +163,6 @@ const PACEditor = () => {
         valorUnitario: 0,
         prioridade: 'Alta',
         justificativa: '',
-        imagemUrl: '',
         codigo_classificacao: '',
         subitem_classificacao: ''
       });
