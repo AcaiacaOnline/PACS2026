@@ -129,6 +129,8 @@ class PACItem(BaseModel):
     prioridade: str
     justificativa: str
     imagemUrl: Optional[str] = None
+    codigo_classificacao: Optional[str] = None  # NOVO: Código de classificação orçamentária
+    subitem_classificacao: Optional[str] = None  # NOVO: Subitem da classificação
     created_at: datetime
 
 class PACItemCreate(BaseModel):
@@ -141,6 +143,8 @@ class PACItemCreate(BaseModel):
     prioridade: str
     justificativa: str
     imagemUrl: Optional[str] = None
+    codigo_classificacao: Optional[str] = None  # NOVO
+    subitem_classificacao: Optional[str] = None  # NOVO
 
 class PACItemUpdate(BaseModel):
     tipo: Optional[str] = None
@@ -152,6 +156,8 @@ class PACItemUpdate(BaseModel):
     prioridade: Optional[str] = None
     justificativa: Optional[str] = None
     imagemUrl: Optional[str] = None
+    codigo_classificacao: Optional[str] = None  # NOVO
+    subitem_classificacao: Optional[str] = None  # NOVO
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
