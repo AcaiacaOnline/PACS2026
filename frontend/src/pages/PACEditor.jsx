@@ -497,9 +497,6 @@ const PACEditor = () => {
                             <div className="text-xs text-muted-foreground italic mt-1">{item.justificativa}</div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-center no-print">
-                          {item.imagemUrl && <ImageIcon size={16} className="text-accent mx-auto" />}
-                        </td>
                         <td className="px-4 py-3 text-center">{item.unidade}</td>
                         <td className="px-4 py-3 text-center font-bold">{item.quantidade}</td>
                         <td className="px-4 py-3 text-right font-mono">{formatCurrency(item.valorUnitario)}</td>
@@ -512,6 +509,18 @@ const PACEditor = () => {
                           }`}>
                             {item.prioridade}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-left">
+                          {item.codigo_classificacao ? (
+                            <div className="text-xs">
+                              <div className="font-semibold">{item.codigo_classificacao}</div>
+                              {item.subitem_classificacao && (
+                                <div className="text-muted-foreground">{item.subitem_classificacao}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 no-print">
                           {!isReadOnly && (
