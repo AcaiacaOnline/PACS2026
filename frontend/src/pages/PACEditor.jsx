@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Plus, Edit, Trash2, FileSpreadsheet, FileText, Upload, Download, X, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import Layout from '../components/Layout';
+import ClassificacaoSelector from '../components/ClassificacaoSelector';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
