@@ -694,7 +694,7 @@ async def export_xlsx(pac_id: str, request: Request):
     
     # Tabela de itens
     current_row += 1
-    headers = ['#', 'Tipo', 'Código', 'Descrição', 'Unidade', 'Qtd', 'Valor Unit (R$)', 'Valor Total (R$)', 'Prioridade', 'Justificativa']
+    headers = ['#', 'Tipo', 'Código', 'Descrição', 'Unidade', 'Qtd', 'Valor Unit (R$)', 'Valor Total (R$)', 'Prioridade', 'Justificativa', 'Classificação']
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=current_row, column=col, value=header)
         cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
@@ -707,6 +707,13 @@ async def export_xlsx(pac_id: str, request: Request):
     # Dados dos itens
     for idx, item in enumerate(items, start=1):
         current_row += 1
+        # Formatar classificação orçamentária
+        classificacao_text = ''
+        if item.get('codigo_classificacao'):
+            classificacao_text = f"{item['codigo_classificacao']}"
+            if item.get('subitem_classificacao'):
+                classificacao_text += f" - {item['subitem_classificacao']}"
+        
         row_data = [
             idx,
             item['tipo'],
@@ -717,7 +724,8 @@ async def export_xlsx(pac_id: str, request: Request):
             item['valorUnitario'],
             item['valorTotal'],
             item['prioridade'],
-            item['justificativa']
+            item['justificativa'],
+            classificacao_text
         ]
         
         for col, value in enumerate(row_data, start=1):
