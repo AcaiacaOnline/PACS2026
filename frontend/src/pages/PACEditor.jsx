@@ -164,7 +164,9 @@ const PACEditor = () => {
         valorUnitario: 0,
         prioridade: 'Alta',
         justificativa: '',
-        imagemUrl: ''
+        imagemUrl: '',
+        codigo_classificacao: '',
+        subitem_classificacao: ''
       });
     }
     setIsModalOpen(true);
