@@ -875,10 +875,19 @@ async def export_pdf(pac_id: str, request: Request):
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', info_label_style))
     elements.append(Spacer(1, 3*mm))
     
-    table_data = [['#', 'Tipo', 'Cód', 'Descrição/Justificativa', 'Und', 'Qtd', 'Valor Unit', 'Total', 'Prior']]
+    table_data = [['#', 'Tipo', 'Cód', 'Descrição/Justificativa', 'Und', 'Qtd', 'Valor Unit', 'Total', 'Prior', 'Classif']]
     
     for idx, item in enumerate(items, start=1):
         desc_just = f"<b>{item['descricao'][:80]}</b><br/><font size=7><i>{item['justificativa'][:100] if item['justificativa'] else ''}</i></font>"
+        
+        # Formatar classificação orçamentária
+        classificacao_text = ''
+        if item.get('codigo_classificacao'):
+            classificacao_text = f"{item['codigo_classificacao']}"
+            if item.get('subitem_classificacao'):
+                # Pegar apenas as primeiras palavras do subitem para economizar espaço
+                subitem_short = ' '.join(item['subitem_classificacao'].split()[:3])
+                classificacao_text += f"\n{subitem_short}..."
         
         table_data.append([
             str(idx),
