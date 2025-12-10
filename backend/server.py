@@ -361,7 +361,8 @@ async def create_pac(pac_data: PACCreate, request: Request):
 @api_router.get("/pacs/{pac_id}", response_model=PAC)
 async def get_pac(pac_id: str, request: Request):
     user = await get_current_user(request)
-    pac = await db.pacs.find_one({'pac_id': pac_id, 'user_id': user.user_id}, {'_id': 0})
+    # CORREÇÃO 1.2: Remover filtro por user_id para permitir visualização de todos os PACs
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC not found")
     return PAC(**pac)
