@@ -184,17 +184,77 @@ backend:
           comment: "✅ VALIDATED: User management endpoints properly restricted to admin only. Admin can access /api/users (200 OK), regular user gets 403 Forbidden."
 
 frontend:
-  - task: "Frontend Integration Testing"
+  - task: "Login Screen Visual Updates"
     implemented: true
-    working: "NA"
-    file: "frontend/src/App.js"
+    working: true
+    file: "frontend/src/pages/Login.jsx"
     stuck_count: 0
-    priority: "low"
+    priority: "high"
     needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "testing"
-          comment: "Frontend testing not performed as per testing agent instructions - backend testing only."
+          comment: "✅ VALIDATED: Login screen displays correct title 'PAC - Plano Anual de Contratações' and subtitle 'Prefeitura Municipal de Acaiaca - MG'. New business-related background image is properly displayed."
+
+  - task: "Authentication Flow"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Login.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Both admin (cristiano.abdo@acaiaca.mg.gov.br) and regular user (teste@acaiaca.mg.gov.br) authentication working correctly. Proper navigation to dashboard after login."
+
+  - task: "PAC Management Interface"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACList.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: PAC list navigation working. Users can view existing PACs and navigate to edit mode. 'Adicionar Item' button properly visible in edit mode."
+
+  - task: "Budget Classification Component"
+    implemented: true
+    working: true
+    file: "frontend/src/components/ClassificacaoSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Classification component fully functional. Search field works with 'material' query, dropdown shows available codes (339030, 339036, 339039, 449052), code selection works. Minor: Subitem field visibility may need improvement but core functionality works."
+
+  - task: "Item Creation with Classification"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACEditor.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Complete item creation flow working. Users can add items with budget classification, fill required fields (description, quantity, unit value, justification), and save successfully. Items appear in table after creation."
+
+  - task: "Permission System Interface"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACEditor.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Permission system working correctly. Regular users see 'Somente Leitura' badges on PACs from other users. In read-only mode: 'Adicionar Item' and 'Salvar Dados' buttons are hidden, ensuring proper access control."
 
 metadata:
   created_by: "testing_agent"
