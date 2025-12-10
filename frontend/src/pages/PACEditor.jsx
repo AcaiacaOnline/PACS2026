@@ -680,17 +680,7 @@ const PACEditor = () => {
                   <option value="Baixa">Baixa</option>
                 </select>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-foreground mb-1">Imagem (URL)</label>
-                <input
-                  type="text"
-                  value={tempItem.imagemUrl}
-                  onChange={(e) => setTempItem({ ...tempItem, imagemUrl: e.target.value })}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                  placeholder="https://..."
-                />
-                <p className="text-xs text-muted-foreground mt-1">A imagem não será exibida nos relatórios</p>
-              </div>
+              
               <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-foreground mb-1">
                   Justificativa <span className="text-destructive">*</span>
@@ -708,8 +698,8 @@ const PACEditor = () => {
               {/* Classificação Orçamentária */}
               <div className="md:col-span-2">
                 <ClassificacaoSelector
-                  codigoSelecionado={tempItem.codigo_classificacao}
-                  subitemSelecionado={tempItem.subitem_classificacao}
+                  codigoSelecionado={tempItem.codigo_classificacao || ''}
+                  subitemSelecionado={tempItem.subitem_classificacao || ''}
                   onCodigoChange={(codigo) => setTempItem({ ...tempItem, codigo_classificacao: codigo })}
                   onSubitemChange={(subitem) => setTempItem({ ...tempItem, subitem_classificacao: subitem })}
                   disabled={false}
