@@ -370,7 +370,7 @@ const PACEditor = () => {
         {/* Header for Print */}
         <div className="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
           <h1 className="text-2xl font-bold uppercase">Prefeitura Municipal de Acaiaca - MG</h1>
-          <h2 className="text-xl font-bold">Plano Anual de Contratações - Exercício 2026</h2>
+          <h2 className="text-xl font-bold">PAC - Plano Anual de Contratações - Exercício 2026</h2>
           <div className="mt-2 text-sm">
             <p>Lei Federal nº 14.133/2021</p>
           </div>
