@@ -898,15 +898,16 @@ async def export_pdf(pac_id: str, request: Request):
             str(int(item['quantidade'])),
             f"R$ {item['valorUnitario']:.2f}",
             f"R$ {item['valorTotal']:.2f}",
-            item['prioridade'][0]
+            item['prioridade'][0],
+            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
         ])
     
     # Linha de total
     total = sum(item['valorTotal'] for item in items)
-    table_data.append(['', '', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", ''])
+    table_data.append(['', '', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", '', ''])
     
     # Larguras das colunas ajustadas para A4 retrato
-    col_widths = [0.8*cm, 2.5*cm, 1.2*cm, 7*cm, 1*cm, 1*cm, 1.8*cm, 1.8*cm, 0.9*cm]
+    col_widths = [0.8*cm, 2.2*cm, 1.0*cm, 6*cm, 0.9*cm, 0.9*cm, 1.5*cm, 1.5*cm, 0.8*cm, 2*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
