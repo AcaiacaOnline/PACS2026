@@ -549,9 +549,9 @@ const PACEditor = () => {
                 {items.length > 0 && (
                   <tfoot className="bg-muted font-bold text-foreground">
                     <tr>
-                      <td colSpan="7" className="px-4 py-3 text-right uppercase">Total Geral Estimado:</td>
+                      <td colSpan="6" className="px-4 py-3 text-right uppercase">Total Geral Estimado:</td>
                       <td className="px-4 py-3 text-right font-mono text-lg">{formatCurrency(calculateTotal())}</td>
-                      <td colSpan="2"></td>
+                      <td colSpan="3"></td>
                     </tr>
                   </tfoot>
                 )}
