@@ -101,6 +101,8 @@ class PACCreate(BaseModel):
     email: str
     endereco: str
     ano: str = "2026"
+    codigo_classificacao: Optional[str] = None  # NOVO
+    subitem_classificacao: Optional[str] = None  # NOVO
 
 class PACUpdate(BaseModel):
     secretaria: Optional[str] = None
