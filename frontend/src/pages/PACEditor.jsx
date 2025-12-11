@@ -120,8 +120,6 @@ const PACEditor = () => {
       return;
     }
 
-    console.log('[PACEditor] Salvando item com dados:', JSON.stringify(tempItem, null, 2));
-
     try {
       if (editingItem) {
         await api.put(`/pacs/${id}/items/${editingItem.item_id}`, tempItem);
@@ -134,7 +132,6 @@ const PACEditor = () => {
       fetchPACData();
       closeModal();
     } catch (error) {
-      console.error('[PACEditor] Erro ao salvar item:', error);
       toast.error('Erro ao salvar item');
     }
   };
