@@ -67,14 +67,6 @@ const ClassificacaoSelector = ({
   }
 
   const codigoData = codigoSelecionado ? codigos[codigoSelecionado] : null;
-  
-  // Debug
-  console.log('[ClassificacaoSelector] Estado atual:', {
-    codigoSelecionado,
-    subitemSelecionado,
-    codigoData: codigoData ? `${codigoData.nome} com ${codigoData.subitens.length} subitens` : 'null',
-    totalCodigos: Object.keys(codigos).length
-  });
 
   return (
     <div className="space-y-4">
