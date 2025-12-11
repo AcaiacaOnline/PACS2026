@@ -710,8 +710,22 @@ const PACEditor = () => {
                 <ClassificacaoSelector
                   codigoSelecionado={tempItem.codigo_classificacao || ''}
                   subitemSelecionado={tempItem.subitem_classificacao || ''}
-                  onCodigoChange={(codigo) => setTempItem({ ...tempItem, codigo_classificacao: codigo })}
-                  onSubitemChange={(subitem) => setTempItem({ ...tempItem, subitem_classificacao: subitem })}
+                  onCodigoChange={(codigo) => {
+                    console.log('[PACEditor] onCodigoChange chamado com:', codigo);
+                    setTempItem(prev => {
+                      const newItem = { ...prev, codigo_classificacao: codigo };
+                      console.log('[PACEditor] Novo tempItem após codigo:', newItem);
+                      return newItem;
+                    });
+                  }}
+                  onSubitemChange={(subitem) => {
+                    console.log('[PACEditor] onSubitemChange chamado com:', subitem);
+                    setTempItem(prev => {
+                      const newItem = { ...prev, subitem_classificacao: subitem };
+                      console.log('[PACEditor] Novo tempItem após subitem:', newItem);
+                      return newItem;
+                    });
+                  }}
                   disabled={false}
                 />
               </div>
