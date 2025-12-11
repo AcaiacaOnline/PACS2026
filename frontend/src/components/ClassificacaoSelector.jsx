@@ -149,7 +149,10 @@ const ClassificacaoSelector = ({
           </label>
           <select
             value={subitemSelecionado}
-            onChange={(e) => onSubitemChange(e.target.value)}
+            onChange={(e) => {
+              console.log('[ClassificacaoSelector] Selecionando subitem:', e.target.value);
+              onSubitemChange(e.target.value);
+            }}
             disabled={disabled}
             className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="classificacao-subitem-select"
