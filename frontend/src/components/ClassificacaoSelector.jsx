@@ -40,7 +40,6 @@ const ClassificacaoSelector = ({
   };
 
   const handleCodigoSelect = (codigo) => {
-    console.log('[ClassificacaoSelector] Selecionando código:', codigo);
     onCodigoChange(codigo);
     onSubitemChange(''); // Limpar subitem ao trocar código
     setShowDropdown(false);
