@@ -77,6 +77,16 @@ const Layout = ({ children }) => {
               <Plus size={18} />
               <span className="hidden md:inline">Novo PAC</span>
             </Link>
+            <Link
+              to="/pacs-geral"
+              data-testid="nav-pac-geral-btn"
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-primary-foreground/20 ${
+                isActive('/pacs-geral') ? 'bg-primary/80' : 'hover:bg-primary/80'
+              }`}
+            >
+              <Building2 size={18} />
+              <span className="hidden md:inline">PAC Geral</span>
+            </Link>
             {user?.is_admin && (
               <>
                 <div className="h-6 w-px bg-primary-foreground/20 mx-2"></div>
