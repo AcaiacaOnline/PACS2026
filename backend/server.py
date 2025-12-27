@@ -1112,6 +1112,175 @@ async def import_xlsx(pac_id: str, file: UploadFile = File(...), request: Reques
     await recalculate_pac_totals(pac_id)
     return {'message': f'{imported_count} itens importados com sucesso'}
 
+# ===== ROTAS PAC GERAL =====
+@api_router.get("/pacs-geral", response_model=List[PACGeral])
+async def get_pacs_geral(request: Request):
+    user = await get_current_user(request)
+    if user.is_admin:
+        pacs = await db.pacs_geral.find({}, {'_id': 0}).to_list(1000)
+    else:
+        pacs = await db.pacs_geral.find({'user_id': user.user_id}, {'_id': 0}).to_list(1000)
+    return pacs
+
+@api_router.post("/pacs-geral", response_model=PACGeral)
+async def create_pac_geral(pac_data: PACGeralCreate, request: Request):
+    user = await get_current_user(request)
+    pac_geral_id = f"pac_geral_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    pac_doc = {
+        'pac_geral_id': pac_geral_id,
+        'user_id': user.user_id,
+        **pac_data.model_dump(),
+        'created_at': now,
+        'updated_at': now
+    }
+    await db.pacs_geral.insert_one(pac_doc)
+    pac_doc.pop('_id', None)
+    return PACGeral(**pac_doc)
+
+@api_router.get("/pacs-geral/{pac_geral_id}", response_model=PACGeral)
+async def get_pac_geral(pac_geral_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    # Admins podem ver todos, usuários padrão só seus próprios
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        # Permitir visualização mas não edição
+        pass
+    return PACGeral(**pac)
+
+@api_router.put("/pacs-geral/{pac_geral_id}", response_model=PACGeral)
+async def update_pac_geral(pac_geral_id: str, pac_data: PACGeralUpdate, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    # Verificar permissões
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    update_data = {k: v for k, v in pac_data.model_dump().items() if v is not None}
+    if update_data:
+        update_data['updated_at'] = datetime.now(timezone.utc)
+        await db.pacs_geral.update_one({'pac_geral_id': pac_geral_id}, {'$set': update_data})
+    
+    updated_pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    return PACGeral(**updated_pac)
+
+@api_router.delete("/pacs-geral/{pac_geral_id}")
+async def delete_pac_geral(pac_geral_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    await db.pacs_geral.delete_one({'pac_geral_id': pac_geral_id})
+    await db.pac_geral_items.delete_many({'pac_geral_id': pac_geral_id})
+    return {'message': 'PAC Geral deleted successfully'}
+
+# ===== ROTAS ITEMS PAC GERAL =====
+@api_router.get("/pacs-geral/{pac_geral_id}/items", response_model=List[PACGeralItem])
+async def get_pac_geral_items(pac_geral_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
+    return items
+
+@api_router.post("/pacs-geral/{pac_geral_id}/items", response_model=PACGeralItem)
+async def create_pac_geral_item(pac_geral_id: str, item_data: PACGeralItemCreate, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    item_id = f"item_{uuid.uuid4().hex[:12]}"
+    
+    # Calcular quantidade total
+    quantidade_total = (
+        item_data.qtd_ad + item_data.qtd_fa + item_data.qtd_sa + 
+        item_data.qtd_se + item_data.qtd_as + item_data.qtd_ag + 
+        item_data.qtd_ob + item_data.qtd_tr + item_data.qtd_cul
+    )
+    
+    valor_total = quantidade_total * item_data.valorUnitario
+    
+    item_doc = {
+        'item_id': item_id,
+        'pac_geral_id': pac_geral_id,
+        **item_data.model_dump(),
+        'quantidade_total': quantidade_total,
+        'valorTotal': valor_total,
+        'created_at': datetime.now(timezone.utc)
+    }
+    
+    await db.pac_geral_items.insert_one(item_doc)
+    item_doc.pop('_id', None)
+    return PACGeralItem(**item_doc)
+
+@api_router.put("/pacs-geral/{pac_geral_id}/items/{item_id}", response_model=PACGeralItem)
+async def update_pac_geral_item(pac_geral_id: str, item_id: str, item_data: PACGeralItemUpdate, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    item = await db.pac_geral_items.find_one({'item_id': item_id, 'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    update_data = {k: v for k, v in item_data.model_dump().items() if v is not None}
+    
+    # Recalcular totais se alguma quantidade ou valor mudou
+    if any(k.startswith('qtd_') for k in update_data.keys()) or 'valorUnitario' in update_data:
+        updated_item = {**item, **update_data}
+        quantidade_total = (
+            updated_item.get('qtd_ad', 0) + updated_item.get('qtd_fa', 0) + 
+            updated_item.get('qtd_sa', 0) + updated_item.get('qtd_se', 0) + 
+            updated_item.get('qtd_as', 0) + updated_item.get('qtd_ag', 0) + 
+            updated_item.get('qtd_ob', 0) + updated_item.get('qtd_tr', 0) + 
+            updated_item.get('qtd_cul', 0)
+        )
+        update_data['quantidade_total'] = quantidade_total
+        update_data['valorTotal'] = quantidade_total * updated_item.get('valorUnitario', 0)
+    
+    if update_data:
+        await db.pac_geral_items.update_one(
+            {'item_id': item_id, 'pac_geral_id': pac_geral_id},
+            {'$set': update_data}
+        )
+    
+    updated_item = await db.pac_geral_items.find_one({'item_id': item_id}, {'_id': 0})
+    return PACGeralItem(**updated_item)
+
+@api_router.delete("/pacs-geral/{pac_geral_id}/items/{item_id}")
+async def delete_pac_geral_item(pac_geral_id: str, item_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    result = await db.pac_geral_items.delete_one({'item_id': item_id, 'pac_geral_id': pac_geral_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    return {'message': 'Item deleted successfully'}
+
+
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
