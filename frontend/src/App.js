@@ -5,6 +5,8 @@ import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import PACList from './pages/PACList';
 import PACEditor from './pages/PACEditor';
+import PACGeralList from './pages/PACGeralList';
+import PACGeralEditor from './pages/PACGeralEditor';
 import Users from './pages/Users';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
