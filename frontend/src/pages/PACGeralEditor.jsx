@@ -475,18 +475,26 @@ const PACGeralEditor = () => {
                 <span>Adicionar Item</span>
               </button>
               
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Upload size={18} />
+                <span>Importar Arquivo</span>
+              </button>
+              
               {items.length > 0 && (
                 <>
                   <button
                     onClick={handleExportXLSX}
-                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                    className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <FileSpreadsheet size={18} />
                     <span>Excel</span>
                   </button>
                   
                   <button
-                    onClick={handleExportPDF}
+                    onClick={() => setShowExportModal(true)}
                     className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                   >
                     <FileText size={18} />
