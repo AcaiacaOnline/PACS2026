@@ -374,6 +374,12 @@ async def oauth_session(request: Request, response: Response):
     user_doc.pop('password_hash', None)
     return User(**user_doc)
 
+
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    user = await get_current_user(request)
+    return user
+
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response):
     token = request.cookies.get('session_token')
