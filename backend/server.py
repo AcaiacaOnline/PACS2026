@@ -1618,6 +1618,134 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
         headers={"Content-Disposition": f"attachment; filename=PAC_Geral_{pac['nome_secretaria']}.xlsx"}
     )
 
+# ===== IMPORTAÇÃO DE ARQUIVO PARA PAC GERAL =====
+@api_router.post("/pacs-geral/{pac_geral_id}/import")
+async def import_pac_geral_items(
+    pac_geral_id: str, 
+    file: UploadFile = File(...), 
+    request: Request = None
+):
+    """
+    Importa itens para o PAC Geral a partir de um arquivo.
+    Formatos suportados: CSV, XLSX, JSON
+    
+    Estrutura esperada:
+    - codigo (Catmat/Catser)
+    - descricao
+    - unidade
+    - quantidade_total (ou qtd_total)
+    - valor_unitario (ou valorUnitario)
+    - prioridade
+    - classificacao (opcional)
+    - justificativa (opcional)
+    """
+    user = await get_current_user(request)
+    
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    # Ler o arquivo
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    items_to_import = []
+    
+    try:
+        if filename.endswith('.csv'):
+            # Processar CSV
+            import csv
+            import io
+            decoded = content.decode('utf-8-sig')
+            reader = csv.DictReader(io.StringIO(decoded), delimiter=';')
+            for row in reader:
+                items_to_import.append(row)
+                
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            # Processar Excel
+            from openpyxl import load_workbook
+            wb = load_workbook(filename=BytesIO(content))
+            ws = wb.active
+            
+            # Pegar cabeçalhos da primeira linha
+            headers = [cell.value for cell in ws[1] if cell.value]
+            
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if any(row):
+                    item = dict(zip(headers, row))
+                    items_to_import.append(item)
+                    
+        elif filename.endswith('.json'):
+            # Processar JSON
+            import json
+            data = json.loads(content.decode('utf-8'))
+            if isinstance(data, list):
+                items_to_import = data
+            elif isinstance(data, dict) and 'items' in data:
+                items_to_import = data['items']
+            else:
+                raise HTTPException(status_code=400, detail="JSON deve conter uma lista de itens ou objeto com chave 'items'")
+        else:
+            raise HTTPException(status_code=400, detail="Formato de arquivo não suportado. Use CSV, XLSX ou JSON")
+        
+        # Processar e inserir itens
+        imported_count = 0
+        for item_data in items_to_import:
+            # Normalizar nomes de campos
+            codigo = item_data.get('codigo') or item_data.get('catmat') or item_data.get('Código') or ''
+            descricao = item_data.get('descricao') or item_data.get('Descrição') or item_data.get('descricão') or ''
+            unidade = item_data.get('unidade') or item_data.get('Unidade') or item_data.get('und') or 'Unidade'
+            
+            qtd_total = item_data.get('quantidade_total') or item_data.get('qtd_total') or item_data.get('Qtd Total') or item_data.get('quantidade') or 0
+            valor_unit = item_data.get('valor_unitario') or item_data.get('valorUnitario') or item_data.get('Valor Unit') or item_data.get('valor') or 0
+            
+            prioridade = item_data.get('prioridade') or item_data.get('Prioridade') or item_data.get('prior') or 'Média'
+            classificacao = item_data.get('classificacao') or item_data.get('Classificação') or item_data.get('codigo_classificacao') or ''
+            justificativa = item_data.get('justificativa') or item_data.get('Justificativa') or ''
+            
+            # Converter valores numéricos
+            try:
+                qtd_total = float(str(qtd_total).replace(',', '.').replace('R$', '').strip()) if qtd_total else 0
+                valor_unit = float(str(valor_unit).replace(',', '.').replace('R$', '').strip()) if valor_unit else 0
+            except:
+                qtd_total = 0
+                valor_unit = 0
+            
+            if not descricao:
+                continue
+            
+            item_id = f"item_{uuid.uuid4().hex[:12]}"
+            item_doc = {
+                'item_id': item_id,
+                'pac_geral_id': pac_geral_id,
+                'catmat': str(codigo)[:20],
+                'descricao': str(descricao)[:500],
+                'unidade': str(unidade)[:20],
+                'qtd_ad': 0, 'qtd_fa': 0, 'qtd_sa': 0, 'qtd_se': 0,
+                'qtd_as': 0, 'qtd_ag': 0, 'qtd_ob': 0, 'qtd_tr': 0, 'qtd_cul': 0,
+                'quantidade_total': qtd_total,
+                'valorUnitario': valor_unit,
+                'valorTotal': qtd_total * valor_unit,
+                'prioridade': str(prioridade)[:20],
+                'justificativa': str(justificativa)[:500],
+                'codigo_classificacao': str(classificacao)[:20] if classificacao else '',
+                'subitem_classificacao': '',
+                'created_at': datetime.now(timezone.utc)
+            }
+            
+            await db.pac_geral_items.insert_one(item_doc)
+            imported_count += 1
+        
+        return {
+            'message': f'{imported_count} itens importados com sucesso',
+            'total_items': imported_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
+
 @api_router.get("/pacs-geral/{pac_geral_id}/export/pdf")
 async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation: str = "landscape"):
     """
