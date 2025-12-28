@@ -65,7 +65,15 @@ const PACGeralEditor = () => {
     if (isEditing) {
       fetchPACData();
     }
+    loadUser();
   }, [id]);
+
+  const loadUser = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  };
 
   const fetchPACData = async () => {
     try {
