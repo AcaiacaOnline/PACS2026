@@ -176,6 +176,7 @@ class PACGeral(BaseModel):
     user_id: str
     nome_secretaria: str
     secretario: str
+    fiscal_contrato: Optional[str] = None  # NOVO - Nome do Fiscal do Contrato
     telefone: str
     email: EmailStr
     endereco: str
@@ -187,6 +188,7 @@ class PACGeral(BaseModel):
 class PACGeralCreate(BaseModel):
     nome_secretaria: str
     secretario: str
+    fiscal_contrato: Optional[str] = None  # NOVO
     telefone: str
     email: EmailStr
     endereco: str
@@ -196,6 +198,7 @@ class PACGeralCreate(BaseModel):
 class PACGeralUpdate(BaseModel):
     nome_secretaria: Optional[str] = None
     secretario: Optional[str] = None
+    fiscal_contrato: Optional[str] = None  # NOVO
     telefone: Optional[str] = None
     email: Optional[EmailStr] = None
     endereco: Optional[str] = None
