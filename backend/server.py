@@ -1134,10 +1134,8 @@ async def import_xlsx(pac_id: str, file: UploadFile = File(...), request: Reques
 @api_router.get("/pacs-geral", response_model=List[PACGeral])
 async def get_pacs_geral(request: Request):
     user = await get_current_user(request)
-    if user.is_admin:
-        pacs = await db.pacs_geral.find({}, {'_id': 0}).to_list(1000)
-    else:
-        pacs = await db.pacs_geral.find({'user_id': user.user_id}, {'_id': 0}).to_list(1000)
+    # Todos os usuários podem ver todos os PACs Gerais
+    pacs = await db.pacs_geral.find({}, {'_id': 0}).to_list(1000)
     return pacs
 
 @api_router.post("/pacs-geral", response_model=PACGeral)
