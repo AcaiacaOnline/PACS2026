@@ -1463,7 +1463,8 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
     ws.column_dimensions['O'].width = 12
     ws.column_dimensions['P'].width = 12
     ws.column_dimensions['Q'].width = 8
-    ws.column_dimensions['R'].width = 30
+    ws.column_dimensions['R'].width = 35  # Justificativa
+    ws.column_dimensions['S'].width = 30  # Classificação
     
     output = BytesIO()
     wb.save(output)
