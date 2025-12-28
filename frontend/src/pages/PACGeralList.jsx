@@ -9,10 +9,19 @@ const PACGeralList = () => {
   const navigate = useNavigate();
   const [pacs, setPacs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetchPACs();
+    loadUser();
   }, []);
+
+  const loadUser = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  };
 
   const fetchPACs = async () => {
     try {
