@@ -40,6 +40,7 @@ const PACGeralEditor = () => {
     qtd_cul: 0,
     valorUnitario: 0,
     prioridade: 'Alta',
+    justificativa: '',
     codigo_classificacao: '',
     subitem_classificacao: ''
   });
