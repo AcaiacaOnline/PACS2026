@@ -297,7 +297,7 @@ const Dashboard = () => {
         {/* Info Card */}
         <div className="bg-accent/5 border border-accent/20 rounded-lg p-6">
           <h3 className="text-lg font-heading font-semibold text-foreground mb-2">
-            Sobre o Sistema PAC 2.0 - Acaiaca
+            Sobre o Sistema PAC Acaiaca 2026
           </h3>
           <p className="text-muted-foreground mb-4">
             Sistema de Planejamento Anual de Contratações desenvolvido para auxiliar as secretarias
