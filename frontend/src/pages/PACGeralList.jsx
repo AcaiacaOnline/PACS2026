@@ -106,13 +106,15 @@ const PACGeralList = () => {
                     >
                       <Edit size={18} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(pac.pac_geral_id)}
-                      className="text-destructive hover:text-destructive/80 transition-colors p-2"
-                      title="Excluir"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    {user?.is_admin && (
+                      <button
+                        onClick={() => handleDelete(pac.pac_geral_id)}
+                        className="text-destructive hover:text-destructive/80 transition-colors p-2"
+                        title="Excluir"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
