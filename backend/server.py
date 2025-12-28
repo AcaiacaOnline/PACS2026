@@ -35,7 +35,7 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'pac-acaiaca-secret-key-2026')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_DAYS = 7
 
-app = FastAPI(title="PAC - Plano Anual de Contratações")
+app = FastAPI(title="PAC - Plano Anual de Contratações 2.0")
 api_router = APIRouter(prefix="/api")
 
 # Models
