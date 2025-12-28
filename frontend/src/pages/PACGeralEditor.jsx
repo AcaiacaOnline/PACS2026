@@ -469,7 +469,12 @@ const PACGeralEditor = () => {
                   {items.map((item) => (
                     <tr key={item.item_id} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 font-mono text-xs">{item.catmat}</td>
-                      <td className="px-4 py-3 font-semibold">{item.descricao}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{item.descricao}</div>
+                        {item.justificativa && (
+                          <div className="text-xs text-muted-foreground italic mt-1">{item.justificativa}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-center">{item.unidade}</td>
                       <td className="px-4 py-3 text-center font-bold">{item.quantidade_total}</td>
                       <td className="px-4 py-3 text-right font-mono">{formatCurrency(item.valorUnitario)}</td>
