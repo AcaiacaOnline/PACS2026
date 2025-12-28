@@ -537,6 +537,32 @@ async def create_user_admin(user_data: UserCreate, request: Request):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     user_id = f"user_{uuid.uuid4().hex[:12]}"
+    
+    # Preparar permissões
+    permissions_data = None
+    if user_data.permissions:
+        permissions_data = user_data.permissions.model_dump()
+    elif user_data.is_admin:
+        # Admin tem todas as permissões por padrão
+        permissions_data = {
+            'can_view': True,
+            'can_edit': True,
+            'can_delete': True,
+            'can_export': True,
+            'can_manage_users': True,
+            'is_full_admin': True
+        }
+    else:
+        # Usuário padrão só pode visualizar
+        permissions_data = {
+            'can_view': True,
+            'can_edit': False,
+            'can_delete': False,
+            'can_export': False,
+            'can_manage_users': False,
+            'is_full_admin': False
+        }
+    
     user_doc = {
         'user_id': user_id,
         'email': user_data.email,
@@ -545,6 +571,7 @@ async def create_user_admin(user_data: UserCreate, request: Request):
         'is_admin': user_data.is_admin,
         'is_active': True,
         'picture': None,
+        'permissions': permissions_data,
         'created_at': datetime.now(timezone.utc)
     }
     await db.users.insert_one(user_doc)
@@ -559,9 +586,22 @@ async def update_user_admin(user_id: str, user_update: UserUpdate, request: Requ
     user = await db.users.find_one({'user_id': user_id}, {'_id': 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    update_data = {k: v for k, v in user_update.model_dump().items() if v is not None}
+    
+    update_data = {}
+    for k, v in user_update.model_dump().items():
+        if v is not None:
+            if k == 'permissions' and isinstance(v, dict):
+                update_data['permissions'] = v
+            else:
+                update_data[k] = v
+    
     if 'password' in update_data:
         update_data['password_hash'] = hash_password(update_data.pop('password'))
+    
+    # Se is_full_admin for marcado, atualiza is_admin também
+    if update_data.get('permissions', {}).get('is_full_admin'):
+        update_data['is_admin'] = True
+    
     await db.users.update_one({'user_id': user_id}, {'$set': update_data})
     updated_user = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password_hash': 0})
     return UserListItem(**updated_user)
