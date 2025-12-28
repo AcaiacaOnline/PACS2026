@@ -516,16 +516,20 @@ const PACGeralEditor = () => {
                       </td>
                       <td className="px-4 py-3 no-print">
                         <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => openModal(item)}
-                            className="text-accent hover:text-accent/80 transition-colors p-1"
-                          >
-                            <Edit size={16} />
-                          </button>
+                          {canEdit() && (
+                            <button
+                              onClick={() => openModal(item)}
+                              className="text-accent hover:text-accent/80 transition-colors p-1"
+                              title="Editar"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          )}
                           {user?.is_admin && (
                             <button
                               onClick={() => handleDeleteItem(item.item_id)}
                               className="text-destructive hover:text-destructive/80 transition-colors p-1"
+                              title="Excluir"
                             >
                               <Trash2 size={16} />
                             </button>
