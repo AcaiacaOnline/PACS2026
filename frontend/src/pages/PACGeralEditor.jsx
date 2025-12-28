@@ -518,15 +518,13 @@ const PACGeralEditor = () => {
                       </td>
                       <td className="px-4 py-3 no-print">
                         <div className="flex justify-center gap-2">
-                          {canEdit() && (
-                            <button
-                              onClick={() => openModal(item)}
-                              className="text-accent hover:text-accent/80 transition-colors p-1"
-                              title="Editar"
-                            >
-                              <Edit size={16} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => openModal(item)}
+                            className="text-accent hover:text-accent/80 transition-colors p-1"
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </button>
                           {user?.is_admin && (
                             <button
                               onClick={() => handleDeleteItem(item.item_id)}
