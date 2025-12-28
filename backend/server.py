@@ -1529,7 +1529,16 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
         fontName='Helvetica-Bold'
     )
     
-    # Cabeçalho
+    # Cabeçalho com logotipo
+    logo_path = ROOT_DIR / 'backend' / 'brasao_acaiaca.jpg'
+    if logo_path.exists():
+        try:
+            logo = Image(str(logo_path), width=2*cm, height=2*cm)
+            elements.append(logo)
+            elements.append(Spacer(1, 3*mm))
+        except:
+            pass
+    
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
     elements.append(Paragraph('PAC GERAL 2.0 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
