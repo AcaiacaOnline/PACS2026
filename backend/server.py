@@ -210,6 +210,7 @@ class PACGeralItem(BaseModel):
     valorUnitario: float
     valorTotal: float
     prioridade: str
+    justificativa: str
     codigo_classificacao: Optional[str] = None
     subitem_classificacao: Optional[str] = None
     created_at: datetime
@@ -229,6 +230,7 @@ class PACGeralItemCreate(BaseModel):
     qtd_cul: float = 0
     valorUnitario: float
     prioridade: str
+    justificativa: str
     codigo_classificacao: Optional[str] = None
     subitem_classificacao: Optional[str] = None
 
@@ -247,6 +249,7 @@ class PACGeralItemUpdate(BaseModel):
     qtd_cul: Optional[float] = None
     valorUnitario: Optional[float] = None
     prioridade: Optional[str] = None
+    justificativa: Optional[str] = None
     codigo_classificacao: Optional[str] = None
     subitem_classificacao: Optional[str] = None
 
