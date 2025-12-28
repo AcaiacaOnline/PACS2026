@@ -1401,6 +1401,7 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
             item['valorUnitario'],
             item['valorTotal'],
             item['prioridade'],
+            item.get('justificativa', ''),
             classificacao_text
         ]
         
