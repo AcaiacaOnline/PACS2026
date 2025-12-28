@@ -25,6 +25,7 @@ const PACGeralEditor = () => {
   const [items, setItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [user, setUser] = useState(null);
   const [tempItem, setTempItem] = useState({
     catmat: '',
     descricao: '',
