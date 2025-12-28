@@ -1172,7 +1172,9 @@ async def update_pac_geral(pac_geral_id: str, pac_data: PACGeralUpdate, request:
     pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC Geral not found")
-    # PAC Geral pode ser editado por qualquer usuário
+    # Apenas o criador ou administrador podem editar
+    if not user.is_admin and pac['user_id'] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only the creator or administrators can edit this PAC Geral")
     
     update_data = {k: v for k, v in pac_data.model_dump().items() if v is not None}
     if update_data:
