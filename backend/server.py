@@ -39,6 +39,15 @@ app = FastAPI(title="PAC Acaiaca 2026 - Plano Anual de Contratações")
 api_router = APIRouter(prefix="/api")
 
 # Models
+# Modelo de permissões do usuário
+class UserPermissions(BaseModel):
+    can_view: bool = True          # Visualizar PACs
+    can_edit: bool = False         # Editar PACs
+    can_delete: bool = False       # Excluir PACs
+    can_export: bool = False       # Gerar relatórios PDF/XLSX
+    can_manage_users: bool = False # Cadastrar/gerenciar usuários
+    is_full_admin: bool = False    # Todos os privilégios de administrador
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
@@ -47,6 +56,7 @@ class User(BaseModel):
     is_admin: bool = False
     is_active: bool = True
     picture: Optional[str] = None
+    permissions: Optional[UserPermissions] = None
     created_at: datetime
 
 class UserCreate(BaseModel):
@@ -54,6 +64,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     is_admin: bool = False
+    permissions: Optional[UserPermissions] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -61,6 +72,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     is_admin: Optional[bool] = None
     is_active: bool = True
+    permissions: Optional[UserPermissions] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -73,6 +85,7 @@ class UserListItem(BaseModel):
     name: str
     is_admin: bool
     is_active: bool = True
+    permissions: Optional[UserPermissions] = None
     created_at: datetime
 
 class PAC(BaseModel):
