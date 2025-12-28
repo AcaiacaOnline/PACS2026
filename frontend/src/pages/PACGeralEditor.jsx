@@ -362,6 +362,19 @@ const PACGeralEditor = () => {
 
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">
+                Nome do Fiscal do Contrato <span className="text-destructive">*</span>
+              </label>
+              <input
+                type="text"
+                value={pac.fiscal_contrato || ''}
+                onChange={(e) => setPac({ ...pac, fiscal_contrato: e.target.value })}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                placeholder="Nome completo do fiscal"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1">
                 Telefone <span className="text-destructive">*</span>
               </label>
               <input
