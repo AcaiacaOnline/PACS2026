@@ -625,6 +625,21 @@ const PACGeralEditor = () => {
                     </select>
                   </div>
 
+                  {/* Justificativa */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-foreground mb-1">
+                      Justificativa Sucinta da Contratação <span className="text-destructive">*</span>
+                    </label>
+                    <textarea
+                      value={tempItem.justificativa}
+                      onChange={(e) => setTempItem({ ...tempItem, justificativa: e.target.value })}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
+                      placeholder="Justificativa da contratação conforme Lei 14.133/2021..."
+                      data-testid="item-justificativa-input"
+                    />
+                  </div>
+
                   {/* Classificação Orçamentária */}
                   <div className="md:col-span-2">
                     <ClassificacaoSelector
