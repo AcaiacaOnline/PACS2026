@@ -110,7 +110,7 @@ const Dashboard = () => {
       <div className="space-y-6 fade-in" data-testid="dashboard">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-3xl font-heading font-bold text-foreground">Dashboard PAC Geral 2.0</h2>
+            <h2 className="text-3xl font-heading font-bold text-foreground">Dashboard PAC Acaiaca 2026</h2>
             <p className="text-muted-foreground mt-1">Valores totais por Classificação Orçamentária</p>
           </div>
         </div>
