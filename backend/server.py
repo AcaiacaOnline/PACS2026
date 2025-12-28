@@ -1240,8 +1240,7 @@ async def update_pac_geral_item(pac_geral_id: str, item_id: str, item_data: PACG
     if not pac:
         raise HTTPException(status_code=404, detail="PAC Geral not found")
     
-    if not user.is_admin and pac['user_id'] != user.user_id:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # Items podem ser editados por qualquer usuário
     
     item = await db.pac_geral_items.find_one({'item_id': item_id, 'pac_geral_id': pac_geral_id}, {'_id': 0})
     if not item:
