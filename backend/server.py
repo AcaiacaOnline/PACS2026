@@ -1887,8 +1887,8 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     # Tabela de itens - SEM granularidade por secretaria (consolidado)
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=2)))
     
-    # Cabeçalho simplificado (sem colunas por secretaria)
-    table_data = [['#', 'Código', 'Descrição', 'Und', 'Qtd Total', 'Valor Unit.', 'Valor Total', 'Prior', 'Classificação']]
+    # Cabeçalho com coluna de Justificativa
+    table_data = [['#', 'Código', 'Descrição', 'Justificativa', 'Und', 'Qtd Total', 'Valor Unit.', 'Valor Total', 'Prior', 'Classificação']]
     
     for idx, item in enumerate(items, start=1):
         classificacao_text = ''
@@ -1897,20 +1897,19 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
             if item.get('subitem_classificacao'):
                 classificacao_text += f" - {item['subitem_classificacao']}"
         
-        # Descrição com justificativa se houver
-        descricao_completa = item['descricao']
-        if item.get('justificativa'):
-            descricao_completa += f" ({item['justificativa'][:50]})"
+        # Justificativa em coluna separada
+        justificativa = item.get('justificativa', '') or ''
         
         table_data.append([
             str(idx),
             item.get('catmat', '')[:12],
-            Paragraph(f"<font size=7>{descricao_completa[:80]}</font>", styles['Normal']),
-            item['unidade'][:6],
+            Paragraph(f"<font size=7>{item['descricao'][:70]}</font>", styles['Normal']),
+            Paragraph(f"<font size=6>{justificativa[:80]}</font>", styles['Normal']),
+            item['unidade'][:5],
             str(int(item.get('quantidade_total', 0))),
             f"R$ {item['valorUnitario']:,.2f}",
             f"R$ {item['valorTotal']:,.2f}",
-            item.get('prioridade', '')[:5],
+            item.get('prioridade', '')[:3],
             Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
         ])
     
@@ -1918,15 +1917,15 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     total = sum(item['valorTotal'] for item in items)
     total_qtd = sum(item.get('quantidade_total', 0) for item in items)
     table_data.append([
-        '', '', Paragraph('<b>TOTAL GERAL:</b>', styles['Normal']), '',
+        '', '', Paragraph('<b>TOTAL GERAL:</b>', styles['Normal']), '', '',
         str(int(total_qtd)), '', f"R$ {total:,.2f}", '', ''
     ])
     
-    # Larguras das colunas ajustadas para relatório consolidado
+    # Larguras das colunas ajustadas para relatório com Justificativa
     if orientation.lower() == 'portrait':
-        col_widths = [0.7*cm, 1.5*cm, 6*cm, 1.2*cm, 1.5*cm, 2*cm, 2.2*cm, 1.2*cm, 3.5*cm]
+        col_widths = [0.6*cm, 1.3*cm, 4*cm, 3.5*cm, 0.9*cm, 1.2*cm, 1.8*cm, 1.8*cm, 0.8*cm, 2.8*cm]
     else:
-        col_widths = [0.8*cm, 2*cm, 8*cm, 1.5*cm, 1.8*cm, 2.5*cm, 2.8*cm, 1.5*cm, 5*cm]
+        col_widths = [0.7*cm, 1.5*cm, 5.5*cm, 5*cm, 1.2*cm, 1.5*cm, 2.2*cm, 2.4*cm, 1*cm, 4.5*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
