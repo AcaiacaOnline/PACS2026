@@ -1364,7 +1364,7 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
     current_row += 2
     
     # Tabela de itens
-    headers = ['#', 'Código', 'Descrição', 'Und', 'AD', 'FA', 'SA', 'SE', 'AS', 'AG', 'OB', 'TR', 'CUL', 'Total', 'Valor Unit', 'Valor Total', 'Prior', 'Classificação']
+    headers = ['#', 'Código', 'Descrição', 'Und', 'AD', 'FA', 'SA', 'SE', 'AS', 'AG', 'OB', 'TR', 'CUL', 'Total', 'Valor Unit', 'Valor Total', 'Prior', 'Justificativa', 'Classificação']
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=current_row, column=col, value=header)
         cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
