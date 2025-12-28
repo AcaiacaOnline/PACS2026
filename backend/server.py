@@ -1379,7 +1379,7 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
     current_row += 1
     
     ws.merge_cells(f'A{current_row}:M{current_row}')
-    ws[f'A{current_row}'] = 'PAC GERAL 2.0 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026'
+    ws[f'A{current_row}'] = 'PAC ACAIACA 2026 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO'
     ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True)
     ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
     ws.row_dimensions[current_row].height = 20
@@ -1584,7 +1584,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
             pass
     
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('PAC GERAL 2.0 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026', subtitle_style))
+    elements.append(Paragraph('PAC ACAIACA 2026 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
     elements.append(Spacer(1, 8*mm))
     
