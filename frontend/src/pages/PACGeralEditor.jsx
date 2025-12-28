@@ -429,16 +429,14 @@ const PACGeralEditor = () => {
         {isSaved && (
           <div className="bg-card border border-border rounded-xl p-6 mb-6 no-print">
             <div className="flex flex-wrap gap-3">
-              {canEdit() && (
-                <button
-                  onClick={() => openModal()}
-                  data-testid="add-item-btn"
-                  className="flex items-center space-x-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
-                >
-                  <Plus size={18} />
-                  <span>Adicionar Item</span>
-                </button>
-              )}
+              <button
+                onClick={() => openModal()}
+                data-testid="add-item-btn"
+                className="flex items-center space-x-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+              >
+                <Plus size={18} />
+                <span>Adicionar Item</span>
+              </button>
               
               {items.length > 0 && (
                 <>
