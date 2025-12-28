@@ -328,6 +328,42 @@ frontend:
           agent: "testing"
           comment: "✅ VALIDATED: Dashboard PAC Geral 2.0 fully functional. Title displays correctly, 3 summary cards show accurate data (Total Geral: R$ 816.921,00, Total Items: 3, Classifications: 2). Horizontal bar chart renders with Recharts, tooltips work on hover. Detailed table shows 2 classification items with progress bars. API endpoint /api/pacs-geral/stats returns correct data. Responsive design works. No errors found."
 
+  - task: "Dashboard with Tabs - PAC Geral and PAC Individual"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Dashboard with tabs functionality working perfectly. Both 'PAC Geral' and 'PAC Individual' tabs found and functional. Tab switching works correctly with data changing between tabs (Total values: PAC Geral R$ 816.921,00 vs PAC Individual R$ 2.993,75). Chart titles update correctly ('Gráfico - PAC Geral' vs 'Gráfico - PAC Individual'). Bar chart renders properly with Recharts. Detailed table shows correct data for each tab. System name 'PAC Acaiaca 2026' displays correctly in header and dashboard title."
+
+  - task: "User Management - 6 Permission Options"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Users.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: User management with 6 permission options working perfectly. All 6 permissions found: 'Visualizar PACs', 'Editar PACs', 'Excluir PACs', 'Gerar Relatórios', 'Cadastrar Usuários', 'Administrador Completo'. 'Administrador Completo' auto-selects all other permissions when checked. When individual permission is deselected, 'Administrador Completo' automatically unchecks. Re-selecting 'Administrador Completo' auto-selects all permissions again. Modal opens/closes correctly. All functionality working as expected."
+
+  - task: "System Name Verification - PAC Acaiaca 2026"
+    implemented: true
+    working: true
+    file: "frontend/src/components/Layout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: System name 'PAC Acaiaca 2026' displays correctly throughout the application. Found in: 1) Page title: 'PAC Acaiaca 2026 - Plano Anual de Contratações' 2) Header: 'PAC Acaiaca 2026' 3) Dashboard title: 'Dashboard PAC Acaiaca 2026' 4) Footer: 'PAC Acaiaca 2026 © 2025'. All instances verified and working correctly."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
