@@ -336,7 +336,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dashboard PAC Geral 2.0 - COMPLETED"
+    - "PDF A4 Landscape Export - PAC Individual - COMPLETED"
+    - "PDF A4 Landscape Export - PAC Geral - COMPLETED"
+    - "User Permissions System - 6 Options - COMPLETED"
+    - "PAC Individual Statistics API - COMPLETED"
+    - "PAC Geral Statistics API - COMPLETED"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
