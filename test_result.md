@@ -364,6 +364,18 @@ frontend:
           agent: "testing"
           comment: "✅ VALIDATED: System name 'PAC Acaiaca 2026' displays correctly throughout the application. Found in: 1) Page title: 'PAC Acaiaca 2026 - Plano Anual de Contratações' 2) Header: 'PAC Acaiaca 2026' 3) Dashboard title: 'Dashboard PAC Acaiaca 2026' 4) Footer: 'PAC Acaiaca 2026 © 2025'. All instances verified and working correctly."
 
+  - task: "PAC Geral New Features - Fiscal Field, PDF Export, Import Modal"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACGeralEditor.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: All PAC Geral new features working correctly. 1) FISCAL FIELD: 'Nome do Fiscal do Contrato' field found in form, accepts input and stores data properly. 2) PDF EXPORT MODAL: Opens with both orientation options (Paisagem/Retrato), includes visual icons and descriptions (A4 Horizontal/Vertical). 3) IMPORT MODAL: Opens showing supported formats (CSV, Excel, JSON) with complete file structure instructions. 4) TABLE HEADERS: All required report fields present (Código, Descrição, Und, Qtd Total, Valor Unit, Total, Prioridade, Classificação). 5) LOGIN: Admin credentials (cristiano.abdo@acaiaca.mg.gov.br) working correctly. All requested functionalities successfully tested and validated."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
