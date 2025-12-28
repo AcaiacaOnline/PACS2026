@@ -26,6 +26,7 @@ const Layout = ({ children }) => {
       await api.post('/auth/logout');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('auth_type');
       toast.success('Logout realizado com sucesso');
       navigate('/login');
     } catch (error) {
