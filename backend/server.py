@@ -1326,7 +1326,7 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
     current_row += 1
     
     ws.merge_cells(f'A{current_row}:M{current_row}')
-    ws[f'A{current_row}'] = 'PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026'
+    ws[f'A{current_row}'] = 'PAC GERAL 2.0 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026'
     ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True)
     ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
     ws.row_dimensions[current_row].height = 20
