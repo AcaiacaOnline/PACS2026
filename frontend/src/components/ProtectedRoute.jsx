@@ -18,7 +18,11 @@ const ProtectedRoute = ({ children }) => {
       }
 
       const token = localStorage.getItem('token');
-      if (!token) {
+      const authType = localStorage.getItem('auth_type');
+      const hasUser = localStorage.getItem('user');
+      
+      // Se não tem token E não tem OAuth E não tem usuário, não está autenticado
+      if (!token && authType !== 'oauth' && !hasUser) {
         if (isMounted.current) {
           setIsAuthenticated(false);
         }
@@ -33,6 +37,8 @@ const ProtectedRoute = ({ children }) => {
       }
 
       try {
+        // Verificar autenticação no backend
+        // O backend aceitará tanto token Bearer quanto cookie session_token
         await api.get('/auth/me');
         if (isMounted.current) {
           setIsAuthenticated(true);
@@ -41,6 +47,7 @@ const ProtectedRoute = ({ children }) => {
         if (isMounted.current) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          localStorage.removeItem('auth_type');
           setIsAuthenticated(false);
         }
       }
