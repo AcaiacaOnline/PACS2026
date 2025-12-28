@@ -250,21 +250,42 @@ const PACGeralEditor = () => {
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (orientation = 'landscape') => {
     try {
-      const response = await api.get(`/pacs-geral/${id}/export/pdf`, {
+      const response = await api.get(`/pacs-geral/${id}/export/pdf?orientation=${orientation}`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `PAC_Geral_${pac.nome_secretaria}.pdf`);
+      const orientationName = orientation === 'landscape' ? 'Paisagem' : 'Retrato';
+      link.setAttribute('download', `PAC_Geral_${pac.nome_secretaria}_${orientationName}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setShowExportModal(false);
       toast.success('Exportado com sucesso!');
     } catch (error) {
       toast.error('Erro ao exportar PDF');
+    }
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post(`/pacs-geral/${id}/import`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(response.data.message);
+      fetchPACData();
+      setShowImportModal(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao importar arquivo');
     }
   };
 
