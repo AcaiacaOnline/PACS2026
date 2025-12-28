@@ -1619,7 +1619,12 @@ async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
     )
 
 @api_router.get("/pacs-geral/{pac_geral_id}/export/pdf")
-async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
+async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation: str = "landscape"):
+    """
+    Exporta o PAC Geral para PDF.
+    Args:
+        orientation: 'landscape' (paisagem) ou 'portrait' (retrato)
+    """
     user = await get_current_user(request)
     pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
     if not pac:
@@ -1628,14 +1633,24 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
-    # A4 Paisagem com margens mínimas para impressão
+    
+    # Determinar orientação
+    if orientation.lower() == 'portrait':
+        page_size = A4
+        page_width = 210*mm
+        margin = 12*mm
+    else:  # landscape (padrão)
+        page_size = landscape(A4)
+        page_width = 297*mm
+        margin = 10*mm
+    
     doc = SimpleDocTemplate(
         buffer, 
-        pagesize=landscape(A4),  # A4 Paisagem
-        rightMargin=8*mm, 
-        leftMargin=8*mm, 
-        topMargin=8*mm, 
-        bottomMargin=8*mm
+        pagesize=page_size,
+        rightMargin=margin, 
+        leftMargin=margin, 
+        topMargin=margin, 
+        bottomMargin=margin
     )
     
     elements = []
@@ -1645,7 +1660,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=14,
+        fontSize=14 if orientation == 'landscape' else 12,
         textColor=colors.HexColor('#1F4788'),
         spaceAfter=4,
         alignment=TA_CENTER,
@@ -1655,7 +1670,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     subtitle_style = ParagraphStyle(
         'CustomSubtitle',
         parent=styles['Heading2'],
-        fontSize=11,
+        fontSize=11 if orientation == 'landscape' else 10,
         textColor=colors.HexColor('#1F4788'),
         spaceAfter=6,
         alignment=TA_CENTER,
@@ -1665,61 +1680,87 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     info_style = ParagraphStyle(
         'InfoStyle',
         parent=styles['Normal'],
-        fontSize=8,
+        fontSize=8 if orientation == 'landscape' else 7,
         spaceAfter=2
     )
     
-    # Cabeçalho com logotipo
+    # Cabeçalho com logotipo - proporcional
     logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
     if logo_path.exists():
         try:
-            logo = Image(str(logo_path), width=1.5*cm, height=1.5*cm)
+            from PIL import Image as PILImage
+            pil_img = PILImage.open(str(logo_path))
+            img_width, img_height = pil_img.size
+            aspect_ratio = img_height / img_width
+            
+            # Definir largura máxima e calcular altura proporcional
+            max_logo_width = 2*cm
+            logo_width = max_logo_width
+            logo_height = logo_width * aspect_ratio
+            
+            logo = Image(str(logo_path), width=logo_width, height=logo_height)
             elements.append(logo)
-        except:
-            pass
+        except Exception as e:
+            # Fallback sem proporção
+            logo = Image(str(logo_path), width=2*cm, height=2*cm)
+            elements.append(logo)
     
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
     elements.append(Paragraph('PAC ACAIACA 2026 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=4)))
     
-    # Dados da Secretaria em formato compacto horizontal
-    info_data = [
-        [
-            Paragraph(f'<b>Secretaria:</b> {pac["nome_secretaria"]}', info_style),
-            Paragraph(f'<b>Secretário:</b> {pac["secretario"]}', info_style),
-            Paragraph(f'<b>Telefone:</b> {pac["telefone"]}', info_style),
-            Paragraph(f'<b>E-mail:</b> {pac["email"]}', info_style),
-        ],
-        [
-            Paragraph(f'<b>Endereço:</b> {pac["endereco"]}', info_style),
-            Paragraph(f'<b>CEP:</b> {pac.get("cep", "")}', info_style),
-            Paragraph(f'<b>Secretarias:</b> {", ".join(pac["secretarias_selecionadas"])}', info_style),
-            ''
-        ]
-    ]
+    # Dados da Secretaria incluindo Fiscal do Contrato
+    fiscal_contrato = pac.get('fiscal_contrato', 'Não informado')
     
-    info_table = Table(info_data, colWidths=[7*cm, 7*cm, 7*cm, 7*cm])
+    if orientation.lower() == 'portrait':
+        # Formato Retrato - dados em linhas
+        info_data = [
+            [Paragraph(f'<b>Secretaria Responsável:</b> {pac["nome_secretaria"]}', info_style)],
+            [Paragraph(f'<b>Secretário(a):</b> {pac["secretario"]}', info_style)],
+            [Paragraph(f'<b>Fiscal do Contrato:</b> {fiscal_contrato}', info_style)],
+            [Paragraph(f'<b>Telefone:</b> {pac["telefone"]} | <b>E-mail:</b> {pac["email"]}', info_style)],
+            [Paragraph(f'<b>Endereço:</b> {pac["endereco"]} | <b>CEP:</b> {pac.get("cep", "")}', info_style)],
+            [Paragraph(f'<b>Secretarias Participantes:</b> {", ".join(pac["secretarias_selecionadas"])}', info_style)],
+        ]
+        info_table = Table(info_data, colWidths=[18*cm])
+    else:
+        # Formato Paisagem - dados em colunas
+        info_data = [
+            [
+                Paragraph(f'<b>Secretaria:</b> {pac["nome_secretaria"]}', info_style),
+                Paragraph(f'<b>Secretário:</b> {pac["secretario"]}', info_style),
+                Paragraph(f'<b>Fiscal do Contrato:</b> {fiscal_contrato}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Telefone:</b> {pac["telefone"]}', info_style),
+                Paragraph(f'<b>E-mail:</b> {pac["email"]}', info_style),
+                Paragraph(f'<b>Secretarias:</b> {", ".join(pac["secretarias_selecionadas"])}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Endereço:</b> {pac["endereco"]}', info_style),
+                Paragraph(f'<b>CEP:</b> {pac.get("cep", "")}', info_style),
+                ''
+            ]
+        ]
+        info_table = Table(info_data, colWidths=[9.2*cm, 9.2*cm, 9.2*cm])
+    
     info_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E7E6E6')),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1F4788')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 3),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
     ]))
     
     elements.append(info_table)
-    elements.append(Spacer(1, 4*mm))
+    elements.append(Spacer(1, 5*mm))
     
-    # Tabela de itens com todas as quantidades por secretaria
+    # Tabela de itens - SEM granularidade por secretaria (consolidado)
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=2)))
     
-    # Cabeçalho com todas as secretarias
-    table_data = [[
-        '#', 'Código', 'Descrição', 'Justificativa', 'Und',
-        'AD', 'FA', 'SA', 'SE', 'AS', 'AG', 'OB', 'TR', 'CUL',
-        'Total Qtd', 'Valor Unit.', 'Valor Total', 'Prior', 'Classificação'
-    ]]
+    # Cabeçalho simplificado (sem colunas por secretaria)
+    table_data = [['#', 'Código', 'Descrição', 'Und', 'Qtd Total', 'Valor Unit.', 'Valor Total', 'Prior', 'Classificação']]
     
     for idx, item in enumerate(items, start=1):
         classificacao_text = ''
@@ -1728,51 +1769,36 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
             if item.get('subitem_classificacao'):
                 classificacao_text += f" - {item['subitem_classificacao']}"
         
+        # Descrição com justificativa se houver
+        descricao_completa = item['descricao']
+        if item.get('justificativa'):
+            descricao_completa += f" ({item['justificativa'][:50]})"
+        
         table_data.append([
             str(idx),
-            item.get('catmat', '')[:8],
-            Paragraph(f"<font size=6>{item['descricao'][:60]}</font>", styles['Normal']),
-            Paragraph(f"<font size=6>{item.get('justificativa', '')[:50]}</font>", styles['Normal']),
-            item['unidade'][:4],
-            str(int(item.get('qtd_ad', 0))),
-            str(int(item.get('qtd_fa', 0))),
-            str(int(item.get('qtd_sa', 0))),
-            str(int(item.get('qtd_se', 0))),
-            str(int(item.get('qtd_as', 0))),
-            str(int(item.get('qtd_ag', 0))),
-            str(int(item.get('qtd_ob', 0))),
-            str(int(item.get('qtd_tr', 0))),
-            str(int(item.get('qtd_cul', 0))),
+            item.get('catmat', '')[:12],
+            Paragraph(f"<font size=7>{descricao_completa[:80]}</font>", styles['Normal']),
+            item['unidade'][:6],
             str(int(item.get('quantidade_total', 0))),
             f"R$ {item['valorUnitario']:,.2f}",
             f"R$ {item['valorTotal']:,.2f}",
-            item.get('prioridade', '')[:1],
-            Paragraph(f"<font size=5>{classificacao_text}</font>", styles['Normal'])
+            item.get('prioridade', '')[:5],
+            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
         ])
     
     # Linha de total
     total = sum(item['valorTotal'] for item in items)
     total_qtd = sum(item.get('quantidade_total', 0) for item in items)
     table_data.append([
-        '', '', '', Paragraph('<b>TOTAL:</b>', styles['Normal']), '',
-        '', '', '', '', '', '', '', '', '',
+        '', '', Paragraph('<b>TOTAL GERAL:</b>', styles['Normal']), '',
         str(int(total_qtd)), '', f"R$ {total:,.2f}", '', ''
     ])
     
-    # Larguras para A4 Paisagem (277mm - margens = ~261mm disponível)
-    col_widths = [
-        0.5*cm,  # #
-        1.2*cm,  # Código
-        3.5*cm,  # Descrição
-        2.8*cm,  # Justificativa
-        0.8*cm,  # Und
-        0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm, 0.7*cm,  # 9 secretarias
-        0.9*cm,  # Total Qtd
-        1.5*cm,  # Valor Unit
-        1.6*cm,  # Valor Total
-        0.6*cm,  # Prior
-        3.5*cm   # Classificação
-    ]
+    # Larguras das colunas ajustadas para relatório consolidado
+    if orientation.lower() == 'portrait':
+        col_widths = [0.7*cm, 1.5*cm, 6*cm, 1.2*cm, 1.5*cm, 2*cm, 2.2*cm, 1.2*cm, 3.5*cm]
+    else:
+        col_widths = [0.8*cm, 2*cm, 8*cm, 1.5*cm, 1.8*cm, 2.5*cm, 2.8*cm, 1.5*cm, 5*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
@@ -1781,15 +1807,16 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 4),
-        ('TOPPADDING', (0, 0), (-1, 0), 4),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+        ('TOPPADDING', (0, 0), (-1, 0), 5),
         
         # Corpo
-        ('FONTSIZE', (0, 1), (-1, -1), 6),
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
         ('ALIGN', (0, 1), (0, -1), 'CENTER'),
-        ('ALIGN', (4, 1), (17, -1), 'CENTER'),
-        ('ALIGN', (15, 1), (16, -1), 'RIGHT'),
+        ('ALIGN', (3, 1), (6, -1), 'CENTER'),
+        ('ALIGN', (5, 1), (6, -1), 'RIGHT'),
+        ('ALIGN', (7, 1), (7, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         
         # Linhas alternadas
@@ -1798,31 +1825,30 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
         # Total
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFC000')),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, -1), (-1, -1), 7),
+        ('FONTSIZE', (0, -1), (-1, -1), 9),
         
         # Bordas
-        ('GRID', (0, 0), (-1, -1), 0.3, colors.grey),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
         
-        # Padding reduzido
-        ('LEFTPADDING', (0, 0), (-1, -1), 2),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        # Padding
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
     ]))
     
     elements.append(table)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(Spacer(1, 8*mm))
     
-    # Legenda das secretarias
-    legenda_text = '<font size=6><b>Legenda:</b> AD=Administração | FA=Fazenda | SA=Saúde | SE=Educação | AS=Assistência Social | AG=Agricultura | OB=Obras | TR=Transporte | CUL=Cultura</font>'
-    elements.append(Paragraph(legenda_text, ParagraphStyle('Legenda', alignment=TA_CENTER, textColor=colors.grey)))
-    elements.append(Spacer(1, 6*mm))
+    # Assinaturas - Responsável e Fiscal
+    secretario_nome = pac.get('secretario', 'Responsável da Secretaria')
+    fiscal_nome = pac.get('fiscal_contrato', 'Fiscal do Contrato')
     
-    # Assinaturas
     signature_data = [
         ['_' * 50, '_' * 50],
-        ['Fiscal do Contrato', 'Gestor do Contrato']
+        [secretario_nome, fiscal_nome],
+        ['Responsável pela Secretaria', 'Fiscal do Contrato']
     ]
     
     sig_table = Table(signature_data, colWidths=[12*cm, 12*cm])
@@ -1830,11 +1856,12 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 1), (-1, 1), 9),
+        ('FONTSIZE', (0, 2), (-1, 2), 8),
         ('TOPPADDING', (0, 1), (-1, 1), 6),
     ]))
     
     elements.append(sig_table)
-    elements.append(Spacer(1, 4*mm))
+    elements.append(Spacer(1, 5*mm))
     
     # Rodapé
     footer_text = f'<font size=6><i>Documento gerado pelo Sistema PAC Acaiaca 2026 em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Desenvolvido por Cristiano Abdo de Souza</i></font>'
@@ -1843,10 +1870,11 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     doc.build(elements)
     buffer.seek(0)
     
+    orientation_name = 'Paisagem' if orientation.lower() == 'landscape' else 'Retrato'
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=PAC_Geral_{pac['nome_secretaria']}.pdf"}
+        headers={"Content-Disposition": f"attachment; filename=PAC_Geral_{pac['nome_secretaria']}_{orientation_name}.pdf"}
     )
 
 
