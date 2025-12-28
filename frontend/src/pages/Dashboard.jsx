@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, TrendingUp, FileText, BarChart3, PieChart } from 'lucide-react';
+import { Calculator, TrendingUp, FileText, BarChart3, PieChart, Building2 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -16,17 +16,23 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState(null);
+  const [statsGeral, setStatsGeral] = useState(null);
+  const [statsPac, setStatsPac] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('geral'); // 'geral' ou 'pac'
 
   useEffect(() => {
-    fetchStats();
+    fetchAllStats();
   }, []);
 
-  const fetchStats = async () => {
+  const fetchAllStats = async () => {
     try {
-      const response = await api.get('/pacs-geral/stats');
-      setStats(response.data);
+      const [geralResponse, pacResponse] = await Promise.all([
+        api.get('/pacs-geral/stats'),
+        api.get('/pacs/stats')
+      ]);
+      setStatsGeral(geralResponse.data);
+      setStatsPac(pacResponse.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
       toast.error('Erro ao carregar estatísticas');
@@ -60,13 +66,13 @@ const Dashboard = () => {
   ];
 
   // Preparar dados para o gráfico
-  const prepareChartData = () => {
+  const prepareChartData = (stats) => {
     if (!stats?.stats_by_subitem) return [];
     
     return stats.stats_by_subitem.map((item, index) => ({
       name: item.codigo 
-        ? `${item.codigo} - ${item.subitem?.substring(0, 30)}${item.subitem?.length > 30 ? '...' : ''}`
-        : item.subitem?.substring(0, 40) || 'Não Classificado',
+        ? `${item.codigo} - ${item.subitem?.substring(0, 25)}${item.subitem?.length > 25 ? '...' : ''}`
+        : item.subitem?.substring(0, 35) || 'Não Classificado',
       valor: item.valor_total,
       codigo: item.codigo,
       subitem: item.subitem,
@@ -103,20 +109,47 @@ const Dashboard = () => {
     );
   }
 
-  const chartData = prepareChartData();
+  const currentStats = activeTab === 'geral' ? statsGeral : statsPac;
+  const chartData = prepareChartData(currentStats);
 
   return (
     <Layout>
       <div className="space-y-6 fade-in" data-testid="dashboard">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
             <h2 className="text-3xl font-heading font-bold text-foreground">Dashboard PAC Acaiaca 2026</h2>
             <p className="text-muted-foreground mt-1">Valores totais por Classificação Orçamentária</p>
           </div>
+          
+          {/* Tabs para alternar entre PAC Geral e PAC Individual */}
+          <div className="flex bg-muted rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab('geral')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'geral' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Building2 className="w-4 h-4 inline mr-2" />
+              PAC Geral
+            </button>
+            <button
+              onClick={() => setActiveTab('pac')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'pac' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FileText className="w-4 h-4 inline mr-2" />
+              PAC Individual
+            </button>
+          </div>
         </div>
 
         {/* Resumo Geral - Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-primary to-primary/80 p-6 rounded-lg shadow-lg text-primary-foreground">
             <div className="flex items-center justify-between mb-2">
               <div className="bg-white/20 p-2 rounded">
@@ -124,9 +157,11 @@ const Dashboard = () => {
               </div>
               <TrendingUp className="w-5 h-5" />
             </div>
-            <div className="text-sm opacity-90 mb-1">Total Geral de PACs Gerais</div>
-            <div className="text-3xl font-heading font-bold">
-              {formatCurrency(stats?.total_geral)}
+            <div className="text-sm opacity-90 mb-1">
+              Total {activeTab === 'geral' ? 'PACs Gerais' : 'PACs Individuais'}
+            </div>
+            <div className="text-2xl font-heading font-bold">
+              {formatCurrency(currentStats?.total_geral)}
             </div>
           </div>
 
@@ -137,8 +172,8 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="text-sm opacity-90 mb-1">Total de Itens</div>
-            <div className="text-3xl font-heading font-bold">
-              {stats?.total_items || 0}
+            <div className="text-2xl font-heading font-bold">
+              {currentStats?.total_items || 0}
             </div>
             <div className="text-xs opacity-75 mt-1">
               Cadastrados no sistema
@@ -151,14 +186,48 @@ const Dashboard = () => {
                 <PieChart className="w-6 h-6" />
               </div>
             </div>
-            <div className="text-sm opacity-90 mb-1">Classificações Distintas</div>
-            <div className="text-3xl font-heading font-bold">
-              {stats?.stats_by_subitem?.length || 0}
+            <div className="text-sm opacity-90 mb-1">Classificações</div>
+            <div className="text-2xl font-heading font-bold">
+              {currentStats?.stats_by_subitem?.length || 0}
             </div>
             <div className="text-xs opacity-75 mt-1">
-              Categorias orçamentárias
+              Categorias distintas
             </div>
           </div>
+
+          {activeTab === 'pac' && (
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-lg shadow-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-white/20 p-2 rounded">
+                  <Building2 className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="text-sm opacity-90 mb-1">Total de PACs</div>
+              <div className="text-2xl font-heading font-bold">
+                {statsPac?.total_pacs || 0}
+              </div>
+              <div className="text-xs opacity-75 mt-1">
+                Secretarias cadastradas
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'geral' && (
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-lg shadow-lg text-white">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-white/20 p-2 rounded">
+                  <Building2 className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="text-sm opacity-90 mb-1">PAC Individual</div>
+              <div className="text-2xl font-heading font-bold">
+                {formatCurrencyShort(statsPac?.total_geral || 0)}
+              </div>
+              <div className="text-xs opacity-75 mt-1">
+                {statsPac?.total_items || 0} itens
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Gráfico de Barras */}
@@ -168,11 +237,11 @@ const Dashboard = () => {
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
                 <h3 className="text-xl font-heading font-bold text-foreground">
-                  Gráfico de Valores por Classificação
+                  Gráfico - {activeTab === 'geral' ? 'PAC Geral' : 'PAC Individual'}
                 </h3>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Distribuição visual dos valores por Subitem da Classificação Orçamentária
+                Distribuição dos valores por Subitem da Classificação Orçamentária
               </p>
             </div>
 
@@ -193,8 +262,8 @@ const Dashboard = () => {
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={250}
-                      tick={{ fontSize: 11 }}
+                      width={220}
+                      tick={{ fontSize: 10 }}
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
@@ -218,7 +287,7 @@ const Dashboard = () => {
         <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-6 py-4 border-b border-border">
             <h3 className="text-xl font-heading font-bold text-foreground">
-              Tabela Detalhada por Classificação Orçamentária
+              Tabela - {activeTab === 'geral' ? 'PAC Geral' : 'PAC Individual'}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
               Lei Federal nº 14.133/2021 - Agrupado por Subitem
@@ -226,11 +295,11 @@ const Dashboard = () => {
           </div>
 
           <div className="p-6">
-            {stats?.stats_by_subitem && stats.stats_by_subitem.length > 0 ? (
+            {currentStats?.stats_by_subitem && currentStats.stats_by_subitem.length > 0 ? (
               <div className="space-y-3">
-                {stats.stats_by_subitem.map((item, index) => {
-                  const percentage = stats.total_geral > 0 
-                    ? (item.valor_total / stats.total_geral) * 100 
+                {currentStats.stats_by_subitem.map((item, index) => {
+                  const percentage = currentStats.total_geral > 0 
+                    ? (item.valor_total / currentStats.total_geral) * 100 
                     : 0;
                   return (
                     <div
@@ -287,7 +356,7 @@ const Dashboard = () => {
                   Nenhum item com classificação orçamentária encontrado.
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Adicione itens aos PACs Gerais para ver as estatísticas aqui.
+                  Adicione itens aos {activeTab === 'geral' ? 'PACs Gerais' : 'PACs'} para ver as estatísticas aqui.
                 </p>
               </div>
             )}
@@ -316,7 +385,7 @@ const Dashboard = () => {
             <div>
               <div className="font-semibold text-foreground mb-1">Exportação</div>
               <ul className="text-muted-foreground space-y-1">
-                <li>• Relatórios em PDF com logotipo</li>
+                <li>• Relatórios em PDF (A4 Paisagem)</li>
                 <li>• Planilhas Excel (XLSX)</li>
                 <li>• Layout institucional</li>
               </ul>
