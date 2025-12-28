@@ -1216,6 +1216,54 @@ async def get_pacs_geral_stats(request: Request):
         'total_items': len(all_items)
     }
 
+# ===== ESTATÍSTICAS DO PAC INDIVIDUAL (DASHBOARD) =====
+@api_router.get("/pacs/stats")
+async def get_pacs_stats(request: Request):
+    """
+    Retorna estatísticas agregadas de todos os PACs individuais,
+    agrupadas por Subitem de Classificação Orçamentária.
+    """
+    user = await get_current_user(request)
+    
+    # Buscar todos os items de PAC individual
+    all_items = await db.pac_items.find({}, {'_id': 0}).to_list(10000)
+    
+    # Agrupar por subitem_classificacao
+    stats_by_subitem = {}
+    total_geral = 0
+    
+    for item in all_items:
+        subitem = item.get('subitem_classificacao', 'Não Classificado') or 'Não Classificado'
+        codigo = item.get('codigo_classificacao', '') or ''
+        valor = item.get('valorTotal', 0) or 0
+        
+        key = f"{codigo} - {subitem}" if codigo else subitem
+        
+        if key not in stats_by_subitem:
+            stats_by_subitem[key] = {
+                'subitem': subitem,
+                'codigo': codigo,
+                'valor_total': 0,
+                'quantidade_items': 0
+            }
+        
+        stats_by_subitem[key]['valor_total'] += valor
+        stats_by_subitem[key]['quantidade_items'] += 1
+        total_geral += valor
+    
+    stats_list = list(stats_by_subitem.values())
+    stats_list.sort(key=lambda x: x['valor_total'], reverse=True)
+    
+    # Contar total de PACs
+    total_pacs = await db.pacs.count_documents({})
+    
+    return {
+        'stats_by_subitem': stats_list,
+        'total_geral': total_geral,
+        'total_items': len(all_items),
+        'total_pacs': total_pacs
+    }
+
 # ===== ROTAS PAC GERAL =====
 @api_router.get("/pacs-geral", response_model=List[PACGeral])
 async def get_pacs_geral(request: Request):
