@@ -1548,10 +1548,15 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
                 subitem_short = ' '.join(item['subitem_classificacao'].split()[:2])
                 classificacao_text += f"\n{subitem_short}..."
         
+        # Incluir justificativa junto com descrição
+        desc_with_just = f"<b>{item['descricao'][:60]}</b>"
+        if item.get('justificativa'):
+            desc_with_just += f"<br/><font size=7><i>{item['justificativa'][:80]}</i></font>"
+        
         table_data.append([
             str(idx),
             item['catmat'][:8],
-            Paragraph(f"<b>{item['descricao'][:60]}</b>", styles['Normal']),
+            Paragraph(desc_with_just, styles['Normal']),
             item['unidade'][:5],
             str(int(item['quantidade_total'])),
             f"R$ {item['valorUnitario']:.2f}",
