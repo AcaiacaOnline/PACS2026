@@ -757,7 +757,7 @@ async def export_xlsx(pac_id: str, request: Request):
     ws.row_dimensions[1].height = 25
     
     ws.merge_cells('A2:K2')
-    ws['A2'] = 'PAC - PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026'
+    ws['A2'] = 'PAC 2.0 - PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026'
     ws['A2'].font = Font(name='Arial', size=14, bold=True)
     ws['A2'].alignment = Alignment(horizontal='center', vertical='center')
     ws.row_dimensions[2].height = 20
