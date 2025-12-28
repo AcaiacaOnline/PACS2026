@@ -1278,8 +1278,9 @@ async def delete_pac_geral_item(pac_geral_id: str, item_id: str, request: Reques
     if not pac:
         raise HTTPException(status_code=404, detail="PAC Geral not found")
     
-    if not user.is_admin and pac['user_id'] != user.user_id:
-        raise HTTPException(status_code=403, detail="Permission denied")
+    # Apenas administradores podem excluir items
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Only administrators can delete items")
     
     result = await db.pac_geral_items.delete_one({'item_id': item_id, 'pac_geral_id': pac_geral_id})
     if result.deleted_count == 0:
