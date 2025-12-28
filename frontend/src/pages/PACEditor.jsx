@@ -573,7 +573,7 @@ const PACEditor = () => {
             </div>
           </div>
           <div className="mt-8 text-center text-xs text-gray-500">
-            Documento gerado eletronicamente pelo Sistema PAC 2.0 - Plano Anual de Contratações em {new Date().toLocaleDateString('pt-BR')}.
+            Documento gerado eletronicamente pelo Sistema PAC Acaiaca 2026 em {new Date().toLocaleDateString('pt-BR')}.
           </div>
         </div>
       </div>
