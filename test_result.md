@@ -276,7 +276,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend and frontend tasks completed and validated"
+    - "Dashboard PAC Geral 2.0 - COMPLETED"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
