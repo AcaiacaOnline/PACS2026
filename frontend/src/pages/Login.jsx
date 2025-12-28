@@ -83,8 +83,9 @@ const Login = () => {
     >
       <div className="bg-card p-8 rounded-xl shadow-2xl w-full max-w-md backdrop-blur-sm bg-opacity-95 border border-border">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-heading font-bold text-foreground">PAC - Plano Anual de Contratações 2.0</h1>
-          <p className="text-muted-foreground text-sm mt-2">Prefeitura Municipal de Acaiaca - MG</p>
+          <h1 className="text-3xl font-heading font-bold text-foreground">PAC Acaiaca 2026</h1>
+          <p className="text-muted-foreground text-sm mt-2">Plano Anual de Contratações</p>
+          <p className="text-muted-foreground text-xs mt-1">Prefeitura Municipal de Acaiaca - MG</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
