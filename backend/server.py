@@ -941,7 +941,7 @@ async def export_pdf(pac_id: str, request: Request):
     
     # Cabeçalho
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('PAC - PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026', subtitle_style))
+    elements.append(Paragraph('PAC 2.0 - PLANO ANUAL DE CONTRATAÇÕES - EXERCÍCIO 2026', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
     elements.append(Spacer(1, 8*mm))
     
