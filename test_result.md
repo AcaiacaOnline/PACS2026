@@ -183,6 +183,66 @@ backend:
           agent: "testing"
           comment: "✅ VALIDATED: User management endpoints properly restricted to admin only. Admin can access /api/users (200 OK), regular user gets 403 Forbidden."
 
+  - task: "PDF A4 Landscape Export - PAC Individual"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: PAC Individual PDF export in A4 landscape format working correctly. GET /api/pacs/{pac_id}/export/pdf returns valid PDF with landscape orientation. PDF format validated with proper headers."
+
+  - task: "PDF A4 Landscape Export - PAC Geral"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: PAC Geral PDF export in A4 landscape format working correctly. GET /api/pacs-geral/{pac_geral_id}/export/pdf returns valid PDF with landscape orientation. PDF format validated with proper headers."
+
+  - task: "User Permissions System - 6 Options"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: User permissions system with 6 granular options working correctly. Tested creating users with specific permissions: can_view, can_edit, can_delete, can_export, can_manage_users, is_full_admin. All permissions saved and retrieved correctly."
+
+  - task: "PAC Individual Statistics API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: GET /api/pacs/stats endpoint working correctly. Returns proper structure with stats_by_subitem (list), total_geral, and total_items. Data format validated for dashboard consumption."
+
+  - task: "PAC Geral Statistics API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: GET /api/pacs-geral/stats endpoint working correctly. Returns proper structure with stats_by_subitem (list), total_geral, and total_items. Data format validated for dashboard consumption."
+
 frontend:
   - task: "Login Screen Visual Updates"
     implemented: true
