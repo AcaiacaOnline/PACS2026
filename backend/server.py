@@ -1522,7 +1522,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
     
     # Cabeçalho
     elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026', subtitle_style))
+    elements.append(Paragraph('PAC GERAL 2.0 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
     elements.append(Spacer(1, 8*mm))
     
