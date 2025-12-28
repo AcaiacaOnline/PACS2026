@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Users as UsersIcon, Plus, Edit, Trash2, UserCheck, UserX, Shield, User as UserIcon, X, Save } from 'lucide-react';
+import { Users as UsersIcon, Plus, Edit, Trash2, UserCheck, UserX, Shield, User as UserIcon, X, Save, Eye, FileText, Settings, Lock } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
+
+const PERMISSIONS_CONFIG = [
+  { key: 'can_view', label: 'Visualizar PACs', icon: Eye, description: 'Pode visualizar todos os PACs e PACs Gerais' },
+  { key: 'can_edit', label: 'Editar PACs', icon: Edit, description: 'Pode editar PACs e PACs Gerais existentes' },
+  { key: 'can_delete', label: 'Excluir PACs', icon: Trash2, description: 'Pode excluir PACs e itens' },
+  { key: 'can_export', label: 'Gerar Relatórios', icon: FileText, description: 'Pode exportar PDF e XLSX' },
+  { key: 'can_manage_users', label: 'Cadastrar Usuários', icon: UsersIcon, description: 'Pode criar e gerenciar usuários' },
+  { key: 'is_full_admin', label: 'Administrador Completo', icon: Shield, description: 'Todos os privilégios do sistema' }
+];
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -14,7 +23,15 @@ const Users = () => {
     email: '',
     password: '',
     is_admin: false,
-    is_active: true
+    is_active: true,
+    permissions: {
+      can_view: true,
+      can_edit: false,
+      can_delete: false,
+      can_export: false,
+      can_manage_users: false,
+      is_full_admin: false
+    }
   });
 
   useEffect(() => {
@@ -44,7 +61,15 @@ const Users = () => {
         email: user.email,
         password: '',
         is_admin: user.is_admin,
-        is_active: user.is_active ?? true
+        is_active: user.is_active ?? true,
+        permissions: user.permissions || {
+          can_view: true,
+          can_edit: user.is_admin,
+          can_delete: user.is_admin,
+          can_export: user.is_admin,
+          can_manage_users: user.is_admin,
+          is_full_admin: user.is_admin
+        }
       });
     } else {
       setEditingUser(null);
@@ -53,7 +78,15 @@ const Users = () => {
         email: '',
         password: '',
         is_admin: false,
-        is_active: true
+        is_active: true,
+        permissions: {
+          can_view: true,
+          can_edit: false,
+          can_delete: false,
+          can_export: false,
+          can_manage_users: false,
+          is_full_admin: false
+        }
       });
     }
     setIsModalOpen(true);
@@ -62,6 +95,60 @@ const Users = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingUser(null);
+  };
+
+  const handlePermissionChange = (key) => {
+    setFormData(prev => {
+      const newPermissions = { ...prev.permissions };
+      
+      // Se marcou is_full_admin, marca todas as outras permissões
+      if (key === 'is_full_admin' && !newPermissions.is_full_admin) {
+        return {
+          ...prev,
+          is_admin: true,
+          permissions: {
+            can_view: true,
+            can_edit: true,
+            can_delete: true,
+            can_export: true,
+            can_manage_users: true,
+            is_full_admin: true
+          }
+        };
+      }
+      
+      // Se desmarcou is_full_admin
+      if (key === 'is_full_admin' && newPermissions.is_full_admin) {
+        return {
+          ...prev,
+          is_admin: false,
+          permissions: {
+            ...newPermissions,
+            is_full_admin: false
+          }
+        };
+      }
+      
+      // Verifica se está desmarcando uma permissão quando is_full_admin está ativo
+      if (newPermissions.is_full_admin && newPermissions[key]) {
+        return {
+          ...prev,
+          is_admin: false,
+          permissions: {
+            ...newPermissions,
+            [key]: false,
+            is_full_admin: false
+          }
+        };
+      }
+      
+      newPermissions[key] = !newPermissions[key];
+      
+      return {
+        ...prev,
+        permissions: newPermissions
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -78,15 +165,23 @@ const Users = () => {
     }
 
     try {
+      const submitData = {
+        name: formData.name,
+        email: formData.email,
+        is_admin: formData.permissions.is_full_admin || formData.is_admin,
+        is_active: formData.is_active,
+        permissions: formData.permissions
+      };
+
+      if (formData.password) {
+        submitData.password = formData.password;
+      }
+
       if (editingUser) {
-        const updateData = { ...formData };
-        if (!updateData.password) {
-          delete updateData.password;
-        }
-        await api.put(`/users/${editingUser.user_id}`, updateData);
+        await api.put(`/users/${editingUser.user_id}`, submitData);
         toast.success('Usuário atualizado com sucesso!');
       } else {
-        await api.post('/users', formData);
+        await api.post('/users', submitData);
         toast.success('Usuário criado com sucesso!');
       }
       closeModal();
@@ -129,6 +224,25 @@ const Users = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
+  const getPermissionsBadges = (user) => {
+    if (!user.permissions) {
+      return user.is_admin ? 'Admin' : 'Visualizar';
+    }
+    
+    if (user.permissions.is_full_admin) {
+      return 'Admin Completo';
+    }
+
+    const activePerms = [];
+    if (user.permissions.can_view) activePerms.push('Ver');
+    if (user.permissions.can_edit) activePerms.push('Editar');
+    if (user.permissions.can_delete) activePerms.push('Excluir');
+    if (user.permissions.can_export) activePerms.push('Exportar');
+    if (user.permissions.can_manage_users) activePerms.push('Usuários');
+    
+    return activePerms.join(', ') || 'Sem permissões';
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -169,6 +283,7 @@ const Users = () => {
                   <th className="px-4 py-3 text-left">Nome</th>
                   <th className="px-4 py-3 text-left">E-mail</th>
                   <th className="px-4 py-3 text-center">Perfil</th>
+                  <th className="px-4 py-3 text-left">Permissões</th>
                   <th className="px-4 py-3 text-center">Status</th>
                   <th className="px-4 py-3 text-center">Cadastro</th>
                   <th className="px-4 py-3 text-center">Ações</th>
@@ -197,42 +312,75 @@ const Users = () => {
                         {user.is_admin ? 'Administrador' : 'Usuário Padrão'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.is_active !== false
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.is_active !== false ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center text-muted-foreground">{formatDate(user.created_at)}</td>
                     <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {user.permissions?.is_full_admin ? (
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs flex items-center gap-1">
+                            <Shield className="w-3 h-3" /> Admin Completo
+                          </span>
+                        ) : (
+                          <>
+                            {user.permissions?.can_view && (
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">Ver</span>
+                            )}
+                            {user.permissions?.can_edit && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs">Editar</span>
+                            )}
+                            {user.permissions?.can_delete && (
+                              <span className="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs">Excluir</span>
+                            )}
+                            {user.permissions?.can_export && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs">Exportar</span>
+                            )}
+                            {user.permissions?.can_manage_users && (
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-800 rounded text-xs">Usuários</span>
+                            )}
+                            {!user.permissions && (
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                {user.is_admin ? 'Admin (legado)' : 'Ver apenas'}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => toggleStatus(user)}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                          user.is_active !== false
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                        }`}
+                      >
+                        {user.is_active !== false ? (
+                          <>
+                            <UserCheck className="w-3 h-3" />
+                            Ativo
+                          </>
+                        ) : (
+                          <>
+                            <UserX className="w-3 h-3" />
+                            Inativo
+                          </>
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                      {formatDate(user.created_at)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => openModal(user)}
-                          data-testid={`edit-user-${user.user_id}`}
-                          className="text-accent hover:text-accent/80 transition-colors p-1"
+                          className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                           title="Editar"
                         >
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => toggleStatus(user)}
-                          data-testid={`toggle-status-${user.user_id}`}
-                          className={`transition-colors p-1 ${
-                            user.is_active !== false
-                              ? 'text-orange-600 hover:text-orange-700' 
-                              : 'text-green-600 hover:text-green-700'
-                          }`}
-                          title={user.is_active !== false ? 'Desativar' : 'Ativar'}
-                        >
-                          {user.is_active !== false ? <UserX size={16} /> : <UserCheck size={16} />}
-                        </button>
-                        <button
                           onClick={() => handleDelete(user.user_id, user.name)}
-                          data-testid={`delete-user-${user.user_id}`}
-                          className="text-destructive hover:text-destructive/80 transition-colors p-1"
+                          className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                           title="Excluir"
                         >
                           <Trash2 size={16} />
@@ -244,121 +392,156 @@ const Users = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-card rounded-xl shadow-2xl w-full max-w-md border border-border">
-            <div className="flex justify-between items-center p-6 border-b border-border">
-              <h3 className="text-xl font-heading font-bold text-foreground">
-                {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-              </h3>
-              <button onClick={closeModal} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X size={24} />
-              </button>
+          {users.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              Nenhum usuário cadastrado
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">
-                  Nome Completo <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                  data-testid="user-name-input"
-                  required
-                />
+          )}
+        </div>
+
+        {/* Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex justify-between items-center">
+                <h3 className="text-xl font-heading font-bold text-foreground">
+                  {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+                </h3>
+                <button
+                  onClick={closeModal}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X size={24} />
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">
-                  E-mail <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                  data-testid="user-email-input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">
-                  Senha {!editingUser && <span className="text-destructive">*</span>}
-                  {editingUser && <span className="text-muted-foreground text-xs ml-2">(deixe em branco para manter)</span>}
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                  data-testid="user-password-input"
-                  required={!editingUser}
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_admin}
-                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                    className="w-4 h-4 rounded border-input focus:ring-2 focus:ring-ring"
-                    data-testid="user-admin-checkbox"
-                  />
-                  <span className="text-sm font-semibold text-foreground flex items-center gap-1">
-                    <Shield size={16} className="text-amber-600" />
-                    Administrador
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="w-4 h-4 rounded border-input focus:ring-2 focus:ring-ring"
-                    data-testid="user-active-checkbox"
-                  />
-                  <span className="text-sm font-semibold text-foreground flex items-center gap-1">
-                    <UserCheck size={16} className="text-green-600" />
-                    Ativo
-                  </span>
-                </label>
-              </div>
-              {!formData.is_admin && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
-                  <strong>Permissões de Usuário Padrão:</strong>
-                  <ul className="mt-1 ml-4 list-disc">
-                    <li>Criar seus próprios PACs</li>
-                    <li>Editar e excluir apenas seus PACs</li>
-                    <li>Visualizar PACs de outros usuários</li>
-                  </ul>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Dados Básicos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Digite o nome"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      E-mail *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="email@exemplo.com"
+                      required
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      {editingUser ? 'Nova Senha (deixe em branco para manter)' : 'Senha *'}
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder={editingUser ? '••••••••' : 'Digite a senha'}
+                      required={!editingUser}
+                    />
+                  </div>
                 </div>
-              )}
-            </form>
-            <div className="p-6 border-t border-border bg-muted/50 rounded-b-xl flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 border border-border rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSubmit}
-                data-testid="save-user-btn"
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <Save size={16} />
-                Salvar
-              </button>
+
+                {/* Permissões */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Lock className="w-5 h-5 text-primary" />
+                    <h4 className="text-lg font-semibold text-foreground">Permissões do Usuário</h4>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+                    {PERMISSIONS_CONFIG.map(({ key, label, icon: Icon, description }) => (
+                      <label
+                        key={key}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          formData.permissions[key]
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions[key]}
+                          onChange={() => handlePermissionChange(key)}
+                          className="mt-1 h-4 w-4 text-primary border-border rounded focus:ring-primary"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Icon className={`w-4 h-4 ${formData.permissions[key] ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <span className={`font-medium ${formData.permissions[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              {label}
+                            </span>
+                            {key === 'is_full_admin' && (
+                              <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs">
+                                Master
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_active}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                      className="h-4 w-4 text-primary border-border rounded focus:ring-primary"
+                    />
+                    <span className="font-medium text-foreground">Usuário Ativo</span>
+                  </label>
+                  <span className="text-xs text-muted-foreground">
+                    (Usuários inativos não podem fazer login)
+                  </span>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <Save size={18} />
+                    {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Layout>
   );
 };
