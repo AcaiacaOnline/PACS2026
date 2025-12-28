@@ -740,6 +740,104 @@ const PACGeralEditor = () => {
             </div>
           </div>
         )}
+
+        {/* Modal de Exportação PDF */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl max-w-md w-full">
+              <div className="p-6 border-b border-border">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-foreground">Exportar Relatório PDF</h3>
+                  <button onClick={() => setShowExportModal(false)} className="text-muted-foreground hover:text-foreground">
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-muted-foreground">Escolha a orientação do relatório:</p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => handleExportPDF('landscape')}
+                    className="flex flex-col items-center p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="w-16 h-10 border-2 border-primary rounded mb-2"></div>
+                    <span className="font-semibold text-foreground">Paisagem</span>
+                    <span className="text-xs text-muted-foreground">A4 Horizontal</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => handleExportPDF('portrait')}
+                    className="flex flex-col items-center p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="w-10 h-14 border-2 border-primary rounded mb-2"></div>
+                    <span className="font-semibold text-foreground">Retrato</span>
+                    <span className="text-xs text-muted-foreground">A4 Vertical</span>
+                  </button>
+                </div>
+                
+                <p className="text-xs text-muted-foreground text-center">
+                  O relatório será gerado com os dados consolidados, sem detalhamento por secretaria.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Importação */}
+        {showImportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl max-w-lg w-full">
+              <div className="p-6 border-b border-border">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-foreground">Importar Itens</h3>
+                  <button onClick={() => setShowImportModal(false)} className="text-muted-foreground hover:text-foreground">
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-muted-foreground">
+                  Selecione um arquivo para importar itens para este PAC Geral.
+                </p>
+                
+                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                  <Upload size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-foreground font-semibold mb-2">Formatos suportados:</p>
+                  <p className="text-sm text-muted-foreground mb-4">CSV, Excel (.xlsx), JSON</p>
+                  
+                  <label className="cursor-pointer">
+                    <span className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-block">
+                      Selecionar Arquivo
+                    </span>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls,.json"
+                      onChange={handleImportFile}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-foreground mb-2">Estrutura esperada do arquivo:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• <b>codigo</b> - Código Catmat/Catser</li>
+                    <li>• <b>descricao</b> - Descrição do item</li>
+                    <li>• <b>unidade</b> - Unidade de medida</li>
+                    <li>• <b>quantidade_total</b> - Quantidade total</li>
+                    <li>• <b>valor_unitario</b> - Valor unitário</li>
+                    <li>• <b>prioridade</b> - Alta, Média ou Baixa</li>
+                    <li>• <b>classificacao</b> - Código de classificação (opcional)</li>
+                    <li>• <b>justificativa</b> - Justificativa (opcional)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
