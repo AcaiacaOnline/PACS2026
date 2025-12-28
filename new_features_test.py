@@ -10,7 +10,12 @@ import json
 from datetime import datetime
 import uuid
 import io
-from PyPDF2 import PdfReader
+
+try:
+    from PyPDF2 import PdfReader
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
 
 class NewFeaturesTester:
     def __init__(self, base_url="https://pac-tracker.preview.emergentagent.com"):
