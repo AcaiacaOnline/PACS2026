@@ -75,6 +75,11 @@ const PACGeralEditor = () => {
     }
   };
 
+  const canEdit = () => {
+    if (!user || !pac.user_id) return false;
+    return user.is_admin || user.user_id === pac.user_id;
+  };
+
   const fetchPACData = async () => {
     try {
       const [pacResponse, itemsResponse] = await Promise.all([
