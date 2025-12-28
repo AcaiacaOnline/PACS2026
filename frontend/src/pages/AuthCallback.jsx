@@ -20,10 +20,16 @@ const AuthCallback = () => {
         const response = await api.get('/auth/oauth/session', {
           headers: {
             'X-Session-ID': sessionId
-          }
+          },
+          withCredentials: true // Importante para receber cookies
         });
 
+        // Salvar dados do usuário
         localStorage.setItem('user', JSON.stringify(response.data));
+        
+        // O token está no cookie (session_token), não precisa salvar no localStorage
+        // Mas vamos criar um flag para indicar que está autenticado via OAuth
+        localStorage.setItem('auth_type', 'oauth');
         
         sessionStorage.setItem('just_authenticated', 'true');
         
