@@ -517,12 +517,14 @@ const PACGeralEditor = () => {
                           >
                             <Edit size={16} />
                           </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.item_id)}
-                            className="text-destructive hover:text-destructive/80 transition-colors p-1"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {user?.is_admin && (
+                            <button
+                              onClick={() => handleDeleteItem(item.item_id)}
+                              className="text-destructive hover:text-destructive/80 transition-colors p-1"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
