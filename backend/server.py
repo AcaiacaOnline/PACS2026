@@ -417,49 +417,6 @@ async def get_classificacao_codigos():
                 "Material Educativo e Esportivo",
                 "Material para Festividades e Homenagens",
                 "Material de Expediente",
-
-
-@api_router.get("/dashboard/stats")
-async def get_dashboard_stats(request: Request):
-    user = await get_current_user(request)
-    
-    # Buscar todos os items de PAC Geral
-    all_items = await db.pac_geral_items.find({}, {'_id': 0}).to_list(10000)
-    
-    # Agrupar por subitem_classificacao
-    stats_by_subitem = {}
-    total_geral = 0
-    
-    for item in all_items:
-        subitem = item.get('subitem_classificacao', 'Não Classificado')
-        codigo = item.get('codigo_classificacao', '')
-        valor = item.get('valorTotal', 0)
-        
-        # Criar chave composta: código + subitem
-        key = f"{codigo} - {subitem}" if codigo else subitem
-        
-        if key not in stats_by_subitem:
-            stats_by_subitem[key] = {
-                'subitem': subitem,
-                'codigo': codigo,
-                'valor_total': 0,
-                'quantidade_items': 0
-            }
-        
-        stats_by_subitem[key]['valor_total'] += valor
-        stats_by_subitem[key]['quantidade_items'] += 1
-        total_geral += valor
-    
-    # Converter para lista e ordenar por valor
-    stats_list = list(stats_by_subitem.values())
-    stats_list.sort(key=lambda x: x['valor_total'], reverse=True)
-    
-    return {
-        'stats_by_subitem': stats_list,
-        'total_geral': total_geral,
-        'total_items': len(all_items)
-    }
-
                 "Material de Processamento de Dados",
                 "Material de Acondicionamento e Embalagem",
                 "Material de Cama, Mesa e Banho",
