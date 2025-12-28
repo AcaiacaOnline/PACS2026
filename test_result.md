@@ -256,6 +256,18 @@ frontend:
           agent: "testing"
           comment: "✅ VALIDATED: Permission system working correctly. Regular users see 'Somente Leitura' badges on PACs from other users. In read-only mode: 'Adicionar Item' and 'Salvar Dados' buttons are hidden, ensuring proper access control."
 
+  - task: "Dashboard PAC Geral 2.0"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Dashboard PAC Geral 2.0 fully functional. Title displays correctly, 3 summary cards show accurate data (Total Geral: R$ 816.921,00, Total Items: 3, Classifications: 2). Horizontal bar chart renders with Recharts, tooltips work on hover. Detailed table shows 2 classification items with progress bars. API endpoint /api/pacs-geral/stats returns correct data. Responsive design works. No errors found."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
