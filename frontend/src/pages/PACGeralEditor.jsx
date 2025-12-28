@@ -15,6 +15,7 @@ const PACGeralEditor = () => {
   const [pac, setPac] = useState({
     nome_secretaria: '',
     secretario: '',
+    fiscal_contrato: '',  // NOVO - Nome do Fiscal do Contrato
     telefone: '',
     email: '',
     endereco: '',
@@ -26,6 +27,8 @@ const PACGeralEditor = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [user, setUser] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);  // NOVO
+  const [showImportModal, setShowImportModal] = useState(false);  // NOVO
   const [tempItem, setTempItem] = useState({
     catmat: '',
     descricao: '',
