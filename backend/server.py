@@ -1281,6 +1281,332 @@ async def delete_pac_geral_item(pac_geral_id: str, item_id: str, request: Reques
     return {'message': 'Item deleted successfully'}
 
 
+# ===== EXPORTAÇÃO PAC GERAL =====
+@api_router.get("/pacs-geral/{pac_geral_id}/export/xlsx")
+async def export_pac_geral_xlsx(pac_geral_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "PAC Geral"
+    
+    # Estilos
+    header_fill = PatternFill(start_color="1F4788", end_color="1F4788", fill_type="solid")
+    total_fill = PatternFill(start_color="E8F4F8", end_color="E8F4F8", fill_type="solid")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    bold_font = Font(name='Arial', size=11, bold=True)
+    normal_font = Font(name='Arial', size=10)
+    
+    current_row = 1
+    
+    # Cabeçalho
+    ws.merge_cells(f'A{current_row}:M{current_row}')
+    ws[f'A{current_row}'] = 'PREFEITURA MUNICIPAL DE ACAIACA - MG'
+    ws[f'A{current_row}'].font = Font(name='Arial', size=16, bold=True)
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[current_row].height = 25
+    current_row += 1
+    
+    ws.merge_cells(f'A{current_row}:M{current_row}')
+    ws[f'A{current_row}'] = 'PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026'
+    ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True)
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[current_row].height = 20
+    current_row += 1
+    
+    ws.merge_cells(f'A{current_row}:M{current_row}')
+    ws[f'A{current_row}'] = 'Lei Federal nº 14.133/2021'
+    ws[f'A{current_row}'].font = Font(name='Arial', size=10, italic=True)
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    current_row += 2
+    
+    # Dados da Secretaria
+    ws[f'A{current_row}'] = 'Secretaria Responsável:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'B{current_row}'] = pac['nome_secretaria']
+    current_row += 1
+    
+    ws[f'A{current_row}'] = 'Secretário:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'B{current_row}'] = pac['secretario']
+    current_row += 1
+    
+    ws[f'A{current_row}'] = 'Telefone:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'B{current_row}'] = pac['telefone']
+    ws[f'E{current_row}'] = 'E-mail:'
+    ws[f'E{current_row}'].font = bold_font
+    ws[f'F{current_row}'] = pac['email']
+    current_row += 1
+    
+    ws[f'A{current_row}'] = 'Secretarias Participantes:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'B{current_row}'] = ', '.join(pac['secretarias_selecionadas'])
+    current_row += 2
+    
+    # Tabela de itens
+    headers = ['#', 'Código', 'Descrição', 'Und', 'AD', 'FA', 'SA', 'SE', 'AS', 'AG', 'OB', 'TR', 'CUL', 'Total', 'Valor Unit', 'Valor Total', 'Prior', 'Classificação']
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=current_row, column=col, value=header)
+        cell.font = Font(name='Arial', size=10, bold=True, color='FFFFFF')
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = border
+    
+    ws.row_dimensions[current_row].height = 30
+    current_row += 1
+    
+    # Dados dos itens
+    for idx, item in enumerate(items, start=1):
+        classificacao_text = ''
+        if item.get('codigo_classificacao'):
+            classificacao_text = f"{item['codigo_classificacao']}"
+            if item.get('subitem_classificacao'):
+                classificacao_text += f" - {item['subitem_classificacao']}"
+        
+        row_data = [
+            idx,
+            item['catmat'],
+            item['descricao'],
+            item['unidade'],
+            item.get('qtd_ad', 0),
+            item.get('qtd_fa', 0),
+            item.get('qtd_sa', 0),
+            item.get('qtd_se', 0),
+            item.get('qtd_as', 0),
+            item.get('qtd_ag', 0),
+            item.get('qtd_ob', 0),
+            item.get('qtd_tr', 0),
+            item.get('qtd_cul', 0),
+            item['quantidade_total'],
+            item['valorUnitario'],
+            item['valorTotal'],
+            item['prioridade'],
+            classificacao_text
+        ]
+        
+        for col, value in enumerate(row_data, start=1):
+            cell = ws.cell(row=current_row, column=col, value=value)
+            cell.font = normal_font
+            cell.border = border
+            cell.alignment = Alignment(
+                horizontal='center' if col in [1,2,4,5,6,7,8,9,10,11,12,13,14,17] else 'left',
+                vertical='center',
+                wrap_text=True
+            )
+            if col in [15, 16]:
+                cell.number_format = 'R$ #,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+        
+        current_row += 1
+    
+    # Totais
+    total = sum(item['valorTotal'] for item in items)
+    
+    ws.merge_cells(f'A{current_row}:O{current_row}')
+    ws[f'A{current_row}'] = 'TOTAL GERAL ESTIMADO:'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'A{current_row}'].fill = total_fill
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='right', vertical='center')
+    ws[f'A{current_row}'].border = border
+    
+    ws[f'P{current_row}'] = total
+    ws[f'P{current_row}'].font = Font(name='Arial', size=12, bold=True)
+    ws[f'P{current_row}'].fill = total_fill
+    ws[f'P{current_row}'].number_format = 'R$ #,##0.00'
+    ws[f'P{current_row}'].alignment = Alignment(horizontal='right', vertical='center')
+    ws[f'P{current_row}'].border = border
+    
+    # Assinaturas
+    current_row += 3
+    ws[f'A{current_row}'] = '_' * 40
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
+    ws[f'H{current_row}'] = '_' * 40
+    ws[f'H{current_row}'].alignment = Alignment(horizontal='center')
+    current_row += 1
+    
+    ws[f'A{current_row}'] = 'Fiscal do Contrato'
+    ws[f'A{current_row}'].font = bold_font
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center')
+    ws[f'H{current_row}'] = 'Gestor do Contrato'
+    ws[f'H{current_row}'].font = bold_font
+    ws[f'H{current_row}'].alignment = Alignment(horizontal='center')
+    
+    # Ajustar largura das colunas
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 12
+    ws.column_dimensions['C'].width = 40
+    ws.column_dimensions['D'].width = 8
+    for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']:
+        ws.column_dimensions[col].width = 8
+    ws.column_dimensions['N'].width = 10
+    ws.column_dimensions['O'].width = 12
+    ws.column_dimensions['P'].width = 12
+    ws.column_dimensions['Q'].width = 8
+    ws.column_dimensions['R'].width = 30
+    
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=PAC_Geral_{pac['nome_secretaria']}.xlsx"}
+    )
+
+@api_router.get("/pacs-geral/{pac_geral_id}/export/pdf")
+async def export_pac_geral_pdf(pac_geral_id: str, request: Request):
+    user = await get_current_user(request)
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral not found")
+    
+    items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos customizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#1F4788'),
+        spaceAfter=6,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor('#1F4788'),
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    info_label_style = ParagraphStyle(
+        'InfoLabel',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.black,
+        spaceAfter=8,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Cabeçalho
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
+    elements.append(Paragraph('PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO - EXERCÍCIO 2026', subtitle_style))
+    elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=10)))
+    elements.append(Spacer(1, 8*mm))
+    
+    # Dados da Secretaria
+    elements.append(Paragraph(f'<b>Secretaria Responsável:</b> {pac["nome_secretaria"]}', info_label_style))
+    elements.append(Paragraph(f'<b>Secretário:</b> {pac["secretario"]}', info_label_style))
+    elements.append(Paragraph(f'<b>Telefone:</b> {pac["telefone"]} | <b>E-mail:</b> {pac["email"]}', info_label_style))
+    elements.append(Paragraph(f'<b>Secretarias Participantes:</b> {", ".join(pac["secretarias_selecionadas"])}', info_label_style))
+    elements.append(Spacer(1, 5*mm))
+    
+    # Tabela de itens
+    elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', info_label_style))
+    elements.append(Spacer(1, 3*mm))
+    
+    table_data = [['#', 'Cód', 'Descrição', 'Und', 'Total', 'Valor Unit', 'Total', 'Prior', 'Classif']]
+    
+    for idx, item in enumerate(items, start=1):
+        classificacao_text = ''
+        if item.get('codigo_classificacao'):
+            classificacao_text = f"{item['codigo_classificacao']}"
+            if item.get('subitem_classificacao'):
+                subitem_short = ' '.join(item['subitem_classificacao'].split()[:2])
+                classificacao_text += f"\n{subitem_short}..."
+        
+        table_data.append([
+            str(idx),
+            item['catmat'][:8],
+            Paragraph(f"<b>{item['descricao'][:60]}</b>", styles['Normal']),
+            item['unidade'][:5],
+            str(int(item['quantidade_total'])),
+            f"R$ {item['valorUnitario']:.2f}",
+            f"R$ {item['valorTotal']:.2f}",
+            item['prioridade'][0],
+            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
+        ])
+    
+    # Linha de total
+    total = sum(item['valorTotal'] for item in items)
+    table_data.append(['', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", '', ''])
+    
+    col_widths = [0.5*cm, 1.5*cm, 6*cm, 1*cm, 1*cm, 1.8*cm, 1.8*cm, 0.8*cm, 2.5*cm]
+    
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4788')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+        ('GRID', (0, 0), (-1, -2), 0.5, colors.grey),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('ALIGN', (4, 1), (7, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E8F4F8')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 9),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 1*cm))
+    
+    # Assinaturas
+    signature_data = [
+        ['_' * 40, '_' * 40],
+        ['Fiscal do Contrato', 'Gestor do Contrato']
+    ]
+    
+    sig_table = Table(signature_data, colWidths=[8*cm, 8*cm])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 1), (-1, 1), 10),
+        ('TOPPADDING', (0, 1), (-1, 1), 8),
+    ]))
+    
+    elements.append(sig_table)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=PAC_Geral_{pac['nome_secretaria']}.pdf"}
+    )
+
+
+
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
