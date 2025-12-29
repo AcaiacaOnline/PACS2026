@@ -1,106 +1,114 @@
 <analysis>**original_problem_statement:**
-O usuário solicitou a criação de uma aplicação web chamada PAC Acaiaca 2026 para gerenciar o Plano Anual de Contratações (PAC). As solicitações evoluíram para incluir:
-- CRUD completo para PACs individuais e seus itens.
-- Um sistema de PAC Geral compartilhado, com um formulário de criação complexo, incluindo um campo de quantidade dividido por 9 secretarias.
-- Gerenciamento de usuários com perfis Administrador e Usuário Padrão.
-- Funcionalidade de Classificação Orçamentária para os itens.
-- Exportação de dados para PDF e XLSX, incluindo um logotipo da prefeitura.
-- Correções de bugs de segurança (hashing de senha) e permissões.
-- Correção do login com a conta Google.
-- Implementação de um dashboard que resume os valores totais de todos os PACs Gerais, agrupados por Subitem da Classificação.
+O usuário solicitou a criação de uma aplicação web chamada PAC Acaiaca 2026 para gerenciar o Plano Anual de Contratações (PAC). Desde o início, os requisitos evoluíram para incluir:
+-   **PAC Individual e Geral**: CRUD completo para ambos, com o PAC Geral sendo uma entidade compartilhada por todas as secretarias.
+-   **Gestão de Usuários**: Sistema de perfis Administrador e Usuário Padrão, com um painel para administradores definirem permissões granulares (editar, excluir, visualizar, etc.) para outros usuários.
+-   **Gestão Processual**: Um módulo completamente novo para gerenciar processos licitatórios, importando dados iniciais de uma planilha Excel e permitindo CRUD completo com regras de permissão específicas.
+-   **Dashboards**:
+    -   Um dashboard consolidado para PACs, exibindo estatísticas de PACs Individuais e PACs Gerais em abas separadas, com gráficos e tabelas.
+    -   Um novo dashboard interativo para a Gestão Processual, para exibir métricas de eficiência.
+-   **Relatórios e Exportação**:
+    -   Exportação para PDF e XLSX para todos os módulos (PAC Individual, PAC Geral, Gestão Processual).
+    -   Funcionalidades avançadas para relatórios PDF, como escolha de orientação (Retrato/Paisagem), upload de logotipo personalizado, e campos dinâmicos como Fiscal do Contrato.
+-   **Importação de Dados**: Funcionalidade para importar itens em massa para um PAC Geral a partir de arquivos (CSV, Excel, JSON).
 
 **PRODUCT REQUIREMENTS:**
--   **PAC Individual:**
-    -   CRUD completo para PACs e seus itens.
-    -   Permissões: Admins têm controle total; usuários padrão podem gerenciar os seus e visualizar os de outros.
--   **PAC Geral (Compartilhado):**
-    -   Um novo botão PAC Geral na navegação.
-    -   Formulário de criação com campos de secretaria, seleção múltipla de secretarias e um botão Selecionar Todas.
-    -   Modal para adicionar itens com campos específicos, incluindo uma grade 3x3 para quantidades por secretaria, com cálculo automático do total.
-    -   Campo Justificativa Sucinta da Contratação para cada item.
-    -   **Permissões:** Qualquer usuário pode criar e editar qualquer PAC Geral. Apenas administradores podem excluir um PAC Geral ou seus itens.
--   **Dashboard:**
-    -   Deve exibir o valor total de todos os PACs Gerais, categorizado pelo Subitem da Classificação.
--   **Exportação:**
-    -   Funcionalidade de exportação para PDF e Excel para PACs individuais e gerais.
-    -   Os relatórios devem incluir o logotipo da prefeitura e ter layout profissional em A4.
--   **Autenticação:**
-    -   Login padrão com email/senha.
-    -   Login via Conta Google deve funcionar corretamente.
--   **UI/UX:**
-    -   Título do sistema: PAC - Plano Anual de Contratações 2.0.
-    -   Rodapé personalizado.
+-   **Módulo PAC (Individual e Geral)**: Funcionalidade CRUD completa com permissões de edição e exclusão. O PAC Geral é visível e editável por todos, mas só pode ser excluído por administradores.
+-   **Módulo Gestão Processual**: CRUD completo, importação de dados de planilha. Usuários padrão podem criar/editar, mas apenas administradores podem excluir processos.
+-   **Módulo Gestão de Usuários**: Interface para administradores concederem permissões específicas (can_edit_pac, can_delete_pac_geral, etc.) aos usuários.
+-   **Dashboards**:
+    -   **Dashboard PAC**: Deve exibir totais, contagens e valores por classificação orçamentária para PACs Individuais e PACs Gerais.
+    -   **Dashboard Processual**: Deve mostrar média de processos por modalidade, tempo médio de finalização e média de processos por usuário.
+-   **Relatórios**: Devem ser gerados em PDF no formato A4 (paisagem ou retrato), incluindo todos os campos relevantes (como Justificativa), logotipo, e seções de assinatura.
+-   **UI/UX**: O sistema deve ter o título PAC Acaiaca 2026.
 
 **User's preferred language**: Portuguese (Brazil). The next agent MUST respond in Portuguese.
 
 **what currently exists?**
-Uma aplicação full-stack (React/FastAPI/MongoDB) funcional. A aplicação inclui autenticação de usuários (JWT e Google OAuth), CRUD completo para PACs individuais e para o novo PAC Geral compartilhado. A funcionalidade de classificação orçamentária está implementada e funcionando. As permissões foram ajustadas várias vezes conforme solicitado: qualquer usuário pode editar um PAC Geral, mas apenas administradores podem excluir. A exportação para PDF e XLSX foi implementada para ambos os tipos de PAC, incluindo o logotipo. O nome da aplicação foi atualizado para PAC - Plano Anual de Contratações 2.0. Um endpoint de backend () foi criado para fornecer dados para o dashboard, mas a interface do dashboard ainda não foi implementada.
+Uma aplicação full-stack (React/FastAPI/MongoDB) robusta e funcional. A aplicação inclui:
+-   Autenticação de usuários (JWT e Google OAuth).
+-   Módulos CRUD completos e testados para PAC Individual, PAC Geral e o novo Gestão Processual.
+-   Sistema de permissões granulares onde administradores podem configurar as capacidades de outros usuários.
+-   Funcionalidade de importação de dados para PAC Geral e Gestão Processual.
+-   Relatórios PDF e Excel avançados para todos os módulos.
+-   Um Dashboard funcional para PACs (Individuais e Gerais).
+-   Um endpoint de backend () foi criado para o novo Dashboard Processual, e a página de frontend () foi criada, mas está vazia.
 
 **Last working item**:
--   **Last item agent was working**: Implementação da visualização do Dashboard para exibir o valor total de todos os PACs Gerais, categorizado pelo Subitem da Classificação. O agente criou o endpoint no backend para agregar os dados, mas não implementou a interface no frontend para consumir e exibir essas informações.
+-   **Last item agent was working**: Implementação do frontend para o dashboard interativo da Gestão Processual. O agente criou com sucesso o endpoint de backend () para fornecer todas as métricas necessárias (média de processos por modalidade, tempo médio de conclusão, etc.) e criou o arquivo da página , adicionando a rota e um link para acessá-la. O trabalho parou antes da implementação da interface do usuário (gráficos e tabelas).
 -   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both. Primeiro, use  para verificar se o endpoint  retorna os dados agregados corretamente. Depois, use o  para validar a nova interface do , garantindo que ela busca e exibe os dados em um gráfico ou tabela de forma clara e correta.
+-   **Which testing method agent to use?**: both. Primeiro, use  para verificar se o endpoint  está retornando as métricas corretas. Em seguida, use o  para validar a nova interface em , garantindo que os gráficos (usando Recharts), as métricas e os filtros sejam renderizados e funcionem corretamente.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Não há bugs pendentes conhecidos. A única tarefa em andamento é a finalização do Dashboard.
+Não há bugs pendentes conhecidos. A única tarefa em andamento é a finalização do Dashboard Processual.
 
 **In progress Task List**:
--   **Task 1**: Implementar o frontend do Dashboard para PAC Geral. (P0)
+-   **Task 1**: Implementar o frontend do Dashboard para a Gestão Processual. (P0)
 
 **Task Detail**:
--   **Task 1: Implementar o frontend do Dashboard para PAC Geral**
-    -   **Where to resume**: O trabalho deve ser retomado no arquivo . Atualmente, ele exibe dados dos PACs individuais. É necessário modificá-lo para:
-        1.  Fazer uma chamada à nova API em .
-        2.  Renderizar os dados recebidos, que virão agrupados por Subitem da Classificação, em um formato visualmente claro (ex: gráfico de barras ou uma tabela).
-    -   **What will be achieved with this?**: Atenderá ao requisito do usuário de ter uma visão geral e consolidada dos custos planejados nos PACs Gerais, permitindo uma análise estratégica das despesas.
+-   **Task 1: Implementar o frontend do Dashboard para a Gestão Processual**
+    -   **Where to resume**: O trabalho deve ser retomado no arquivo .
+    -   **What will be achieved with this?**: O usuário terá uma visão analítica e consolidada da eficiência dos processos de contratação. A implementação envolverá:
+        1.  Fazer uma chamada à API em  para buscar os dados.
+        2.  Usar a biblioteca  para criar os gráficos solicitados: Média de Processos por Modalidade.
+        3.  Exibir os cartões (cards) com as métricas: Tempo Médio para Finalização e Média de Processos por Usuário.
+        4.  Implementar filtros, como filtro por período.
     -   **Status**: IN PROGRESS
     -   **Should Test frontend/backend/both after fix?**: Both
     -   **Blocked on something**: Não.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   **Definir e implementar a funcionalidade dos botões Template e Importar** na tela de edição do PAC Geral. A funcionalidade exata precisa ser confirmada com o usuário. (P1)
+    -   **Confirmar funcionalidade dos botões Template e Importar**: No PAC Geral, a funcionalidade de Importar foi implementada. A funcionalidade do botão Template não foi definida. É preciso confirmar com o usuário se um template para download ainda é necessário ou se a funcionalidade de importação atual é suficiente. (P1)
 -   **Future Tasks**:
-    -   Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar. (P2)
+    -   **Instalador cPanel**: Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar. (P2)
 
 **Completed work in this session**
--   **Permissões do PAC Geral**: Implementado o fluxo onde qualquer usuário pode editar, mas apenas administradores podem excluir.
--   **Visibilidade do PAC Geral**: Garantido que todos os PACs Gerais cadastrados sejam visíveis para todos os usuários.
--   **Campo Justificativa**: Adicionado o campo aos itens do PAC Geral e aos relatórios.
--   **Renomeação e Branding**: O sistema foi renomeado para PAC - Plano Anual de Contratações 2.0 e o logotipo foi adicionado aos relatórios em PDF.
--   **Correção do Login Google**: Resolvidos os problemas com o fluxo de autenticação via Google, garantindo a persistência da sessão.
--   **Funcionalidade PAC Geral**: Criada toda a estrutura de CRUD para PACs Gerais, incluindo o formulário complexo de adição de itens.
--   **Correções de Bugs Iniciais**: Corrigido o hashing de senhas, permissões de PACs individuais e o salvamento de dados de classificação orçamentária.
+-   **Módulo Gestão Processual**: Implementado do zero, incluindo backend (modelos, CRUD, permissões, importação, exportação PDF/XLSX) e frontend (página de listagem/edição). 70+ registros foram importados de uma planilha.
+-   **Melhorias nos Relatórios PDF**:
+    -   Adicionada opção para o usuário escolher a orientação (Paisagem/Retrato).
+    -   Adicionado campo Fiscal do Contrato e seção de assinaturas.
+    -   Corrigida a exibição do campo Justificativa.
+    -   Itens consolidados no relatório do PAC Geral.
+-   **Dashboard de PACs**: Implementado para exibir dados de PACs Individuais e Gerais em abas, com gráficos e tabelas.
+-   **Gestão de Usuários com Permissões Granulares**: Implementado backend e frontend para permitir que administradores controlem as ações de outros usuários.
+-   **Importação de Itens (PAC Geral)**: Criada funcionalidade para importar itens via CSV, Excel ou JSON.
+-   **Renomeação do Sistema**: Toda a aplicação foi padronizada com o nome PAC Acaiaca 2026.
+-   **Correção de Bug Crítico**: Resolvido um erro de sintaxe em  que impedia o servidor de iniciar.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend**: React, TailwindCSS, , Axios
+-   **Frontend**: React, TailwindCSS, , Axios, 
 -   **Backend**: FastAPI (Python), Pydantic
 -   **Database**: MongoDB (com  assíncrono)
--   **Authentication**: JSON Web Tokens (JWT), Google OAuth (com cookies de sessão)
+-   **Authentication**: JSON Web Tokens (JWT), Google OAuth
 -   **Relatórios**:  para PDF,  para XLSX
+-   **Manipulação de Imagem**:  para redimensionamento de logo nos PDFs
 
 **key DB schema**
 -   **users**: , , , , , 
--   **pacs**: , , , , , ...
--   **items**: , , , , , ...
 -   **pacs_geral**: , , , , ...
--   **pacs_geral_items**: , , , , ,  (objeto com 9 siglas), , , ...
+-   **processos**: , , , , , , , , , , , 
+
+**changes in tech stack**
+-   A biblioteca  foi adicionada ao backend para manipulação de imagens.
 
 **All files of reference**
--   : **Principal arquivo a ser modificado** para implementar a nova visualização.
--   : Contém o endpoint  que será consumido pelo dashboard.
--   : Referência para a estrutura de dados dos itens do PAC Geral.
+-   : **Principal arquivo a ser modificado** para construir a interface do dashboard.
+-   : Contém o endpoint  que fornecerá os dados para o dashboard.
+-   : Página que agora contém o link para o .
 
 **Areas that need refactoring**:
--   O arquivo  contém toda a lógica do backend (mais de 1500 linhas). Seria benéfico refatorar, separando as rotas de ,  e  em diferentes arquivos (routers) para melhorar a organização e manutenção do código.
+-   O arquivo  está extremamente grande (mais de 2500 linhas) e contém a lógica para todos os módulos. É altamente recomendável refatorá-lo, separando as rotas de , , , e  em arquivos de  distintos para melhorar a manutenibilidade.
 
 **key api endpoints**
--   : **Novo endpoint** a ser usado para o dashboard.
+-   : **Novo endpoint** a ser consumido pelo .
+-   
+-   
+-   
 -   
 -   
 -   
@@ -108,32 +116,37 @@ Não há bugs pendentes conhecidos. A única tarefa em andamento é a finalizaç
 -   
 
 **Critical Info for New Agent**
--   A prioridade máxima é finalizar a implementação do Dashboard. O backend está pronto; o trabalho é no frontend.
--   As regras de permissão para o PAC Geral são específicas e foram definidas recentemente pelo usuário: **qualquer usuário pode editar**, mas apenas administradores podem excluir. É crucial manter essa lógica.
--   As funcionalidades para os botões Template e Importar ainda não foram definidas. Não tente implementá-los sem antes consultar o usuário.
+-   A prioridade máxima é finalizar a implementação do frontend do Dashboard Processual em . O backend já está pronto e fornecendo os dados.
+-   As regras de permissão para Gestão Processual são diferentes dos outros módulos: **usuários padrão não podem excluir**.
+-   Devido ao tamanho do , a ordem das rotas é crucial. Rotas específicas (como ) devem ser declaradas antes de rotas com parâmetros (como ) para evitar conflitos de roteamento.
 
 **Last 10 User Messages and any pending HUMAN messages**
--   O usuário relatou problemas de visibilidade e permissões no PAC Geral, login do Google e solicitou o novo Dashboard. (Completo)
--   O usuário clarificou que a edição do PAC Geral deve ser permitida para **todos** os usuários, não apenas para o criador/admin. (Completo)
--   O agente confirmou o entendimento e iniciou a implementação, criando o backend do dashboard e ajustando as permissões de edição. (Pendente - Frontend do Dashboard)
--   O usuário pediu para adicionar o campo justificativa. (Completo)
--   O usuário pediu para renomear o sistema, adicionar um logotipo e ajustar as permissões de exclusão. (Completo)
+1.  **Usuário (Message 358):** Solicitou um novo dashboard interativo para a Gestão Processual com métricas específicas (média por modalidade, tempo de finalização, etc.). (Em Andamento)
+2.  **Usuário (Message 311):** Confirmou a adição do módulo Gestão Processual, definiu as regras de permissão (admin exclui) e anexou a planilha com dados para importação. (Completo)
+3.  **Usuário (Message 281):** Relatou que a justificativa da contratação estava faltando nos relatórios PDF. (Completo - Corrigido)
+4.  **Usuário (Message 221):** Solicitou grandes melhorias nos relatórios do PAC Geral (importação de dados, escolha de orientação paisagem/retrato, campo de fiscal, logo dinâmico, etc.). (Completo)
+5.  **Usuário (Message 133):** Solicitou múltiplas funcionalidades: relatórios em paisagem, adição de estatísticas do PAC individual ao dashboard, e gestão de permissões granulares para usuários. (Completo)
+6.  **Usuário (Message 73):** Pediu para analisar dados, remover duplicatas (nenhuma encontrada) e renomear o sistema para PAC Acaiaca. (Completo)
 
 **Project Health Check:**
--   **Broken**: A página do Dashboard () está funcionalmente desatualizada. Ela não reflete o requisito mais recente de exibir as estatísticas do PAC Geral.
+-   **In Progress**: A página do Dashboard Processual () existe, mas está vazia. É uma casca aguardando a implementação da interface.
 
 **3rd Party Integrations**
 -   Emergent-managed Google Auth
+-    (geração de PDF)
+-    (manipulação de arquivos Excel)
+-    (manipulação de imagens para logos em PDF)
 
 **Testing status**
--   **Testing agent used after significant changes**: YES
--   **Known regressions**: N/A
+-   **Testing agent used after significant changes**: YES. O agente de teste foi utilizado extensivamente para validar cada um dos grandes recursos implementados nesta sessão (Dashboard PAC, Permissões de Usuário, Módulo Gestão Processual, Relatórios Avançados).
+-   **Test files created**:
+    -    foi consistentemente atualizado para guiar os testes.
 
 **Credentials to test flow:**
 -   **Admin**:
     -   **Email**: 
     -   **Senha**: 
--   Usuários padrão podem ser criados através da página de registro para testar as permissões.
+-   Usuários padrão podem ser criados através da página de registro ou pelo administrador para testar as permissões.
 
 **What agent forgot to execute**
--   O agente anterior implementou o endpoint de backend , mas **não finalizou a tarefa** implementando a interface do frontend no arquivo  para consumir e exibir esses dados, que era o objetivo principal da última solicitação do usuário.</analysis>
+-   Nenhuma tarefa solicitada foi esquecida. O agente abordou sistematicamente cada um dos múltiplos e complexos pedidos do usuário. A única funcionalidade pendente do *primeiro* handoff (Template) foi efetivamente substituída pela funcionalidade de Importação, que é mais poderosa. Isso deve ser confirmado com o usuário.</analysis>
