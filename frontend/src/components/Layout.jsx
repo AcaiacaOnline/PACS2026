@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield, ClipboardList, Database } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -102,6 +102,17 @@ const Layout = ({ children }) => {
                 >
                   <Users size={16} />
                   <span className="hidden lg:inline">Usuários</span>
+                </Link>
+                <Link
+                  to="/backup"
+                  data-testid="nav-backup-btn"
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
+                    isActive('/backup') ? 'bg-green-600' : 'hover:bg-green-600/80'
+                  }`}
+                  title="Backup e Restauração"
+                >
+                  <Database size={16} />
+                  <span className="hidden lg:inline">Backup</span>
                 </Link>
               </>
             )}
