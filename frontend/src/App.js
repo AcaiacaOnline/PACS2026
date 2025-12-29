@@ -10,6 +10,7 @@ import PACGeralEditor from './pages/PACGeralEditor';
 import GestaoProcessual from './pages/GestaoProcessual';
 import DashboardProcessual from './pages/DashboardProcessual';
 import Users from './pages/Users';
+import Backup from './pages/Backup';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
@@ -36,6 +37,7 @@ function App() {
           <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
           <Route path="/gestao-processual/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+          <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
