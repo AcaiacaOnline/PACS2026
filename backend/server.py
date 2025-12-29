@@ -2070,31 +2070,181 @@ async def get_processos(request: Request):
     return [Processo(**p) for p in processos]
 
 @api_router.get("/processos/stats")
-async def get_processos_stats(request: Request):
-    """Estatísticas dos processos para dashboard"""
+async def get_processos_stats(request: Request, data_inicio: str = None, data_fim: str = None):
+    """Estatísticas avançadas dos processos para dashboard"""
     user = await get_current_user(request)
-    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
     
-    # Agrupar por status
+    # Query base
+    query = {}
+    
+    # Filtro por período
+    if data_inicio or data_fim:
+        date_filter = {}
+        if data_inicio:
+            date_filter['$gte'] = data_inicio
+        if data_fim:
+            date_filter['$lte'] = data_fim
+        if date_filter:
+            query['data_inicio'] = date_filter
+    
+    processos = await db.processos.find(query, {'_id': 0}).to_list(1000)
+    
+    # Filtrar processos com dados válidos
+    processos_validos = [p for p in processos if p.get('numero_processo') and p.get('numero_processo') != 'Processo']
+    
+    # 1. Estatísticas por Status
     stats_by_status = {}
-    for p in processos:
-        status = p.get('status', 'Não Definido')
+    for p in processos_validos:
+        status = p.get('status', 'Não Definido') or 'Não Definido'
         if status not in stats_by_status:
             stats_by_status[status] = {'status': status, 'quantidade': 0}
         stats_by_status[status]['quantidade'] += 1
     
-    # Agrupar por modalidade
+    # 2. Estatísticas por Modalidade
     stats_by_modalidade = {}
-    for p in processos:
-        modalidade = p.get('modalidade', 'Não Definido')
+    for p in processos_validos:
+        modalidade = p.get('modalidade', 'Não Definido') or 'Não Definido'
         if modalidade not in stats_by_modalidade:
-            stats_by_modalidade[modalidade] = {'modalidade': modalidade, 'quantidade': 0}
+            stats_by_modalidade[modalidade] = {'modalidade': modalidade, 'quantidade': 0, 'concluidos': 0}
         stats_by_modalidade[modalidade]['quantidade'] += 1
+        if p.get('status') == 'Concluído':
+            stats_by_modalidade[modalidade]['concluidos'] += 1
+    
+    # 3. Tempo médio de finalização (em dias)
+    tempos_finalizacao = []
+    tempos_por_mes = {}
+    tempos_por_modalidade = {}
+    
+    for p in processos_validos:
+        if p.get('status') == 'Concluído' and p.get('data_inicio') and p.get('data_contrato'):
+            try:
+                data_inicio_str = p.get('data_inicio')
+                data_contrato_str = p.get('data_contrato')
+                
+                # Parse das datas
+                if isinstance(data_inicio_str, str) and data_inicio_str not in ['None', 'null', '']:
+                    if 'T' in data_inicio_str:
+                        data_inicio_dt = datetime.fromisoformat(data_inicio_str.replace('Z', '+00:00'))
+                    else:
+                        data_inicio_dt = datetime.strptime(data_inicio_str.split(' ')[0], '%Y-%m-%d')
+                    
+                    if isinstance(data_contrato_str, str) and data_contrato_str not in ['None', 'null', '']:
+                        if 'T' in data_contrato_str:
+                            data_contrato_dt = datetime.fromisoformat(data_contrato_str.replace('Z', '+00:00'))
+                        else:
+                            data_contrato_dt = datetime.strptime(data_contrato_str.split(' ')[0], '%Y-%m-%d')
+                        
+                        dias = (data_contrato_dt - data_inicio_dt).days
+                        if dias >= 0 and dias < 365:  # Filtrar outliers
+                            tempos_finalizacao.append(dias)
+                            
+                            # Por mês
+                            mes_ano = data_inicio_dt.strftime('%Y-%m')
+                            if mes_ano not in tempos_por_mes:
+                                tempos_por_mes[mes_ano] = []
+                            tempos_por_mes[mes_ano].append(dias)
+                            
+                            # Por modalidade
+                            modalidade = p.get('modalidade', 'Não Definido')
+                            if modalidade not in tempos_por_modalidade:
+                                tempos_por_modalidade[modalidade] = []
+                            tempos_por_modalidade[modalidade].append(dias)
+            except Exception as e:
+                continue
+    
+    tempo_medio_geral = round(sum(tempos_finalizacao) / len(tempos_finalizacao), 1) if tempos_finalizacao else 0
+    
+    # Tempo médio por mês
+    tempo_medio_por_mes = []
+    for mes, tempos in sorted(tempos_por_mes.items()):
+        tempo_medio_por_mes.append({
+            'mes': mes,
+            'tempo_medio': round(sum(tempos) / len(tempos), 1) if tempos else 0,
+            'quantidade': len(tempos)
+        })
+    
+    # Tempo médio por modalidade
+    tempo_medio_por_modalidade = []
+    for modalidade, tempos in tempos_por_modalidade.items():
+        tempo_medio_por_modalidade.append({
+            'modalidade': modalidade,
+            'tempo_medio': round(sum(tempos) / len(tempos), 1) if tempos else 0,
+            'quantidade': len(tempos)
+        })
+    tempo_medio_por_modalidade.sort(key=lambda x: x['tempo_medio'], reverse=True)
+    
+    # 4. Processos por Responsável/Usuário
+    processos_por_responsavel = {}
+    for p in processos_validos:
+        responsavel = p.get('responsavel', 'Não Atribuído') or 'Não Atribuído'
+        if responsavel not in processos_por_responsavel:
+            processos_por_responsavel[responsavel] = {
+                'responsavel': responsavel,
+                'quantidade': 0,
+                'concluidos': 0,
+                'em_andamento': 0
+            }
+        processos_por_responsavel[responsavel]['quantidade'] += 1
+        if p.get('status') == 'Concluído':
+            processos_por_responsavel[responsavel]['concluidos'] += 1
+        else:
+            processos_por_responsavel[responsavel]['em_andamento'] += 1
+    
+    lista_responsaveis = list(processos_por_responsavel.values())
+    lista_responsaveis.sort(key=lambda x: x['quantidade'], reverse=True)
+    
+    # 5. Processos por Secretaria
+    processos_por_secretaria = {}
+    for p in processos_validos:
+        secretaria = p.get('secretaria', 'Não Informada') or 'Não Informada'
+        if secretaria not in processos_por_secretaria:
+            processos_por_secretaria[secretaria] = {'secretaria': secretaria, 'quantidade': 0}
+        processos_por_secretaria[secretaria]['quantidade'] += 1
+    
+    lista_secretarias = list(processos_por_secretaria.values())
+    lista_secretarias.sort(key=lambda x: x['quantidade'], reverse=True)
+    
+    # 6. Processos por mês (timeline)
+    processos_por_mes = {}
+    for p in processos_validos:
+        data_inicio_str = p.get('data_inicio')
+        if data_inicio_str and data_inicio_str not in ['None', 'null', '']:
+            try:
+                if 'T' in str(data_inicio_str):
+                    dt = datetime.fromisoformat(str(data_inicio_str).replace('Z', '+00:00'))
+                else:
+                    dt = datetime.strptime(str(data_inicio_str).split(' ')[0], '%Y-%m-%d')
+                mes_ano = dt.strftime('%Y-%m')
+                if mes_ano not in processos_por_mes:
+                    processos_por_mes[mes_ano] = {'mes': mes_ano, 'quantidade': 0, 'concluidos': 0}
+                processos_por_mes[mes_ano]['quantidade'] += 1
+                if p.get('status') == 'Concluído':
+                    processos_por_mes[mes_ano]['concluidos'] += 1
+            except:
+                pass
+    
+    timeline = list(processos_por_mes.values())
+    timeline.sort(key=lambda x: x['mes'])
+    
+    # Calcular médias gerais
+    total_processos = len(processos_validos)
+    total_concluidos = sum(1 for p in processos_validos if p.get('status') == 'Concluído')
+    total_em_andamento = total_processos - total_concluidos
+    taxa_conclusao = round((total_concluidos / total_processos * 100), 1) if total_processos > 0 else 0
     
     return {
-        'total_processos': len(processos),
+        'total_processos': total_processos,
+        'total_concluidos': total_concluidos,
+        'total_em_andamento': total_em_andamento,
+        'taxa_conclusao': taxa_conclusao,
+        'tempo_medio_dias': tempo_medio_geral,
         'stats_by_status': list(stats_by_status.values()),
-        'stats_by_modalidade': list(stats_by_modalidade.values())
+        'stats_by_modalidade': list(stats_by_modalidade.values()),
+        'tempo_medio_por_mes': tempo_medio_por_mes,
+        'tempo_medio_por_modalidade': tempo_medio_por_modalidade,
+        'processos_por_responsavel': lista_responsaveis,
+        'processos_por_secretaria': lista_secretarias,
+        'timeline': timeline
     }
 
 @api_router.post("/processos", response_model=Processo)
