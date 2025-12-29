@@ -396,11 +396,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PDF A4 Landscape Export - PAC Individual - COMPLETED"
-    - "PDF A4 Landscape Export - PAC Geral - COMPLETED"
-    - "User Permissions System - 6 Options - COMPLETED"
-    - "PAC Individual Statistics API - COMPLETED"
-    - "PAC Geral Statistics API - COMPLETED"
+    - "Backup and Restoration Page - COMPLETED"
+    - "Backup and Restoration API Endpoints - COMPLETED"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
