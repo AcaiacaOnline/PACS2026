@@ -269,6 +269,54 @@ class PACGeralItemUpdate(BaseModel):
     codigo_classificacao: Optional[str] = None
     subitem_classificacao: Optional[str] = None
 
+# ============ MODELOS DE GESTÃO PROCESSUAL ============
+class Processo(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    processo_id: str
+    user_id: str
+    numero_processo: str  # Ex: PRC - 0006/2025
+    status: str  # Concluído, Iniciado, Publicado, Aguardando Jurídico, Homologado
+    modalidade: str  # Dispensa por Limite, Chamamento Público, Inexigibilidade, Pregão, etc.
+    objeto: str  # Descrição do processo
+    situacao: Optional[str] = None  # OK ou outro indicador
+    responsavel: str
+    data_inicio: Optional[datetime] = None
+    data_autuacao: Optional[datetime] = None
+    data_contrato: Optional[datetime] = None
+    secretaria: str
+    secretario: str
+    observacoes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+class ProcessoCreate(BaseModel):
+    numero_processo: str
+    status: str
+    modalidade: str
+    objeto: str
+    situacao: Optional[str] = None
+    responsavel: str
+    data_inicio: Optional[datetime] = None
+    data_autuacao: Optional[datetime] = None
+    data_contrato: Optional[datetime] = None
+    secretaria: str
+    secretario: str
+    observacoes: Optional[str] = None
+
+class ProcessoUpdate(BaseModel):
+    numero_processo: Optional[str] = None
+    status: Optional[str] = None
+    modalidade: Optional[str] = None
+    objeto: Optional[str] = None
+    situacao: Optional[str] = None
+    responsavel: Optional[str] = None
+    data_inicio: Optional[datetime] = None
+    data_autuacao: Optional[datetime] = None
+    data_contrato: Optional[datetime] = None
+    secretaria: Optional[str] = None
+    secretario: Optional[str] = None
+    observacoes: Optional[str] = None
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
