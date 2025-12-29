@@ -376,6 +376,18 @@ frontend:
           agent: "testing"
           comment: "✅ VALIDATED: All PAC Geral new features working correctly. 1) FISCAL FIELD: 'Nome do Fiscal do Contrato' field found in form, accepts input and stores data properly. 2) PDF EXPORT MODAL: Opens with both orientation options (Paisagem/Retrato), includes visual icons and descriptions (A4 Horizontal/Vertical). 3) IMPORT MODAL: Opens showing supported formats (CSV, Excel, JSON) with complete file structure instructions. 4) TABLE HEADERS: All required report fields present (Código, Descrição, Und, Qtd Total, Valor Unit, Total, Prioridade, Classificação). 5) LOGIN: Admin credentials (cristiano.abdo@acaiaca.mg.gov.br) working correctly. All requested functionalities successfully tested and validated."
 
+  - task: "Backup and Restoration Page"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Backup.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Backup and Restoration page fully functional. 1) NAVIGATION: Green 'Backup' button found in admin navigation menu, successfully navigates to /backup route. 2) PAGE TITLE: 'Backup e Restauração' displays correctly. 3) SYSTEM STATISTICS: All statistics display correct values - Usuários: 3, PACs Individuais: 2, Itens PAC: 8, PACs Gerais: 1, Itens PAC Geral: 6, Processos: 70. 4) TOTAL RECORDS: Shows correct total of 90 records. 5) EXPORT BUTTON: 'Baixar Backup Completo' button present with green styling. 6) RESTORE BUTTON: 'Selecionar Arquivo de Backup' button present with blue styling. 7) FORK/REDEPLOY WARNING: Amber warning section about fork/redeploy displayed correctly. 8) INSTRUCTIONS: 'Como usar o Backup' section with 4 instruction steps present. 9) ADMIN LOGIN: Credentials (cristiano.abdo@acaiaca.mg.gov.br / Cris@820906) working correctly. All requested functionality validated and working as expected."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
