@@ -2053,6 +2053,379 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     )
 
 
+# ============ ROTAS DE GESTÃO PROCESSUAL ============
+
+@api_router.get("/processos", response_model=List[Processo])
+async def get_processos(request: Request):
+    """Lista todos os processos"""
+    user = await get_current_user(request)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    return [Processo(**p) for p in processos]
+
+@api_router.get("/processos/stats")
+async def get_processos_stats(request: Request):
+    """Estatísticas dos processos para dashboard"""
+    user = await get_current_user(request)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    # Agrupar por status
+    stats_by_status = {}
+    for p in processos:
+        status = p.get('status', 'Não Definido')
+        if status not in stats_by_status:
+            stats_by_status[status] = {'status': status, 'quantidade': 0}
+        stats_by_status[status]['quantidade'] += 1
+    
+    # Agrupar por modalidade
+    stats_by_modalidade = {}
+    for p in processos:
+        modalidade = p.get('modalidade', 'Não Definido')
+        if modalidade not in stats_by_modalidade:
+            stats_by_modalidade[modalidade] = {'modalidade': modalidade, 'quantidade': 0}
+        stats_by_modalidade[modalidade]['quantidade'] += 1
+    
+    return {
+        'total_processos': len(processos),
+        'stats_by_status': list(stats_by_status.values()),
+        'stats_by_modalidade': list(stats_by_modalidade.values())
+    }
+
+@api_router.post("/processos", response_model=Processo)
+async def create_processo(processo_data: ProcessoCreate, request: Request):
+    """Cria um novo processo - qualquer usuário autenticado"""
+    user = await get_current_user(request)
+    processo_id = f"proc_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    
+    processo_doc = {
+        'processo_id': processo_id,
+        'user_id': user.user_id,
+        **processo_data.model_dump(),
+        'created_at': now,
+        'updated_at': now
+    }
+    
+    # Converter datas para o formato correto
+    if processo_doc.get('data_inicio'):
+        processo_doc['data_inicio'] = processo_doc['data_inicio'].isoformat() if isinstance(processo_doc['data_inicio'], datetime) else processo_doc['data_inicio']
+    if processo_doc.get('data_autuacao'):
+        processo_doc['data_autuacao'] = processo_doc['data_autuacao'].isoformat() if isinstance(processo_doc['data_autuacao'], datetime) else processo_doc['data_autuacao']
+    if processo_doc.get('data_contrato'):
+        processo_doc['data_contrato'] = processo_doc['data_contrato'].isoformat() if isinstance(processo_doc['data_contrato'], datetime) else processo_doc['data_contrato']
+    
+    await db.processos.insert_one(processo_doc)
+    return Processo(**processo_doc)
+
+@api_router.get("/processos/{processo_id}", response_model=Processo)
+async def get_processo(processo_id: str, request: Request):
+    """Obtém um processo específico"""
+    user = await get_current_user(request)
+    processo = await db.processos.find_one({'processo_id': processo_id}, {'_id': 0})
+    if not processo:
+        raise HTTPException(status_code=404, detail="Processo not found")
+    return Processo(**processo)
+
+@api_router.put("/processos/{processo_id}", response_model=Processo)
+async def update_processo(processo_id: str, processo_update: ProcessoUpdate, request: Request):
+    """Atualiza um processo - qualquer usuário autenticado"""
+    user = await get_current_user(request)
+    processo = await db.processos.find_one({'processo_id': processo_id}, {'_id': 0})
+    if not processo:
+        raise HTTPException(status_code=404, detail="Processo not found")
+    
+    update_data = {k: v for k, v in processo_update.model_dump().items() if v is not None}
+    update_data['updated_at'] = datetime.now(timezone.utc)
+    
+    # Converter datas
+    for date_field in ['data_inicio', 'data_autuacao', 'data_contrato']:
+        if date_field in update_data and update_data[date_field]:
+            if isinstance(update_data[date_field], datetime):
+                update_data[date_field] = update_data[date_field].isoformat()
+    
+    await db.processos.update_one({'processo_id': processo_id}, {'$set': update_data})
+    updated = await db.processos.find_one({'processo_id': processo_id}, {'_id': 0})
+    return Processo(**updated)
+
+@api_router.delete("/processos/{processo_id}")
+async def delete_processo(processo_id: str, request: Request):
+    """Exclui um processo - APENAS ADMINISTRADORES"""
+    user = await get_current_user(request)
+    
+    # Verificar se é admin
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem excluir processos")
+    
+    processo = await db.processos.find_one({'processo_id': processo_id}, {'_id': 0})
+    if not processo:
+        raise HTTPException(status_code=404, detail="Processo not found")
+    
+    await db.processos.delete_one({'processo_id': processo_id})
+    return {'message': 'Processo excluído com sucesso'}
+
+@api_router.post("/processos/import")
+async def import_processos(file: UploadFile = File(...), request: Request = None):
+    """Importa processos de um arquivo Excel/CSV"""
+    user = await get_current_user(request)
+    
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    items_to_import = []
+    
+    try:
+        if filename.endswith('.csv'):
+            import csv
+            import io
+            decoded = content.decode('utf-8-sig')
+            reader = csv.DictReader(io.StringIO(decoded), delimiter=';')
+            for row in reader:
+                items_to_import.append(row)
+                
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            from openpyxl import load_workbook
+            wb = load_workbook(filename=BytesIO(content))
+            ws = wb.active
+            
+            headers = [cell.value for cell in ws[1] if cell.value]
+            
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if any(row):
+                    item = dict(zip(headers, row))
+                    items_to_import.append(item)
+        else:
+            raise HTTPException(status_code=400, detail="Formato não suportado. Use CSV ou XLSX")
+        
+        imported_count = 0
+        for item_data in items_to_import:
+            # Mapear campos da planilha
+            numero = str(item_data.get('Processo', item_data.get('Column1', '')))
+            if not numero:
+                continue
+            
+            processo_id = f"proc_{uuid.uuid4().hex[:12]}"
+            now = datetime.now(timezone.utc)
+            
+            # Processar datas
+            data_inicio = item_data.get('Data de Início', item_data.get('Column6'))
+            data_autuacao = item_data.get('Data de Autuação', item_data.get('Column7'))
+            data_contrato = item_data.get('Data do Contrato', item_data.get('Column8'))
+            
+            processo_doc = {
+                'processo_id': processo_id,
+                'user_id': user.user_id,
+                'numero_processo': numero,
+                'status': str(item_data.get('Status', item_data.get('Column2', 'Iniciado'))),
+                'modalidade': str(item_data.get('Modalidade', item_data.get('Column3', ''))),
+                'objeto': str(item_data.get('Objeto', item_data.get('Column4', '')))[:1000],
+                'situacao': str(item_data.get('Situação', item_data.get('Column5', '')))[:50],
+                'responsavel': str(item_data.get('Responsável', item_data.get('Column6', '')))[:100] if not isinstance(item_data.get('Responsável', item_data.get('Column6')), datetime) else '',
+                'data_inicio': str(data_inicio) if data_inicio else None,
+                'data_autuacao': str(data_autuacao) if data_autuacao else None,
+                'data_contrato': str(data_contrato) if data_contrato else None,
+                'secretaria': str(item_data.get('Secretaria', item_data.get('Column9', '')))[:200],
+                'secretario': str(item_data.get('Secretário', item_data.get('Column10', '')))[:100],
+                'observacoes': str(item_data.get('Observações', item_data.get('Column11', '')))[:500] if item_data.get('Observações', item_data.get('Column11')) else '',
+                'created_at': now,
+                'updated_at': now
+            }
+            
+            await db.processos.insert_one(processo_doc)
+            imported_count += 1
+        
+        return {'message': f'{imported_count} processos importados com sucesso', 'total_items': imported_count}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
+
+@api_router.get("/processos/export/pdf")
+async def export_processos_pdf(request: Request, orientation: str = "landscape"):
+    """Exporta todos os processos para PDF"""
+    user = await get_current_user(request)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    buffer = BytesIO()
+    
+    if orientation.lower() == 'portrait':
+        page_size = A4
+        margin = 12*mm
+    else:
+        page_size = landscape(A4)
+        margin = 10*mm
+    
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=page_size,
+        rightMargin=margin, 
+        leftMargin=margin, 
+        topMargin=margin, 
+        bottomMargin=margin
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'CustomTitle', parent=styles['Heading1'], fontSize=14,
+        textColor=colors.HexColor('#1F4788'), spaceAfter=4,
+        alignment=TA_CENTER, fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle', parent=styles['Heading2'], fontSize=11,
+        textColor=colors.HexColor('#1F4788'), spaceAfter=6,
+        alignment=TA_CENTER, fontName='Helvetica-Bold'
+    )
+    
+    # Logotipo proporcional
+    logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
+    if logo_path.exists():
+        try:
+            from PIL import Image as PILImage
+            pil_img = PILImage.open(str(logo_path))
+            img_width, img_height = pil_img.size
+            aspect_ratio = img_height / img_width
+            max_logo_width = 2*cm
+            logo_width = max_logo_width
+            logo_height = logo_width * aspect_ratio
+            logo = Image(str(logo_path), width=logo_width, height=logo_height)
+            elements.append(logo)
+        except:
+            pass
+    
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
+    elements.append(Paragraph('GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS', subtitle_style))
+    elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=6)))
+    
+    # Tabela de processos
+    if orientation.lower() == 'portrait':
+        table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Secretaria']]
+        for idx, p in enumerate(processos, start=1):
+            table_data.append([
+                str(idx),
+                p.get('numero_processo', '')[:20],
+                p.get('status', '')[:15],
+                Paragraph(f"<font size=6>{p.get('modalidade', '')[:25]}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{p.get('objeto', '')[:60]}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{p.get('secretaria', '')[:30]}</font>", styles['Normal'])
+            ])
+        col_widths = [0.6*cm, 2.5*cm, 2*cm, 3*cm, 6*cm, 4*cm]
+    else:
+        table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Responsável', 'Secretaria', 'Observações']]
+        for idx, p in enumerate(processos, start=1):
+            table_data.append([
+                str(idx),
+                p.get('numero_processo', '')[:22],
+                p.get('status', '')[:12],
+                Paragraph(f"<font size=6>{p.get('modalidade', '')[:20]}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{p.get('objeto', '')[:80]}</font>", styles['Normal']),
+                p.get('responsavel', '')[:15],
+                Paragraph(f"<font size=6>{p.get('secretaria', '')[:25]}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{p.get('observacoes', '')[:50]}</font>", styles['Normal'])
+            ])
+        col_widths = [0.6*cm, 2.5*cm, 1.8*cm, 2.5*cm, 7*cm, 2*cm, 4*cm, 4*cm]
+    
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4788')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 7),
+        ('FONTSIZE', (0, 1), (-1, -1), 6),
+        ('ALIGN', (0, 1), (2, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 8*mm))
+    
+    # Rodapé
+    footer_text = f'<font size=6><i>Total de {len(processos)} processos | Gerado em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Sistema PAC Acaiaca 2026</i></font>'
+    elements.append(Paragraph(footer_text, ParagraphStyle('Footer', alignment=TA_CENTER, textColor=colors.grey)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    orientation_name = 'Paisagem' if orientation.lower() == 'landscape' else 'Retrato'
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=Gestao_Processual_{orientation_name}.pdf"}
+    )
+
+@api_router.get("/processos/export/xlsx")
+async def export_processos_xlsx(request: Request):
+    """Exporta todos os processos para Excel"""
+    user = await get_current_user(request)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Gestão Processual"
+    
+    # Cabeçalho
+    headers = ['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Situação', 'Responsável', 
+               'Data Início', 'Data Autuação', 'Data Contrato', 'Secretaria', 'Secretário', 'Observações']
+    
+    header_fill = PatternFill(start_color="1F4788", end_color="1F4788", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True)
+    
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Dados
+    for row, p in enumerate(processos, start=2):
+        ws.cell(row=row, column=1, value=row-1)
+        ws.cell(row=row, column=2, value=p.get('numero_processo', ''))
+        ws.cell(row=row, column=3, value=p.get('status', ''))
+        ws.cell(row=row, column=4, value=p.get('modalidade', ''))
+        ws.cell(row=row, column=5, value=p.get('objeto', ''))
+        ws.cell(row=row, column=6, value=p.get('situacao', ''))
+        ws.cell(row=row, column=7, value=p.get('responsavel', ''))
+        ws.cell(row=row, column=8, value=p.get('data_inicio', ''))
+        ws.cell(row=row, column=9, value=p.get('data_autuacao', ''))
+        ws.cell(row=row, column=10, value=p.get('data_contrato', ''))
+        ws.cell(row=row, column=11, value=p.get('secretaria', ''))
+        ws.cell(row=row, column=12, value=p.get('secretario', ''))
+        ws.cell(row=row, column=13, value=p.get('observacoes', ''))
+    
+    # Ajustar larguras
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 25
+    ws.column_dimensions['E'].width = 50
+    ws.column_dimensions['F'].width = 10
+    ws.column_dimensions['G'].width = 20
+    ws.column_dimensions['H'].width = 15
+    ws.column_dimensions['I'].width = 15
+    ws.column_dimensions['J'].width = 15
+    ws.column_dimensions['K'].width = 30
+    ws.column_dimensions['L'].width = 25
+    ws.column_dimensions['M'].width = 40
+    
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=Gestao_Processual.xlsx"}
+    )
+
 app.include_router(api_router)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
