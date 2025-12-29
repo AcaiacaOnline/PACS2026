@@ -431,7 +431,7 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-      message: "TASK (Dec 28, 2025): Implementação de melhorias no relatório PAC Geral: 1) Campo Fiscal do Contrato adicionado ao modelo e formulário 2) PDF com opção de orientação (Paisagem/Retrato) 3) Relatório consolidado sem granularidade por secretaria 4) Importação de arquivo (CSV, XLSX, JSON) 5) Logotipo proporcional. TESTE PENDENTE."
+      message: "TASK (Dec 28, 2025): Implementação do módulo Gestão Processual. 1) Criados modelos de dados no backend 2) Implementado CRUD completo com permissões (apenas admin pode excluir) 3) Importação de Excel/CSV 4) Exportação PDF (Paisagem/Retrato) e XLSX 5) 70 processos importados da planilha do usuário. TESTE PENDENTE."
     - agent: "testing"
       message: "DASHBOARD PAC GERAL TESTING COMPLETED (Dec 28, 2025): ✅ Comprehensive testing performed with admin credentials (cristiano.abdo@acaiaca.mg.gov.br) ✅ Dashboard title 'Dashboard PAC Geral 2.0' displays correctly ✅ All 3 summary cards working: Total Geral (R$ 816.921,00), Total Items (3), Classifications (2) ✅ Horizontal bar chart renders properly with Recharts ✅ Chart tooltips functional on hover ✅ Detailed table shows 2 classification items with progress bars ✅ API endpoint /api/pacs-geral/stats returns correct data ✅ Responsive design works on mobile ✅ No console errors found. All core functionality validated successfully. Dashboard is fully operational."
     - agent: "testing"
