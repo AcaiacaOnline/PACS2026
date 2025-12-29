@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield } from 'lucide-react';
+import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield, ClipboardList } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -49,76 +49,77 @@ const Layout = ({ children }) => {
               <div className="text-xs opacity-90">Planejamento e Contratações</div>
             </div>
           </div>
-          <nav className="flex items-center space-x-2 md:space-x-4">
+          <nav className="flex items-center space-x-1 md:space-x-2">
             <Link
               to="/dashboard"
               data-testid="nav-dashboard-btn"
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
                 isActive('/dashboard') ? 'bg-primary/80' : 'hover:bg-primary/80'
               }`}
             >
-              <LayoutDashboard size={18} />
-              <span className="hidden md:inline">Dashboard</span>
+              <LayoutDashboard size={16} />
+              <span className="hidden lg:inline">Dashboard</span>
             </Link>
             <Link
               to="/pacs"
               data-testid="nav-pacs-btn"
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                isActive('/pacs') ? 'bg-primary/80' : 'hover:bg-primary/80'
+              className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
+                isActive('/pacs') && !isActive('/pacs-geral') ? 'bg-primary/80' : 'hover:bg-primary/80'
               }`}
             >
-              <List size={18} />
-              <span className="hidden md:inline">Meus PACs</span>
-            </Link>
-            <Link
-              to="/pacs/new"
-              data-testid="nav-new-pac-btn"
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-secondary/90 bg-secondary text-secondary-foreground shadow-sm transition-colors"
-            >
-              <Plus size={18} />
-              <span className="hidden md:inline">Novo PAC</span>
+              <List size={16} />
+              <span className="hidden lg:inline">Meus PACs</span>
             </Link>
             <Link
               to="/pacs-geral"
               data-testid="nav-pac-geral-btn"
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-primary-foreground/20 ${
+              className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-primary-foreground/20 ${
                 isActive('/pacs-geral') ? 'bg-primary/80' : 'hover:bg-primary/80'
               }`}
             >
-              <Building2 size={18} />
-              <span className="hidden md:inline">PAC Geral</span>
+              <Building2 size={16} />
+              <span className="hidden lg:inline">PAC Geral</span>
+            </Link>
+            <Link
+              to="/gestao-processual"
+              data-testid="nav-gestao-processual-btn"
+              className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-amber-500/50 ${
+                isActive('/gestao-processual') ? 'bg-amber-600' : 'hover:bg-amber-600/80'
+              }`}
+            >
+              <ClipboardList size={16} />
+              <span className="hidden lg:inline">Gestão Processual</span>
             </Link>
             {user?.is_admin && (
               <>
-                <div className="h-6 w-px bg-primary-foreground/20 mx-2"></div>
+                <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
                 <Link
                   to="/users"
                   data-testid="nav-users-btn"
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
                     isActive('/users') ? 'bg-primary/80' : 'hover:bg-primary/80'
                   }`}
                 >
-                  <Users size={18} />
-                  <span className="hidden md:inline">Usuários</span>
+                  <Users size={16} />
+                  <span className="hidden lg:inline">Usuários</span>
                 </Link>
               </>
             )}
-            <div className="h-6 w-px bg-primary-foreground/20 mx-2"></div>
+            <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
             {user && (
-              <div className="hidden md:block text-sm">
+              <div className="hidden xl:block text-sm">
                 <div className="font-medium flex items-center gap-1">
-                  {user.name}
+                  {user.name?.split(' ')[0]}
                   {user.is_admin && (
                     <Shield size={14} className="text-amber-400" title="Administrador" />
                   )}
                 </div>
-                <div className="text-xs opacity-75">{user.email}</div>
               </div>
             )}
             <button
               onClick={handleLogout}
               data-testid="logout-btn"
-              className="text-destructive-foreground hover:text-destructive transition-colors"
+              className="text-destructive-foreground hover:text-destructive transition-colors p-2"
               title="Sair"
             >
               <LogOut size={18} />
