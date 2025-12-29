@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardList, Plus, Search, Edit, Trash2, FileText, 
-  FileSpreadsheet, Upload, X, Save, Calendar, Building2, User
+  FileSpreadsheet, Upload, X, Save, Calendar, Building2, User, BarChart3
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
