@@ -7,6 +7,7 @@ import PACList from './pages/PACList';
 import PACEditor from './pages/PACEditor';
 import PACGeralList from './pages/PACGeralList';
 import PACGeralEditor from './pages/PACGeralEditor';
+import GestaoProcessual from './pages/GestaoProcessual';
 import Users from './pages/Users';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/pacs-geral" element={<ProtectedRoute><PACGeralList /></ProtectedRoute>} />
           <Route path="/pacs-geral/:id/edit" element={<ProtectedRoute><PACGeralEditor /></ProtectedRoute>} />
           <Route path="/pacs-geral/new" element={<ProtectedRoute><PACGeralEditor /></ProtectedRoute>} />
+          <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
