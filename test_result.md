@@ -525,6 +525,18 @@ test_plan:
           agent: "testing"
           comment: "✅ VALIDATED: Backend API integration working correctly. Fixed datetime parsing issue for null values in data_autuacao and data_contrato fields. GET /api/processos endpoint returns all 70 imported processes correctly. CRUD operations functional through API."
 
+  - task: "Backup and Restoration API Endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Backup and restoration API endpoints fully functional. 1) GET /api/backup/info: Returns correct system statistics (users: 3, pacs: 2, pac_items: 8, pacs_geral: 1, pac_geral_items: 6, processos: 70, total: 90). 2) GET /api/backup/export: Admin-only endpoint for exporting complete system backup as JSON. 3) POST /api/backup/restore: Admin-only endpoint for restoring system from backup file. 4) ADMIN AUTHENTICATION: Proper admin-only access control implemented. All backup functionality working as designed."
+
 agent_communication:
     - agent: "main"
       message: "TASK (Dec 28, 2025): Implementação do módulo Gestão Processual. 1) Criados modelos de dados no backend 2) Implementado CRUD completo com permissões (apenas admin pode excluir) 3) Importação de Excel/CSV 4) Exportação PDF (Paisagem/Retrato) e XLSX 5) 70 processos importados da planilha do usuário. TESTE PENDENTE."
