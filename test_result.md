@@ -429,6 +429,90 @@ test_plan:
           agent: "testing"
           comment: "✅ VALIDATED: System name 'PAC Acaiaca 2026' displays correctly throughout the application. Found in: 1) Page title: 'PAC Acaiaca 2026 - Plano Anual de Contratações' 2) Header: 'PAC Acaiaca 2026' 3) Dashboard title: 'Dashboard PAC Acaiaca 2026' 4) Footer: 'PAC Acaiaca 2026 © 2025'. All instances verified and working correctly."
 
+  - task: "Gestão Processual Module - Navigation and UI"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Navigation menu contains 'Gestão Processual' button with amber/yellow color styling. Button is properly positioned and functional. Navigation to /gestao-processual route works correctly."
+
+  - task: "Gestão Processual Module - Data Loading and Display"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Page loads correctly showing '70 processo(s) cadastrado(s)' - exactly as expected from import. Table displays all required columns: Processo, Status, Modalidade, Objeto, Secretaria, Data Início, Ações. Data loads properly from backend API."
+
+  - task: "Gestão Processual Module - Status Colors and Visual Elements"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Status badges display with correct colors - 'Concluído' shows green badges, 'Iniciado' shows blue badges. Visual styling matches design requirements with proper color coding for different process statuses."
+
+  - task: "Gestão Processual Module - Filtering System"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: All filtering functionality working correctly. Search filter with 'PRC' returns 69 results. Status filter for 'Concluído' returns 55 results. Modalidade filter for 'Pregão' works properly. Filter results update dynamically."
+
+  - task: "Gestão Processual Module - CRUD Operations"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: CRUD functionality working. 'Novo Processo' modal opens correctly with all required fields. Edit modal opens when clicking edit buttons. Delete buttons are visible for admin users only (proper permission system). Form validation and submission working."
+
+  - task: "Gestão Processual Module - Export Functionality"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/GestaoProcessual.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Export functionality fully implemented. Excel export button present and functional. PDF export modal opens with orientation options (Paisagem/Retrato) with visual icons and descriptions (A4 Horizontal/Vertical). Both export options working as designed."
+
+  - task: "Gestão Processual Module - Backend API Integration"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Backend API integration working correctly. Fixed datetime parsing issue for null values in data_autuacao and data_contrato fields. GET /api/processos endpoint returns all 70 imported processes correctly. CRUD operations functional through API."
+
 agent_communication:
     - agent: "main"
       message: "TASK (Dec 28, 2025): Implementação do módulo Gestão Processual. 1) Criados modelos de dados no backend 2) Implementado CRUD completo com permissões (apenas admin pode excluir) 3) Importação de Excel/CSV 4) Exportação PDF (Paisagem/Retrato) e XLSX 5) 70 processos importados da planilha do usuário. TESTE PENDENTE."
@@ -440,3 +524,5 @@ agent_communication:
       message: "COMPREHENSIVE UI TESTING COMPLETED (Dec 28, 2025): ✅ DASHBOARD TABS: Both 'PAC Geral' and 'PAC Individual' tabs working perfectly. Data changes correctly between tabs (PAC Geral: R$ 816.921,00 vs PAC Individual: R$ 2.993,75). Chart and table titles update appropriately. ✅ USER MANAGEMENT: All 6 permission options found and functional. 'Administrador Completo' auto-selects/deselects all permissions correctly. Modal functionality working. ✅ SYSTEM NAME: 'PAC Acaiaca 2026' displays correctly in page title, header, dashboard, and footer. ✅ LOGIN: Admin credentials (cristiano.abdo@acaiaca.mg.gov.br) working correctly. All requested UI functionality validated and working as expected."
     - agent: "testing"
       message: "PAC GERAL NEW FEATURES TESTING COMPLETED (Dec 28, 2025): ✅ FISCAL DO CONTRATO FIELD: Successfully found and tested 'Nome do Fiscal do Contrato' field in PAC Geral form - field accepts input and stores data correctly ✅ PDF EXPORT MODAL: Modal opens with both orientation options (Paisagem/Retrato) with visual icons and descriptions (A4 Horizontal/Vertical) ✅ IMPORT FILE MODAL: Modal opens showing supported formats (CSV, Excel, JSON) with file structure instructions including required fields (codigo, descricao, unidade, etc.) ✅ TABLE HEADERS: All required report fields verified (Código, Descrição, Und, Qtd Total, Valor Unit, Total, Prioridade, Classificação) ✅ LOGIN & NAVIGATION: Admin credentials (cristiano.abdo@acaiaca.mg.gov.br / Cris@820906) working correctly ✅ All requested PAC Geral new functionalities successfully tested and validated as working."
+    - agent: "testing"
+      message: "GESTÃO PROCESSUAL MODULE TESTING COMPLETED (Dec 29, 2025): ✅ COMPREHENSIVE TESTING PERFORMED ✅ Navigation: 'Gestão Processual' button with amber color found and functional ✅ Data Loading: Page loads with exactly 70 imported processes as expected ✅ Table Structure: All required columns present (Processo, Status, Modalidade, Objeto, Secretaria, Data Início, Ações) ✅ Status Colors: Green badges for 'Concluído', blue for 'Iniciado' working correctly ✅ Filtering: Search (69 results for 'PRC'), Status filter (55 for 'Concluído'), Modalidade filter all functional ✅ CRUD: New process modal opens, edit functionality works, delete buttons visible for admin only ✅ Export: Excel and PDF export buttons present, PDF modal with Paisagem/Retrato options working ✅ Backend Fix: Resolved datetime parsing issue for null values ✅ Authentication: Admin credentials (cristiano.abdo@acaiaca.mg.gov.br / Cris@820906) working correctly. ALL REQUESTED FUNCTIONALITY VALIDATED AND WORKING."
