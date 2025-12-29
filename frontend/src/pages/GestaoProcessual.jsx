@@ -266,6 +266,14 @@ const GestaoProcessual = () => {
           
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={() => navigate('/gestao-processual/dashboard')}
+              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <BarChart3 size={18} />
+              Dashboard
+            </button>
+            
+            <button
               onClick={() => openModal()}
               className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
             >
