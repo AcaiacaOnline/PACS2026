@@ -2060,6 +2060,13 @@ async def get_processos(request: Request):
     """Lista todos os processos"""
     user = await get_current_user(request)
     processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    # Fix null string values in datetime fields
+    for p in processos:
+        for field in ['data_inicio', 'data_autuacao', 'data_contrato']:
+            if p.get(field) == 'null' or p.get(field) == '':
+                p[field] = None
+    
     return [Processo(**p) for p in processos]
 
 @api_router.get("/processos/stats")
