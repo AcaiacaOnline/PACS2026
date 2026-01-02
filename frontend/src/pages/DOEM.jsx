@@ -187,6 +187,7 @@ const DOEM = () => {
       titulo: '',
       texto: '',
       secretaria: 'Gabinete do Prefeito',
+      segmento: 'Decretos',
       tipo: 'Decreto'
     });
     
@@ -214,6 +215,7 @@ const DOEM = () => {
           titulo: p.titulo,
           texto: p.texto,
           secretaria: p.secretaria,
+          segmento: p.segmento || 'Decretos',
           tipo: p.tipo,
           ordem: i + 1
         }))
