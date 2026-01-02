@@ -437,31 +437,48 @@ const DOEM = () => {
               <Plus size={18} />
               Nova Edição
             </button>
-          </div>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-card border border-border rounded-xl p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="relative flex-1 min-w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar por número ou título..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
-              />
-            </div>
             
-            <div className="text-sm text-muted-foreground flex items-center">
-              {filteredEdicoes.length} resultado(s)
-            </div>
+            {user?.is_admin && (
+              <button
+                onClick={() => setActiveTab(activeTab === 'newsletter' ? 'edicoes' : 'newsletter')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === 'newsletter' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+              >
+                <Mail size={18} />
+                Newsletter
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Lista de Edições */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Abas de conteúdo */}
+        {activeTab === 'edicoes' ? (
+          <>
+            {/* Filtros */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <div className="flex flex-wrap gap-4">
+                <div className="relative flex-1 min-w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Buscar por número ou título..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                  />
+                </div>
+                
+                <div className="text-sm text-muted-foreground flex items-center">
+                  {filteredEdicoes.length} resultado(s)
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de Edições */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
             <div className="col-span-full flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
