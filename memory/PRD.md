@@ -165,6 +165,10 @@ A assinatura digital do DOEM está **SIMULADA**:
 - ✅ Gestão de inscritos (admin)
 - ✅ Inscrição pública com confirmação por email
 - ✅ Notificações automáticas via SMTP próprio
+- ✅ **BUGFIX**: Filtro de processos por ano corrigido (extrai ano do numero_processo)
+- ✅ **MELHORIA**: PDF do DOEM com cabeçalho personalizado (brasão + título)
+- ✅ **MELHORIA**: PDF do DOEM com rodapé customizado
+- ✅ **MELHORIA**: Margens do PDF otimizadas para aproveitar espaço
 
 ### v1.3.0 - 02/01/2026
 - ✅ Filtro de ano para PAC, PAC Geral e Processos
