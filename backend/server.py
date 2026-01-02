@@ -288,6 +288,7 @@ class Processo(BaseModel):
     data_contrato: Optional[datetime] = None
     secretaria: str
     secretario: str
+    ano: int = 2025  # Ano do processo
     observacoes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -304,6 +305,7 @@ class ProcessoCreate(BaseModel):
     data_contrato: Optional[datetime] = None
     secretaria: str
     secretario: str
+    ano: int = None  # Será extraído do numero_processo se não fornecido
     observacoes: Optional[str] = None
 
 class ProcessoUpdate(BaseModel):
@@ -318,6 +320,7 @@ class ProcessoUpdate(BaseModel):
     data_contrato: Optional[datetime] = None
     secretaria: Optional[str] = None
     secretario: Optional[str] = None
+    ano: Optional[int] = None
     observacoes: Optional[str] = None
 
 def hash_password(password: str) -> str:
