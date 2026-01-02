@@ -584,7 +584,7 @@ const PortalPublico = () => {
         {/* Navegação */}
         <nav className="bg-white/95 backdrop-blur-sm border-b shadow-sm print:hidden">
           <div className="container mx-auto px-4">
-            <div className="flex gap-1">
+            <div className="flex gap-1 overflow-x-auto">
               {[
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'pacs', label: 'PAC Individual', icon: FileText },
@@ -594,7 +594,7 @@ const PortalPublico = () => {
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id 
                       ? 'border-[#1F4E78] text-[#1F4E78] font-medium' 
                       : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -604,6 +604,14 @@ const PortalPublico = () => {
                   {tab.label}
                 </button>
               ))}
+              {/* Link para DOEM */}
+              <button
+                onClick={() => navigate('/doem-publico')}
+                className="flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-purple-600 hover:text-purple-800 transition-colors whitespace-nowrap"
+              >
+                <Newspaper size={18} />
+                DOEM
+              </button>
             </div>
           </div>
         </nav>
