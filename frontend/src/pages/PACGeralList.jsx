@@ -191,6 +191,14 @@ const PACGeralList = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Template */}
+      <TemplateModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onApply={handleApplyTemplate}
+        type="pac-geral"
+      />
     </Layout>
   );
 };
