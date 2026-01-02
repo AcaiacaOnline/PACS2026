@@ -326,6 +326,76 @@ class ProcessoUpdate(BaseModel):
     ano: Optional[int] = None
     observacoes: Optional[str] = None
 
+# ============ MODELOS DOEM (Diário Oficial Eletrônico Municipal) ============
+
+class DOEMPublicacao(BaseModel):
+    """Publicação individual dentro de uma edição do DOEM"""
+    publicacao_id: str
+    titulo: str
+    texto: str
+    secretaria: str
+    tipo: str  # decreto, portaria, lei, edital, aviso, extrato, ata, outros
+    ordem: int = 1
+
+class DOEMPublicacaoCreate(BaseModel):
+    titulo: str
+    texto: str
+    secretaria: str = "Gabinete do Prefeito"
+    tipo: str = "decreto"
+    ordem: int = 1
+
+class DOEMAssinatura(BaseModel):
+    """Metadados de assinatura digital (simulada)"""
+    assinado: bool = False
+    data_assinatura: Optional[datetime] = None
+    hash_documento: Optional[str] = None
+    tipo_certificado: str = "ICP-Brasil (Simulado)"
+    titular: str = "Prefeitura Municipal de Acaiaca"
+
+class DOEMEdicao(BaseModel):
+    """Edição do Diário Oficial"""
+    model_config = ConfigDict(extra="ignore")
+    edicao_id: str
+    numero_edicao: int
+    ano: int
+    data_publicacao: datetime
+    data_criacao: datetime
+    status: str = "rascunho"  # rascunho, agendado, publicado
+    publicacoes: List[DOEMPublicacao] = []
+    criado_por: str
+    assinatura_digital: Optional[DOEMAssinatura] = None
+    created_at: datetime
+    updated_at: datetime
+
+class DOEMEdicaoCreate(BaseModel):
+    data_publicacao: Optional[datetime] = None
+    publicacoes: List[DOEMPublicacaoCreate] = []
+
+class DOEMEdicaoUpdate(BaseModel):
+    data_publicacao: Optional[datetime] = None
+    status: Optional[str] = None
+    publicacoes: Optional[List[DOEMPublicacaoCreate]] = None
+
+class DOEMConfig(BaseModel):
+    """Configurações do DOEM"""
+    model_config = ConfigDict(extra="ignore")
+    config_id: str = "doem_config_main"
+    nome_municipio: str = "Acaiaca"
+    uf: str = "MG"
+    prefeito: str = ""
+    ano_inicio: int = 2026
+    ultimo_numero_edicao: int = 0
+    tipos_publicacao: List[str] = [
+        "Decreto", "Portaria", "Lei", "Edital", 
+        "Aviso", "Extrato de Contrato", "Ata", "Outros"
+    ]
+
+class DOEMConfigUpdate(BaseModel):
+    nome_municipio: Optional[str] = None
+    uf: Optional[str] = None
+    prefeito: Optional[str] = None
+    tipos_publicacao: Optional[List[str]] = None
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
