@@ -1936,23 +1936,17 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     
     buffer = BytesIO()
     
-    # Determinar orientação
-    if orientation.lower() == 'portrait':
-        page_size = A4
-        page_width = 210*mm
-        margin = 12*mm
-    else:  # landscape (padrão)
-        page_size = landscape(A4)
-        page_width = 297*mm
-        margin = 10*mm
+    # Margens padronizadas conforme Lei 14.133/2021
+    # 5cm (esquerda/direita), 3cm (superior/inferior)
+    page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        rightMargin=25*mm if orientation.lower() == 'landscape' else 30*mm,  # AMPLIADA PARA ASSINATURA DIGITAL
-        leftMargin=margin if orientation.lower() == 'portrait' else 8*mm, 
-        topMargin=margin if orientation.lower() == 'portrait' else 8*mm, 
-        bottomMargin=margin if orientation.lower() == 'portrait' else 8*mm
+        leftMargin=REPORT_MARGIN_LEFT, 
+        rightMargin=REPORT_MARGIN_RIGHT, 
+        topMargin=REPORT_MARGIN_TOP, 
+        bottomMargin=REPORT_MARGIN_BOTTOM
     )
     
     elements = []
