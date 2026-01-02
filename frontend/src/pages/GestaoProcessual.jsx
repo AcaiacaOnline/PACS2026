@@ -78,9 +78,22 @@ const GestaoProcessual = () => {
     }
   };
 
-  const fetchProcessos = async () => {
+  const fetchAnos = async () => {
     try {
-      const response = await api.get('/processos');
+      const response = await api.get('/processos/anos');
+      setAnos(response.data.anos);
+      setAnoSelecionado(response.data.ano_atual);
+    } catch (error) {
+      console.error('Erro ao carregar anos:', error);
+      setAnoSelecionado(new Date().getFullYear());
+    }
+  };
+
+  const fetchProcessos = async () => {
+    setLoading(true);
+    try {
+      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+      const response = await api.get(`/processos${params}`);
       setProcessos(response.data);
     } catch (error) {
       toast.error('Erro ao carregar processos');
