@@ -7,6 +7,7 @@ import {
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import { EmailInput } from '../utils/masks';
 
 // Segmentos do DOEM
 const DOEM_SEGMENTOS = [
@@ -614,13 +615,11 @@ const DOEM = () => {
                 Adicionar Inscrito Manualmente
               </h3>
               <form onSubmit={handleAddInscrito} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input
-                  type="email"
-                  placeholder="Email"
+                <EmailInput
                   value={newInscrito.email}
                   onChange={(e) => setNewInscrito({ ...newInscrito, email: e.target.value })}
                   className="px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
-                  required
+                  data-testid="newsletter-email-input"
                 />
                 <input
                   type="text"
