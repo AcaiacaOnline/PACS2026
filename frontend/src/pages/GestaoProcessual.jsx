@@ -7,6 +7,7 @@ import {
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import { maskProcesso } from '../utils/masks';
 
 const STATUS_OPTIONS = [
   'Iniciado', 'Publicado', 'Aguardando Jurídico', 'Homologado', 'Concluído', 'Cancelado'

@@ -418,8 +418,7 @@ const PACEditor = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">Telefone</label>
-              <input
-                type="text"
+              <TelefoneInput
                 value={headerData.telefone}
                 onChange={(e) => setHeaderData({ ...headerData, telefone: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
@@ -429,11 +428,11 @@ const PACEditor = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1">E-mail</label>
-              <input
-                type="email"
+              <EmailInput
                 value={headerData.email}
                 onChange={(e) => setHeaderData({ ...headerData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="email-input"
                 disabled={isReadOnly}
               />
             </div>
@@ -661,11 +660,9 @@ const PACEditor = () => {
                 <label className="block text-sm font-semibold text-foreground mb-1">
                   Valor Unitário (R$) <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
+                <CurrencyInput
                   value={tempItem.valorUnitario}
-                  onChange={(e) => setTempItem({ ...tempItem, valorUnitario: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setTempItem({ ...tempItem, valorUnitario: e.target.value })}
                   className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
                   data-testid="item-valor-input"
                 />
