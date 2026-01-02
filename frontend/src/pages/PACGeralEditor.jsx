@@ -6,6 +6,7 @@ import QuantidadeSecretarias from '../components/QuantidadeSecretarias';
 import { ArrowLeft, Save, Plus, Edit, Trash2, FileText, FileSpreadsheet, Download, Upload, X } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import { TelefoneInput, EmailInput, CEPInput, CurrencyInput } from '../utils/masks';
 
 const PACGeralEditor = () => {
   const navigate = useNavigate();
@@ -377,12 +378,11 @@ const PACGeralEditor = () => {
               <label className="block text-sm font-semibold text-foreground mb-1">
                 Telefone <span className="text-destructive">*</span>
               </label>
-              <input
-                type="tel"
+              <TelefoneInput
                 value={pac.telefone}
                 onChange={(e) => setPac({ ...pac, telefone: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                placeholder="(00) 00000-0000"
+                data-testid="telefone-input"
               />
             </div>
 
@@ -390,12 +390,11 @@ const PACGeralEditor = () => {
               <label className="block text-sm font-semibold text-foreground mb-1">
                 E-mail <span className="text-destructive">*</span>
               </label>
-              <input
-                type="email"
+              <EmailInput
                 value={pac.email}
                 onChange={(e) => setPac({ ...pac, email: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                placeholder="email@prefeitura.gov.br"
+                data-testid="email-input"
               />
             </div>
 
@@ -403,12 +402,11 @@ const PACGeralEditor = () => {
               <label className="block text-sm font-semibold text-foreground mb-1">
                 CEP <span className="text-destructive">*</span>
               </label>
-              <input
-                type="text"
+              <CEPInput
                 value={pac.cep}
                 onChange={(e) => setPac({ ...pac, cep: e.target.value })}
                 className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
-                placeholder="00000-000"
+                data-testid="cep-input"
               />
             </div>
 
@@ -669,12 +667,9 @@ const PACGeralEditor = () => {
                     <label className="block text-sm font-semibold text-foreground mb-1">
                       Valor Unitário (R$) <span className="text-destructive">*</span>
                     </label>
-                    <input
-                      type="number"
+                    <CurrencyInput
                       value={tempItem.valorUnitario}
-                      onChange={(e) => setTempItem({ ...tempItem, valorUnitario: parseFloat(e.target.value) || 0 })}
-                      step="0.01"
-                      min="0"
+                      onChange={(e) => setTempItem({ ...tempItem, valorUnitario: e.target.value })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-ring outline-none"
                       data-testid="item-valor-input"
                     />
