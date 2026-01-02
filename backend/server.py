@@ -670,12 +670,58 @@ async def delete_user_admin(user_id: str, request: Request):
 
 # ============ PAC ROUTES (WITH PERMISSIONS) ============
 
+# ===== CONSTANTES DE MARGENS PADRONIZADAS (Lei 14.133/2021) =====
+# Margens: 5cm (esquerda/direita), 3cm (superior/inferior)
+REPORT_MARGIN_LEFT = 50*mm    # 5cm
+REPORT_MARGIN_RIGHT = 50*mm   # 5cm
+REPORT_MARGIN_TOP = 30*mm     # 3cm
+REPORT_MARGIN_BOTTOM = 30*mm  # 3cm
+
+@api_router.get("/pacs/anos")
+async def get_pacs_anos(request: Request):
+    """Retorna lista de anos disponíveis nos PACs individuais"""
+    user = await get_current_user(request)
+    
+    # Buscar anos distintos dos PACs
+    pipeline = [
+        {'$match': {'ano': {'$exists': True, '$ne': None}}},
+        {'$group': {'_id': '$ano'}},
+        {'$sort': {'_id': -1}}
+    ]
+    
+    result = await db.pacs.aggregate(pipeline).to_list(100)
+    anos = [r['_id'] for r in result if r['_id']]
+    
+    # Converter para inteiros se necessário
+    anos_int = []
+    for ano in anos:
+        try:
+            anos_int.append(int(ano))
+        except (ValueError, TypeError):
+            pass
+    
+    # Garantir que 2025 e o ano atual estejam na lista
+    ano_atual = datetime.now().year
+    anos_base = list(range(2025, ano_atual + 1))
+    
+    for ano in anos_base:
+        if ano not in anos_int:
+            anos_int.append(ano)
+    
+    anos_int.sort(reverse=True)
+    return {'anos': anos_int, 'ano_atual': ano_atual}
+
 @api_router.get("/pacs", response_model=List[PAC])
-async def get_pacs(request: Request):
+async def get_pacs(request: Request, ano: str = None):
     user = await get_current_user(request)
     # Usuários padrão veem todos os PACs (mas só podem editar os seus)
     # Admin vê e pode editar todos
-    pacs = await db.pacs.find({}, {'_id': 0}).to_list(1000)
+    
+    query = {}
+    if ano:
+        query['ano'] = str(ano)
+    
+    pacs = await db.pacs.find(query, {'_id': 0}).to_list(1000)
     return [PAC(**p) for p in pacs]
 
 @api_router.get("/pacs/stats")
