@@ -2331,26 +2331,29 @@ async def get_processos_anos(request: Request):
     """Retorna lista de anos disponíveis nos processos"""
     user = await get_current_user(request)
     
-    # Buscar anos distintos dos processos
-    pipeline = [
-        {'$match': {'ano': {'$exists': True, '$ne': None}}},
-        {'$group': {'_id': '$ano'}},
-        {'$sort': {'_id': -1}}
-    ]
+    # Como muitos processos não têm o campo ano, extrair do numero_processo
+    processos = await db.processos.find({}, {'numero_processo': 1, 'ano': 1}).to_list(1000)
     
-    result = await db.processos.aggregate(pipeline).to_list(100)
-    anos = [r['_id'] for r in result if r['_id']]
+    anos = set()
+    for p in processos:
+        if p.get('ano'):
+            anos.add(int(p['ano']))
+        else:
+            # Extrair do numero_processo (ex: PRC - 0006/2025)
+            numero = p.get('numero_processo', '')
+            match = re.search(r'/(\d{4})$', numero)
+            if match:
+                anos.add(int(match.group(1)))
     
     # Garantir que 2025 e o ano atual estejam na lista
     ano_atual = datetime.now().year
     anos_base = list(range(2025, ano_atual + 1))
     
     for ano in anos_base:
-        if ano not in anos:
-            anos.append(ano)
+        anos.add(ano)
     
-    anos.sort(reverse=True)
-    return {'anos': anos, 'ano_atual': ano_atual}
+    anos_list = sorted(list(anos), reverse=True)
+    return {'anos': anos_list, 'ano_atual': ano_atual}
 
 
 @api_router.get("/processos", response_model=List[Processo])
