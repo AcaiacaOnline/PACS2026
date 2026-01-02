@@ -3774,6 +3774,160 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
 
 doem_router = APIRouter(prefix="/api/doem", tags=["DOEM"])
 
+# ===== Funções de Email =====
+
+def enviar_email_smtp(destinatario: str, assunto: str, corpo_html: str, anexo_pdf: bytes = None, nome_anexo: str = None):
+    """Envia email via SMTP da prefeitura"""
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = assunto
+        msg['From'] = f"DOEM Acaiaca <{SMTP_EMAIL}>"
+        msg['To'] = destinatario
+        
+        # Corpo do email em HTML
+        html_part = MIMEText(corpo_html, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        # Anexar PDF se fornecido
+        if anexo_pdf and nome_anexo:
+            pdf_part = MIMEBase('application', 'pdf')
+            pdf_part.set_payload(anexo_pdf)
+            encoders.encode_base64(pdf_part)
+            pdf_part.add_header('Content-Disposition', f'attachment; filename="{nome_anexo}"')
+            msg.attach(pdf_part)
+        
+        # Conectar e enviar
+        if SMTP_USE_SSL:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
+                server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                server.sendmail(SMTP_EMAIL, destinatario, msg.as_string())
+        else:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls()
+                server.login(SMTP_EMAIL, SMTP_PASSWORD)
+                server.sendmail(SMTP_EMAIL, destinatario, msg.as_string())
+        
+        logging.info(f"Email enviado com sucesso para {destinatario}")
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao enviar email para {destinatario}: {e}")
+        return False
+
+async def enviar_notificacao_doem(edicao: dict, pdf_buffer: BytesIO):
+    """Envia notificação de nova edição do DOEM para todos os inscritos"""
+    config = await get_doem_config()
+    
+    # Buscar segmentos da edição
+    segmentos_edicao = set()
+    for pub in edicao.get('publicacoes', []):
+        segmentos_edicao.add(pub.get('segmento', 'Decretos'))
+    
+    # Buscar todos os destinatários
+    destinatarios = []
+    
+    # 1. Inscritos na newsletter (confirmados e ativos)
+    inscritos = await db.doem_newsletter.find({
+        'ativo': True,
+        'confirmado': True
+    }, {'_id': 0}).to_list(1000)
+    
+    for inscrito in inscritos:
+        # Verificar se tem interesse nos segmentos da edição
+        interesses = inscrito.get('segmentos_interesse', [])
+        if not interesses or any(s in segmentos_edicao for s in interesses):
+            destinatarios.append(inscrito['email'])
+    
+    # 2. Usuários do sistema (se configurado)
+    usuarios = await db.users.find({'is_active': True}, {'_id': 0, 'email': 1}).to_list(500)
+    for user in usuarios:
+        if user['email'] not in destinatarios:
+            destinatarios.append(user['email'])
+    
+    if not destinatarios:
+        logging.info("Nenhum destinatário para notificação do DOEM")
+        return 0
+    
+    # Formatar data
+    data_pub = edicao.get('data_publicacao')
+    if isinstance(data_pub, datetime):
+        data_formatada = data_pub.strftime('%d/%m/%Y')
+    else:
+        data_formatada = str(data_pub)[:10] if data_pub else ''
+    
+    # Listar publicações por segmento
+    pubs_por_segmento = {}
+    for pub in edicao.get('publicacoes', []):
+        seg = pub.get('segmento', 'Outros')
+        if seg not in pubs_por_segmento:
+            pubs_por_segmento[seg] = []
+        pubs_por_segmento[seg].append(pub['titulo'])
+    
+    lista_pubs = ""
+    for seg, titulos in pubs_por_segmento.items():
+        lista_pubs += f"<h4 style='color:#1F4E78;margin:10px 0 5px 0;'>{seg}</h4><ul>"
+        for t in titulos:
+            lista_pubs += f"<li>{t}</li>"
+        lista_pubs += "</ul>"
+    
+    # Montar email HTML
+    assunto = f"DOEM Acaiaca - Edição nº {edicao['numero_edicao']} publicada"
+    corpo_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1F4E78, #2E7D32); padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">📰 DOEM Acaiaca</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Diário Oficial Eletrônico Municipal</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6;">
+            <h2 style="color: #1F4E78; margin-top: 0;">Nova Edição Publicada!</h2>
+            
+            <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <p><strong>Edição:</strong> nº {edicao['numero_edicao']}/{edicao['ano']}</p>
+                <p><strong>Data de Publicação:</strong> {data_formatada}</p>
+                <p><strong>Total de Publicações:</strong> {len(edicao.get('publicacoes', []))}</p>
+            </div>
+            
+            <h3 style="color: #333;">Conteúdo desta edição:</h3>
+            {lista_pubs}
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="https://pac-system.preview.emergentagent.com/doem-publico" 
+                   style="background: #1F4E78; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    📥 Acessar o DOEM
+                </a>
+            </div>
+        </div>
+        
+        <div style="background: #1F4E78; color: white; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px;">
+            <p style="margin: 0;">Prefeitura Municipal de Acaiaca - MG</p>
+            <p style="margin: 5px 0 0 0; opacity: 0.8;">Este é um email automático. Não responda.</p>
+            <p style="margin: 5px 0 0 0; opacity: 0.7;">
+                <a href="https://pac-system.preview.emergentagent.com/newsletter/cancelar" style="color: #90caf9;">Cancelar inscrição</a>
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Enviar para todos os destinatários
+    enviados = 0
+    pdf_bytes = pdf_buffer.getvalue() if pdf_buffer else None
+    nome_pdf = f"DOEM_Acaiaca_Edicao_{edicao['numero_edicao']}_{edicao['ano']}.pdf"
+    
+    for email in destinatarios:
+        try:
+            if enviar_email_smtp(email, assunto, corpo_html, pdf_bytes, nome_pdf):
+                enviados += 1
+        except Exception as e:
+            logging.error(f"Falha ao enviar para {email}: {e}")
+    
+    logging.info(f"Notificações enviadas: {enviados}/{len(destinatarios)}")
+    return enviados
+
 # ===== Funções Auxiliares DOEM =====
 
 def parse_rtf_publicacao(rtf_content: bytes) -> list:
@@ -3842,10 +3996,8 @@ async def get_doem_config() -> dict:
             'prefeito': '',
             'ano_inicio': 2026,
             'ultimo_numero_edicao': 0,
-            'tipos_publicacao': [
-                "Decreto", "Portaria", "Lei", "Edital", 
-                "Aviso", "Extrato de Contrato", "Ata", "Outros"
-            ]
+            'segmentos': DOEM_SEGMENTOS,
+            'tipos_publicacao': DOEM_TIPOS_PUBLICACAO
         }
         await db.doem_config.insert_one(config)
     return config
