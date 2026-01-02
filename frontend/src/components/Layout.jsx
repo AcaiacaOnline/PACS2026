@@ -105,6 +105,16 @@ const Layout = ({ children }) => {
                 <ClipboardList size={16} />
                 <span className="hidden lg:inline">Gestão Processual</span>
               </Link>
+              <Link
+                to="/doem"
+                data-testid="nav-doem-btn"
+                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-purple-500/50 ${
+                  isActive('/doem') ? 'bg-purple-600' : 'hover:bg-purple-600/80'
+                }`}
+              >
+                <Newspaper size={16} />
+                <span className="hidden lg:inline">DOEM</span>
+              </Link>
               {user?.is_admin && (
                 <>
                   <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
