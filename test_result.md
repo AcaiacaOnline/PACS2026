@@ -642,6 +642,18 @@ test_plan:
           agent: "testing"
           comment: "✅ VALIDATED: TemplateModal component fully functional with 3-step wizard interface. Step 1: Dados da Secretaria (header data), Step 2: Adicionar Itens (item management), Step 3: Revisar e Aplicar (review and apply). Progress bar, navigation buttons, form validation, and modal close functionality all working correctly."
 
+  - task: "PAC Acaiaca 2026 Corrections and New Features Testing"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PortalPublico.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ COMPREHENSIVE TESTING COMPLETED (Jan 2, 2026): All requested corrections and new features validated successfully. 1) PORTAL PÚBLICO BACKGROUND: New background image (bg-acaiaca.png) properly applied and visible. 2) PDF EXPORT FUNCTIONALITY: All PDF export features working - PAC Individual has red download buttons (2 found), eye icons expand to show items with 'PDF Paisagem' and 'PDF Retrato' buttons, Processos tab has 'Exportar PDF' button at top. 3) LOGIN WITHOUT GOOGLE: Form-based login working perfectly with admin credentials (cristiano.abdo@acaiaca.mg.gov.br / Cris@820906), successfully navigates to /dashboard. 4) TEMPLATE BUTTONS REMOVAL: Confirmed Template buttons correctly REMOVED from both /pacs and /pacs-geral pages (0 found on each page). 5) DASHBOARD FEATURES: Background image applied (subtle), 'Portal' button found in admin navigation menu. 6) ACESSO ADMINISTRATIVO: Yellow/amber button found and functional in portal header. ALL REQUESTED FEATURES WORKING PERFECTLY."
+
 agent_communication:
     - agent: "main"
       message: "TASK (Dec 28, 2025): Implementação do módulo Gestão Processual. 1) Criados modelos de dados no backend 2) Implementado CRUD completo com permissões (apenas admin pode excluir) 3) Importação de Excel/CSV 4) Exportação PDF (Paisagem/Retrato) e XLSX 5) 70 processos importados da planilha do usuário. TESTE PENDENTE."
@@ -661,3 +673,5 @@ agent_communication:
       message: "PORTAL PÚBLICO DE TRANSPARÊNCIA TESTING COMPLETED (Jan 2, 2026): ✅ COMPREHENSIVE TESTING PERFORMED ✅ All 4 dashboard cards working with correct data (PACs Individuais: 2, PACs Gerais: 1, Processos: 70, Valor Total: R$ 825.414,75) ✅ Pie chart and bar chart rendering correctly with proper data visualization ✅ PAC Individual tab: Table, search, and item expansion functionality all working ✅ PAC Geral tab: Participating secretaries displayed correctly ✅ Processos tab: Colored status badges (green for Concluído, blue for Iniciado) and search working ✅ Header, footer, print button, and tab navigation all functional ✅ Currency formatting in R$ (Brazilian Real) working correctly ✅ Public access (no authentication) working at /transparencia route ✅ ALL REQUESTED PORTAL PÚBLICO FUNCTIONALITY VALIDATED AND WORKING PERFECTLY."
     - agent: "testing"
       message: "NEW VISUAL FEATURES TESTING COMPLETED (Jan 2, 2026): ✅ COMPREHENSIVE TESTING OF NEW PAC ACAIACA 2026 FEATURES ✅ Portal Público as Homepage: Successfully loads at root URL (/) with 'PAC Acaiaca 2026' title and 'Portal da Transparência' subtitle ✅ Background Image: Tree with flag background (bg-acaiaca.png) properly applied across all pages (homepage, login, admin area) ✅ Acesso Administrativo Button: Yellow/amber button found in header, successfully navigates to /login ✅ Login Page: 'Voltar ao Portal' button found in top left, background image applied correctly ✅ Admin Login: Credentials (cristiano.abdo@acaiaca.mg.gov.br / Cris@820906) working correctly ✅ Portal Navigation: 'Portal' button found in admin navigation menu ✅ Template Functionality: Both PAC Individual and PAC Geral have amber 'Template' buttons that open 3-step modals (Passo 1 de 3, Passo 2 de 3, Passo 3 de 3) with working navigation (Próximo/Voltar buttons) ✅ Modal Features: Step navigation working correctly, forms functional, close buttons working ✅ ALL NEW VISUAL AND TEMPLATE FEATURES VALIDATED AND WORKING PERFECTLY."
+    - agent: "testing"
+      message: "PAC ACAIACA 2026 CORRECTIONS TESTING COMPLETED (Jan 2, 2026): ✅ COMPREHENSIVE TESTING OF ALL REQUESTED CORRECTIONS AND NEW FEATURES ✅ Portal Público Background: New background image (bg-acaiaca.png) properly applied and visible ✅ PDF Export Features: All working - PAC Individual has red download buttons (2 found), eye icons expand items with 'PDF Paisagem'/'PDF Retrato' buttons, Processos tab has 'Exportar PDF' button ✅ Form Login: Working perfectly with admin credentials, navigates to /dashboard ✅ Template Buttons Removal: Confirmed removed from both /pacs and /pacs-geral pages ✅ Dashboard: Background image applied, 'Portal' button in navigation ✅ Acesso Administrativo: Yellow/amber button functional in portal header ✅ ALL REQUESTED FEATURES WORKING PERFECTLY - READY FOR PRODUCTION"
