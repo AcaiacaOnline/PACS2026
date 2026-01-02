@@ -2353,7 +2353,14 @@ async def get_processos_anos(request: Request):
         anos.add(ano)
     
     anos_list = sorted(list(anos), reverse=True)
-    return {'anos': anos_list, 'ano_atual': ano_atual}
+    
+    # Definir o ano padrão como o mais recente que tenha processos
+    ano_padrao = anos_list[0] if anos_list else ano_atual
+    # Se existem processos em 2025 mas não em 2026, selecionar 2025
+    if 2025 in anos and processos:
+        ano_padrao = 2025
+    
+    return {'anos': anos_list, 'ano_atual': ano_padrao}
 
 
 @api_router.get("/processos", response_model=List[Processo])
