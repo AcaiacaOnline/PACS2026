@@ -11,6 +11,8 @@ import DashboardProcessual from './pages/DashboardProcessual';
 import Users from './pages/Users';
 import Backup from './pages/Backup';
 import PortalPublico from './pages/PortalPublico';
+import DOEM from './pages/DOEM';
+import DOEMPublico from './pages/DOEMPublico';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import api from './utils/api';
