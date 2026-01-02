@@ -4280,39 +4280,34 @@ async def download_pdf_edicao(edicao_id: str, request: Request):
     )
 
 async def gerar_pdf_doem(edicao: dict) -> BytesIO:
-    """Gera PDF do DOEM em formato de jornal oficial"""
+    """Gera PDF do DOEM em formato de jornal oficial com cabeçalho e rodapé customizados"""
+    from reportlab.platypus import Frame, PageTemplate, BaseDocTemplate
+    from reportlab.lib.utils import ImageReader
+    from PIL import Image as PILImage
+    
     buffer = BytesIO()
     config = await get_doem_config()
     
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=REPORT_MARGIN_LEFT,
-        rightMargin=REPORT_MARGIN_RIGHT,
-        topMargin=REPORT_MARGIN_TOP,
-        bottomMargin=REPORT_MARGIN_BOTTOM
-    )
+    # Margens reduzidas para aproveitar melhor o espaço
+    left_margin = 15*mm
+    right_margin = 15*mm
+    top_margin = 35*mm  # Espaço para cabeçalho com imagem
+    bottom_margin = 30*mm  # Espaço para rodapé com imagem
     
-    elements = []
+    # Caminhos das imagens
+    brasao_path = ROOT_DIR / 'brasao_doem.png'
+    rodape_path = ROOT_DIR / 'rodape_doem.jpg'
+    
     styles = getSampleStyleSheet()
     
     # Estilos customizados
-    header_style = ParagraphStyle(
-        'DOEMHeader',
-        parent=styles['Heading1'],
-        fontSize=16,
-        textColor=colors.HexColor('#1F4E78'),
-        alignment=TA_CENTER,
-        spaceAfter=4,
-        fontName='Helvetica-Bold'
-    )
-    
-    subheader_style = ParagraphStyle(
-        'DOEMSubheader',
+    header_title_style = ParagraphStyle(
+        'DOEMHeaderTitle',
         parent=styles['Normal'],
-        fontSize=10,
-        alignment=TA_CENTER,
-        spaceAfter=2
+        fontSize=11,
+        fontName='Helvetica-Bold',
+        alignment=TA_LEFT,
+        leading=13
     )
     
     edition_style = ParagraphStyle(
@@ -4320,27 +4315,38 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         parent=styles['Normal'],
         fontSize=9,
         alignment=TA_CENTER,
-        textColor=colors.HexColor('#666666'),
-        spaceAfter=10
+        textColor=colors.HexColor('#333333'),
+        spaceAfter=8,
+        spaceBefore=4
     )
     
     section_style = ParagraphStyle(
         'DOEMSection',
         parent=styles['Heading2'],
-        fontSize=12,
+        fontSize=11,
         textColor=colors.HexColor('#1F4E78'),
         fontName='Helvetica-Bold',
-        spaceBefore=10,
-        spaceAfter=6
+        spaceBefore=8,
+        spaceAfter=4
+    )
+    
+    subsection_style = ParagraphStyle(
+        'DOEMSubsection',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica-Bold',
+        spaceBefore=6,
+        spaceAfter=3,
+        textColor=colors.HexColor('#2E5A1F')
     )
     
     title_style = ParagraphStyle(
         'DOEMTitle',
         parent=styles['Heading3'],
-        fontSize=10,
+        fontSize=9,
         fontName='Helvetica-Bold',
-        spaceBefore=8,
-        spaceAfter=4
+        spaceBefore=6,
+        spaceAfter=2
     )
     
     body_style = ParagraphStyle(
@@ -4349,8 +4355,8 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         fontSize=9,
         fontName='Helvetica',
         alignment=TA_JUSTIFY,
-        spaceAfter=6,
-        leading=12
+        spaceAfter=4,
+        leading=11
     )
     
     footer_style = ParagraphStyle(
@@ -4358,89 +4364,191 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         parent=styles['Normal'],
         fontSize=7,
         alignment=TA_CENTER,
-        textColor=colors.HexColor('#888888')
+        textColor=colors.HexColor('#666666')
     )
     
-    # Cabeçalho do jornal
-    elements.append(Paragraph(f'<b>DIÁRIO OFICIAL ELETRÔNICO</b>', header_style))
-    elements.append(Paragraph(f'MUNICÍPIO DE {config["nome_municipio"].upper()} - {config["uf"]}', subheader_style))
+    # Função para desenhar cabeçalho e rodapé em cada página
+    def draw_header_footer(canvas, doc):
+        canvas.saveState()
+        page_width, page_height = A4
+        
+        # === CABEÇALHO ===
+        # Desenhar brasão
+        if brasao_path.exists():
+            try:
+                pil_img = PILImage.open(str(brasao_path))
+                img_width, img_height = pil_img.size
+                aspect_ratio = img_height / img_width
+                logo_width = 22*mm
+                logo_height = logo_width * aspect_ratio
+                canvas.drawImage(str(brasao_path), left_margin, page_height - 28*mm, 
+                               width=logo_width, height=logo_height, preserveAspectRatio=True)
+            except Exception as e:
+                logging.error(f"Erro ao carregar brasão: {e}")
+        
+        # Texto do cabeçalho ao lado do brasão
+        # Cores do brasão: azul #1F4E78 e verde #2E5A1F
+        text_x = left_margin + 26*mm
+        text_y = page_height - 12*mm
+        
+        canvas.setFont('Helvetica-Bold', 12)
+        canvas.setFillColor(colors.HexColor('#1F4E78'))
+        canvas.drawString(text_x, text_y, "DOEM")
+        
+        canvas.setFont('Helvetica-Bold', 10)
+        canvas.setFillColor(colors.HexColor('#2E5A1F'))
+        canvas.drawString(text_x, text_y - 12, "Diário Oficial Eletrônico Municipal")
+        
+        canvas.setFont('Helvetica', 9)
+        canvas.setFillColor(colors.HexColor('#1F4E78'))
+        canvas.drawString(text_x, text_y - 23, "de Acaiaca - MG")
+        
+        # Linha divisória
+        canvas.setStrokeColor(colors.HexColor('#1F4E78'))
+        canvas.setLineWidth(1)
+        canvas.line(left_margin, page_height - 32*mm, page_width - right_margin, page_height - 32*mm)
+        
+        # === RODAPÉ ===
+        if rodape_path.exists():
+            try:
+                pil_img = PILImage.open(str(rodape_path))
+                img_width, img_height = pil_img.size
+                aspect_ratio = img_height / img_width
+                rodape_width = page_width - left_margin - right_margin
+                rodape_height = rodape_width * aspect_ratio
+                if rodape_height > 20*mm:
+                    rodape_height = 20*mm
+                    rodape_width = rodape_height / aspect_ratio
+                canvas.drawImage(str(rodape_path), left_margin, 5*mm, 
+                               width=rodape_width, height=rodape_height, preserveAspectRatio=True)
+            except Exception as e:
+                logging.error(f"Erro ao carregar rodapé: {e}")
+        
+        # Número da página
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(colors.HexColor('#666666'))
+        canvas.drawCentredString(page_width / 2, 3*mm, f"Página {doc.page}")
+        
+        canvas.restoreState()
+    
+    # Criar documento com template customizado
+    doc = BaseDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=left_margin,
+        rightMargin=right_margin,
+        topMargin=top_margin,
+        bottomMargin=bottom_margin
+    )
+    
+    # Frame para o conteúdo
+    frame = Frame(
+        left_margin, bottom_margin,
+        A4[0] - left_margin - right_margin,
+        A4[1] - top_margin - bottom_margin,
+        id='main'
+    )
+    
+    # Template com cabeçalho e rodapé
+    template = PageTemplate(id='doem', frames=[frame], onPage=draw_header_footer)
+    doc.addPageTemplates([template])
+    
+    elements = []
     
     # Formatação da data
     data_pub = edicao.get('data_publicacao')
     if isinstance(data_pub, str):
         data_pub = datetime.fromisoformat(data_pub.replace('Z', '+00:00'))
-    data_formatada = data_pub.strftime('%d de %B de %Y').replace('January', 'Janeiro').replace('February', 'Fevereiro').replace('March', 'Março').replace('April', 'Abril').replace('May', 'Maio').replace('June', 'Junho').replace('July', 'Julho').replace('August', 'Agosto').replace('September', 'Setembro').replace('October', 'Outubro').replace('November', 'Novembro').replace('December', 'Dezembro')
     
+    meses = {
+        'January': 'Janeiro', 'February': 'Fevereiro', 'March': 'Março',
+        'April': 'Abril', 'May': 'Maio', 'June': 'Junho',
+        'July': 'Julho', 'August': 'Agosto', 'September': 'Setembro',
+        'October': 'Outubro', 'November': 'Novembro', 'December': 'Dezembro'
+    }
+    data_formatada = data_pub.strftime('%d de %B de %Y')
+    for en, pt in meses.items():
+        data_formatada = data_formatada.replace(en, pt)
+    
+    # Info da edição
+    ano_doem = edicao['ano'] - config.get('ano_inicio', 2026) + 1
     elements.append(Paragraph(
-        f"Edição nº {edicao['numero_edicao']} | Ano {edicao['ano'] - config['ano_inicio'] + 1} | {data_formatada}",
+        f"<b>Edição nº {edicao['numero_edicao']}</b> | Ano {ano_doem} | {data_formatada}",
         edition_style
     ))
     
-    # Linha divisória
-    elements.append(Spacer(1, 5*mm))
+    elements.append(Spacer(1, 3*mm))
     
-    # Agrupar publicações por secretaria
-    publicacoes_por_secretaria = {}
+    # Agrupar publicações por segmento
+    publicacoes_por_segmento = {}
     for pub in edicao.get('publicacoes', []):
+        segmento = pub.get('segmento', 'Decretos')
+        if segmento not in publicacoes_por_segmento:
+            publicacoes_por_segmento[segmento] = {}
+        
         secretaria = pub.get('secretaria', 'Gabinete do Prefeito')
-        if secretaria not in publicacoes_por_secretaria:
-            publicacoes_por_secretaria[secretaria] = []
-        publicacoes_por_secretaria[secretaria].append(pub)
+        if secretaria not in publicacoes_por_segmento[segmento]:
+            publicacoes_por_segmento[segmento][secretaria] = []
+        publicacoes_por_segmento[segmento][secretaria].append(pub)
     
     # Seção: PODER EXECUTIVO
     elements.append(Paragraph('<b>PODER EXECUTIVO</b>', section_style))
     
-    # Publicações por secretaria
-    for secretaria, pubs in publicacoes_por_secretaria.items():
-        elements.append(Paragraph(f'<b>{secretaria.upper()}</b>', ParagraphStyle(
-            'Secretaria',
-            parent=styles['Normal'],
-            fontSize=10,
-            fontName='Helvetica-Bold',
-            spaceBefore=6,
-            spaceAfter=4,
-            textColor=colors.HexColor('#333333')
-        )))
+    # Publicações por segmento e secretaria
+    for segmento, secretarias in publicacoes_por_segmento.items():
+        # Título do segmento
+        elements.append(Paragraph(f'<b>{segmento.upper()}</b>', subsection_style))
         
-        for pub in sorted(pubs, key=lambda x: x.get('ordem', 1)):
-            elements.append(Paragraph(f'<b>{pub["titulo"]}</b>', title_style))
+        for secretaria, pubs in secretarias.items():
+            # Nome da secretaria
+            elements.append(Paragraph(f'<i>{secretaria}</i>', ParagraphStyle(
+                'Secretaria',
+                parent=styles['Normal'],
+                fontSize=8,
+                fontName='Helvetica-Oblique',
+                spaceBefore=2,
+                spaceAfter=2,
+                textColor=colors.HexColor('#555555')
+            )))
             
-            # Quebrar texto em parágrafos
-            texto = pub.get('texto', '').strip()
-            paragrafos = texto.split('\n\n') if '\n\n' in texto else [texto]
-            for paragrafo in paragrafos:
-                if paragrafo.strip():
-                    elements.append(Paragraph(paragrafo.strip(), body_style))
-            
-            elements.append(Spacer(1, 3*mm))
+            for pub in sorted(pubs, key=lambda x: x.get('ordem', 1)):
+                elements.append(Paragraph(f'<b>{pub["titulo"]}</b>', title_style))
+                
+                # Quebrar texto em parágrafos
+                texto = pub.get('texto', '').strip()
+                # Dividir por quebras de linha dupla ou simples
+                if '\n\n' in texto:
+                    paragrafos = texto.split('\n\n')
+                else:
+                    paragrafos = texto.split('\n')
+                
+                for paragrafo in paragrafos:
+                    if paragrafo.strip():
+                        elements.append(Paragraph(paragrafo.strip(), body_style))
+                
+                elements.append(Spacer(1, 2*mm))
     
-    # Rodapé com informação de assinatura
-    elements.append(Spacer(1, 10*mm))
+    # Informação de assinatura digital
+    elements.append(Spacer(1, 5*mm))
     
     assinatura = edicao.get('assinatura_digital')
     if assinatura and assinatura.get('assinado'):
-        # Formatar data de assinatura
         data_ass = assinatura.get('data_assinatura', '')
         if isinstance(data_ass, datetime):
-            data_ass_str = data_ass.strftime('%d/%m/%Y')
+            data_ass_str = data_ass.strftime('%d/%m/%Y %H:%M')
         elif isinstance(data_ass, str):
-            data_ass_str = data_ass[:10]
+            data_ass_str = data_ass[:16].replace('T', ' ')
         else:
-            data_ass_str = str(data_ass)[:10] if data_ass else ''
+            data_ass_str = str(data_ass)[:16] if data_ass else ''
         
         elements.append(Paragraph(
-            f"Este documento foi assinado digitalmente em {data_ass_str}",
+            f"<b>Documento assinado digitalmente</b> em {data_ass_str}",
             footer_style
         ))
         elements.append(Paragraph(
-            f"Hash SHA-256: {str(assinatura.get('hash_documento', ''))[:32]}...",
+            f"Hash SHA-256: {str(assinatura.get('hash_documento', ''))[:48]}...",
             footer_style
         ))
-    
-    elements.append(Paragraph(
-        f"Prefeitura Municipal de {config['nome_municipio']} | CNPJ: 18.294.659/0001-71",
-        footer_style
-    ))
     
     doc.build(elements)
     buffer.seek(0)
