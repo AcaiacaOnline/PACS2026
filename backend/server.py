@@ -2905,7 +2905,276 @@ async def get_backup_info(request: Request):
     }
 
 
+# ============ PORTAL PÚBLICO - TRANSPARÊNCIA ============
+# Endpoints públicos para acesso sem autenticação
+# Conformidade com Lei de Acesso à Informação (Lei 12.527/2011)
+
+public_router = APIRouter(prefix="/api/public")
+
+@public_router.get("/pacs")
+async def public_get_pacs(
+    secretaria: str = None,
+    ano: str = "2026",
+    page: int = 1,
+    limit: int = 50
+):
+    """
+    Lista pública de PACs Individuais.
+    Não requer autenticação - Portal de Transparência.
+    """
+    query = {}
+    if secretaria:
+        query['secretaria'] = {'$regex': secretaria, '$options': 'i'}
+    if ano:
+        query['ano'] = ano
+    
+    skip = (page - 1) * limit
+    total = await db.pacs.count_documents(query)
+    
+    pacs = await db.pacs.find(query, {
+        '_id': 0,
+        'user_id': 0  # Ocultar informações internas
+    }).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        'success': True,
+        'data': pacs,
+        'pagination': {
+            'page': page,
+            'limit': limit,
+            'total': total,
+            'pages': (total + limit - 1) // limit
+        }
+    }
+
+@public_router.get("/pacs/{pac_id}")
+async def public_get_pac(pac_id: str):
+    """Detalhes públicos de um PAC específico."""
+    pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0, 'user_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC não encontrado")
+    return {'success': True, 'data': pac}
+
+@public_router.get("/pacs/{pac_id}/items")
+async def public_get_pac_items(pac_id: str):
+    """Lista pública de itens de um PAC."""
+    pac = await db.pacs.find_one({'pac_id': pac_id})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC não encontrado")
+    
+    items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
+    return {'success': True, 'data': items, 'total': len(items)}
+
+@public_router.get("/pacs-geral")
+async def public_get_pacs_geral(page: int = 1, limit: int = 50):
+    """Lista pública de PACs Gerais."""
+    skip = (page - 1) * limit
+    total = await db.pacs_geral.count_documents({})
+    
+    pacs = await db.pacs_geral.find({}, {
+        '_id': 0,
+        'user_id': 0
+    }).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        'success': True,
+        'data': pacs,
+        'pagination': {
+            'page': page,
+            'limit': limit,
+            'total': total,
+            'pages': (total + limit - 1) // limit
+        }
+    }
+
+@public_router.get("/pacs-geral/{pac_geral_id}")
+async def public_get_pac_geral(pac_geral_id: str):
+    """Detalhes públicos de um PAC Geral."""
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0, 'user_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral não encontrado")
+    return {'success': True, 'data': pac}
+
+@public_router.get("/pacs-geral/{pac_geral_id}/items")
+async def public_get_pac_geral_items(pac_geral_id: str):
+    """Lista pública de itens de um PAC Geral."""
+    pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral não encontrado")
+    
+    items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
+    return {'success': True, 'data': items, 'total': len(items)}
+
+@public_router.get("/processos")
+async def public_get_processos(
+    status: str = None,
+    modalidade: str = None,
+    secretaria: str = None,
+    page: int = 1,
+    limit: int = 50
+):
+    """
+    Lista pública de processos licitatórios.
+    Não requer autenticação - Portal de Transparência.
+    """
+    query = {}
+    if status:
+        query['status'] = {'$regex': status, '$options': 'i'}
+    if modalidade:
+        query['modalidade'] = {'$regex': modalidade, '$options': 'i'}
+    if secretaria:
+        query['secretaria'] = {'$regex': secretaria, '$options': 'i'}
+    
+    skip = (page - 1) * limit
+    total = await db.processos.count_documents(query)
+    
+    processos = await db.processos.find(query, {
+        '_id': 0,
+        'user_id': 0
+    }).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        'success': True,
+        'data': processos,
+        'pagination': {
+            'page': page,
+            'limit': limit,
+            'total': total,
+            'pages': (total + limit - 1) // limit
+        }
+    }
+
+@public_router.get("/processos/{processo_id}")
+async def public_get_processo(processo_id: str):
+    """Detalhes públicos de um processo."""
+    processo = await db.processos.find_one({'processo_id': processo_id}, {'_id': 0, 'user_id': 0})
+    if not processo:
+        raise HTTPException(status_code=404, detail="Processo não encontrado")
+    return {'success': True, 'data': processo}
+
+@public_router.get("/dashboard/stats")
+async def public_dashboard_stats():
+    """
+    Estatísticas públicas consolidadas para o Dashboard de Transparência.
+    """
+    # Total de PACs
+    total_pacs = await db.pacs.count_documents({})
+    total_pacs_geral = await db.pacs_geral.count_documents({})
+    total_processos = await db.processos.count_documents({})
+    
+    # Processos por status
+    processos_por_status = await db.processos.aggregate([
+        {'$group': {'_id': '$status', 'quantidade': {'$sum': 1}}}
+    ]).to_list(100)
+    
+    # Total de itens e valores
+    pac_items = await db.pac_items.find({}, {'_id': 0, 'valorTotal': 1}).to_list(10000)
+    pac_geral_items = await db.pac_geral_items.find({}, {'_id': 0, 'valorTotal': 1}).to_list(10000)
+    
+    valor_total_pac = sum(item.get('valorTotal', 0) for item in pac_items)
+    valor_total_pac_geral = sum(item.get('valorTotal', 0) for item in pac_geral_items)
+    
+    # Classificações orçamentárias mais utilizadas
+    classificacoes = await db.pac_geral_items.aggregate([
+        {'$group': {
+            '_id': '$subitem_classificacao',
+            'quantidade': {'$sum': 1},
+            'valor_total': {'$sum': '$valorTotal'}
+        }},
+        {'$sort': {'valor_total': -1}},
+        {'$limit': 10}
+    ]).to_list(10)
+    
+    return {
+        'success': True,
+        'data': {
+            'resumo': {
+                'total_pacs_individuais': total_pacs,
+                'total_pacs_gerais': total_pacs_geral,
+                'total_processos': total_processos,
+                'valor_total_pac': valor_total_pac,
+                'valor_total_pac_geral': valor_total_pac_geral
+            },
+            'processos_por_status': [
+                {'status': p['_id'] or 'Não informado', 'quantidade': p['quantidade']}
+                for p in processos_por_status
+            ],
+            'classificacoes_principais': [
+                {
+                    'subitem': c['_id'] or 'Não classificado',
+                    'quantidade': c['quantidade'],
+                    'valor_total': c['valor_total']
+                }
+                for c in classificacoes
+            ]
+        },
+        'meta': {
+            'generated_at': datetime.now(timezone.utc).isoformat(),
+            'system': 'PAC Acaiaca 2026 - Portal de Transparência'
+        }
+    }
+
+@public_router.get("/classificacoes")
+async def public_get_classificacoes():
+    """Retorna os códigos de classificação orçamentária (público)."""
+    codigos = {
+        "339030": {
+            "nome": "Material de Consumo",
+            "subitens": [
+                "Material de Consumo - Combustíveis e Lubrificantes Automotivos",
+                "Gás Engarrafado",
+                "Gêneros de Alimentação",
+                "Material Farmacológico",
+                "Material Odontológico",
+                "Material Educativo e Esportivo",
+                "Material de Expediente",
+                "Material de Processamento de Dados",
+                "Material de Limpeza e Higienização",
+                "Uniformes, Tecidos e Aviamentos",
+                "Material para Manutenção de Bens Imóveis",
+                "Material Elétrico e Eletrônico",
+                "Material Hospitalar"
+            ]
+        },
+        "339036": {
+            "nome": "Outros Serviços de Terceiros (Pessoa Física)",
+            "subitens": [
+                "Serviços Técnicos Profissionais",
+                "Manutenção e Conservação de Equipamentos",
+                "Manutenção e Conservação de Veículos",
+                "Serviços de Limpeza e Conservação",
+                "Serviços Médicos e Odontológicos"
+            ]
+        },
+        "339039": {
+            "nome": "Outros Serviços de Terceiros (Pessoa Jurídica)",
+            "subitens": [
+                "Serviços Técnicos Profissionais",
+                "Manutenção de Software",
+                "Manutenção e Conservação de Veículos",
+                "Serviços de Energia Elétrica",
+                "Serviços de Telecomunicações",
+                "Vigilância Ostensiva",
+                "Limpeza e Conservação"
+            ]
+        },
+        "449052": {
+            "nome": "Equipamentos e Material Permanente",
+            "subitens": [
+                "Aparelhos e Equipamentos de Comunicação",
+                "Equipamentos Médico-Hospitalares",
+                "Mobiliário em Geral",
+                "Equipamentos de Processamento de Dados",
+                "Máquinas e Utensílios de Escritório",
+                "Veículos de Tração Mecânica"
+            ]
+        }
+    }
+    return {'success': True, 'data': codigos}
+
+
 app.include_router(api_router)
+app.include_router(public_router)  # Rotas públicas para transparência
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
