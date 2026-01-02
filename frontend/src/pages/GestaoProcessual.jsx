@@ -215,13 +215,15 @@ const GestaoProcessual = () => {
 
   const handleExportXLSX = async () => {
     try {
-      const response = await api.get('/processos/export/xlsx', {
+      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+      const response = await api.get(`/processos/export/xlsx${params}`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'Gestao_Processual.xlsx');
+      const yearSuffix = anoSelecionado ? `_${anoSelecionado}` : '';
+      link.setAttribute('download', `Gestao_Processual${yearSuffix}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
