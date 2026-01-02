@@ -2358,17 +2358,26 @@ async def get_processos(request: Request, ano: int = None):
     """Lista todos os processos, opcionalmente filtrados por ano"""
     user = await get_current_user(request)
     
-    query = {}
-    if ano:
-        query['ano'] = ano
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
     
-    processos = await db.processos.find(query, {'_id': 0}).to_list(1000)
-    
-    # Fix null string values in datetime fields
+    # Fix null string values in datetime fields e extrair ano do numero_processo
     for p in processos:
         for field in ['data_inicio', 'data_autuacao', 'data_contrato']:
             if p.get(field) == 'null' or p.get(field) == '':
                 p[field] = None
+        
+        # Extrair ano do numero_processo se não existir (ex: PRC - 0006/2025)
+        if not p.get('ano'):
+            numero = p.get('numero_processo', '')
+            match = re.search(r'/(\d{4})$', numero)
+            if match:
+                p['ano'] = int(match.group(1))
+            else:
+                p['ano'] = 2025  # Ano padrão
+    
+    # Aplicar filtro de ano após extração
+    if ano:
+        processos = [p for p in processos if p.get('ano') == ano]
     
     return [Processo(**p) for p in processos]
 
