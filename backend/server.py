@@ -2108,11 +2108,43 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
 
 # ============ ROTAS DE GESTÃO PROCESSUAL ============
 
-@api_router.get("/processos", response_model=List[Processo])
-async def get_processos(request: Request):
-    """Lista todos os processos"""
+@api_router.get("/processos/anos")
+async def get_processos_anos(request: Request):
+    """Retorna lista de anos disponíveis nos processos"""
     user = await get_current_user(request)
-    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    # Buscar anos distintos dos processos
+    pipeline = [
+        {'$match': {'ano': {'$exists': True, '$ne': None}}},
+        {'$group': {'_id': '$ano'}},
+        {'$sort': {'_id': -1}}
+    ]
+    
+    result = await db.processos.aggregate(pipeline).to_list(100)
+    anos = [r['_id'] for r in result if r['_id']]
+    
+    # Garantir que 2025 e o ano atual estejam na lista
+    ano_atual = datetime.now().year
+    anos_base = list(range(2025, ano_atual + 1))
+    
+    for ano in anos_base:
+        if ano not in anos:
+            anos.append(ano)
+    
+    anos.sort(reverse=True)
+    return {'anos': anos, 'ano_atual': ano_atual}
+
+
+@api_router.get("/processos", response_model=List[Processo])
+async def get_processos(request: Request, ano: int = None):
+    """Lista todos os processos, opcionalmente filtrados por ano"""
+    user = await get_current_user(request)
+    
+    query = {}
+    if ano:
+        query['ano'] = ano
+    
+    processos = await db.processos.find(query, {'_id': 0}).to_list(1000)
     
     # Fix null string values in datetime fields
     for p in processos:
