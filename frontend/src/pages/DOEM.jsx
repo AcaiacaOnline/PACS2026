@@ -82,8 +82,6 @@ const DOEM = () => {
     nome: '',
     segmentos_interesse: []
   });
-    tipo: 'Decreto'
-  });
 
   useEffect(() => {
     fetchUser();
@@ -95,6 +93,13 @@ const DOEM = () => {
       fetchEdicoes();
     }
   }, [anoSelecionado]);
+
+  useEffect(() => {
+    if (activeTab === 'newsletter' && user?.is_admin) {
+      fetchInscritos();
+      fetchNewsletterStats();
+    }
+  }, [activeTab, user]);
 
   const fetchUser = async () => {
     try {
@@ -126,6 +131,24 @@ const DOEM = () => {
       toast.error('Erro ao carregar edições');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInscritos = async () => {
+    try {
+      const response = await api.get('/newsletter/inscritos');
+      setInscritos(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar inscritos:', error);
+    }
+  };
+
+  const fetchNewsletterStats = async () => {
+    try {
+      const response = await api.get('/newsletter/estatisticas');
+      setNewsletterStats(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
     }
   };
 
