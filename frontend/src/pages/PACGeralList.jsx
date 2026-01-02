@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import TemplateModal from '../components/TemplateModal';
-import { Plus, Edit, Trash2, Building2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2 } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -11,7 +10,6 @@ const PACGeralList = () => {
   const [pacs, setPacs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   useEffect(() => {
     fetchPACs();
@@ -48,39 +46,6 @@ const PACGeralList = () => {
     }
   };
 
-  const handleApplyTemplate = async (templateData) => {
-    try {
-      // Criar novo PAC Geral com os dados do template
-      const pacData = {
-        nome_secretaria: templateData.header.secretaria,
-        secretario: templateData.header.secretario,
-        fiscal_contrato: templateData.header.fiscal,
-        telefone: templateData.header.telefone,
-        email: templateData.header.email,
-        endereco: templateData.header.endereco,
-        ano: templateData.header.ano,
-        secretarias_selecionadas: templateData.secretariasSelecionadas || []
-      };
-      
-      const pacResponse = await api.post('/pacs-geral', pacData);
-      const pacGeralId = pacResponse.data.pac_geral_id;
-      
-      // Adicionar itens ao PAC Geral
-      for (const item of templateData.items) {
-        const { id, ...itemData } = item;
-        itemData.valorTotal = itemData.quantidade * itemData.valorUnitario;
-        itemData.quantidade_total = itemData.quantidade;
-        await api.post(`/pacs-geral/${pacGeralId}/items`, itemData);
-      }
-      
-      toast.success(`PAC Geral criado com ${templateData.items.length} itens!`);
-      fetchPACs();
-      navigate(`/pacs-geral/${pacGeralId}/edit`);
-    } catch (error) {
-      toast.error('Erro ao aplicar template');
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -102,23 +67,13 @@ const PACGeralList = () => {
               <p className="text-muted-foreground">Plano Anual de Contratações Compartilhado</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowTemplateModal(true)}
-              className="flex items-center space-x-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors shadow-md"
-              title="Usar Template"
-            >
-              <FileText size={20} />
-              <span>Template</span>
-            </button>
-            <button
-              onClick={() => navigate('/pacs-geral/new')}
-              className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
-            >
-              <Plus size={20} />
-              <span>Novo PAC Geral</span>
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/pacs-geral/new')}
+            className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
+          >
+            <Plus size={20} />
+            <span>Novo PAC Geral</span>
+          </button>
         </div>
 
         {loading ? (
