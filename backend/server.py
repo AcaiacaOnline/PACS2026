@@ -1099,28 +1099,17 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     
     buffer = BytesIO()
     
-    # Configuração de margens otimizadas para assinatura digital
-    # Margem direita ampliada para permitir assinatura digital em lote
-    if orientation.lower() == 'portrait':
-        page_size = A4
-        left_margin = 10*mm
-        right_margin = 30*mm  # AMPLIADA PARA ASSINATURA DIGITAL
-        top_margin = 10*mm
-        bottom_margin = 10*mm
-    else:
-        page_size = landscape(A4)
-        left_margin = 8*mm
-        right_margin = 25*mm  # AMPLIADA PARA ASSINATURA DIGITAL
-        top_margin = 8*mm
-        bottom_margin = 8*mm
+    # Margens padronizadas conforme Lei 14.133/2021
+    # 5cm (esquerda/direita), 3cm (superior/inferior)
+    page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=left_margin, 
-        rightMargin=right_margin, 
-        topMargin=top_margin, 
-        bottomMargin=bottom_margin,
+        leftMargin=REPORT_MARGIN_LEFT, 
+        rightMargin=REPORT_MARGIN_RIGHT, 
+        topMargin=REPORT_MARGIN_TOP, 
+        bottomMargin=REPORT_MARGIN_BOTTOM,
         title=f'PAC {pac["secretaria"]} 2026'
     )
     
