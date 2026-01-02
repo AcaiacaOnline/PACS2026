@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import ClassificacaoSelector from '../components/ClassificacaoSelector';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import { TelefoneInput, EmailInput, CurrencyInput, maskCurrency, unmaskCurrency } from '../utils/masks';
 
 const PACEditor = () => {
   const { id } = useParams();
