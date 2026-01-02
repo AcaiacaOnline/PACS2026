@@ -191,14 +191,18 @@ const GestaoProcessual = () => {
 
   const handleExportPDF = async (orientation) => {
     try {
-      const response = await api.get(`/processos/export/pdf?orientation=${orientation}`, {
+      const params = new URLSearchParams({ orientation });
+      if (anoSelecionado) params.append('ano', anoSelecionado);
+      
+      const response = await api.get(`/processos/export/pdf?${params.toString()}`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       const orientationName = orientation === 'landscape' ? 'Paisagem' : 'Retrato';
-      link.setAttribute('download', `Gestao_Processual_${orientationName}.pdf`);
+      const yearSuffix = anoSelecionado ? `_${anoSelecionado}` : '';
+      link.setAttribute('download', `Gestao_Processual_${orientationName}${yearSuffix}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
