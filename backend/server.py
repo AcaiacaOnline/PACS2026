@@ -1977,33 +1977,39 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     elements.append(info_table)
     elements.append(Spacer(1, 5*mm))
     
-    # Tabela de itens - SEM granularidade por secretaria (consolidado)
+    # Tabela de itens - CAMPOS COMPLETOS sem truncamento
+    # Conforme especificação: todos os campos devem ser exibidos integralmente
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=2)))
     
-    # Cabeçalho com coluna de Justificativa
-    table_data = [['#', 'Código', 'Descrição', 'Justificativa', 'Und', 'Qtd Total', 'Valor Unit.', 'Valor Total', 'Prior', 'Classificação']]
+    # Cabeçalhos COMPLETOS conforme especificação técnica
+    table_data = [['#', 'Código\nCATMAT', 'Descrição do Objeto', 'Justificativa da Contratação', 'Und', 'Qtd\nTotal', 'Valor\nUnitário', 'Valor\nTotal', 'Prior.', 'Classificação Orçamentária\n(Código - Subitem)']]
     
     for idx, item in enumerate(items, start=1):
+        # Classificação Orçamentária COMPLETA - destaque para Subitem
         classificacao_text = ''
         if item.get('codigo_classificacao'):
             classificacao_text = f"{item['codigo_classificacao']}"
             if item.get('subitem_classificacao'):
-                classificacao_text += f" - {item['subitem_classificacao']}"
+                # SUBITEM COMPLETO - identificador do PAC para licitação
+                classificacao_text += f"\n{item['subitem_classificacao']}"
         
-        # Justificativa em coluna separada
-        justificativa = item.get('justificativa', '') or ''
+        # Justificativa COMPLETA - sem truncamento
+        justificativa = item.get('justificativa', '') or 'Não informada'
+        
+        # Descrição COMPLETA - sem truncamento
+        descricao = item.get('descricao', '')
         
         table_data.append([
             str(idx),
-            item.get('catmat', '')[:12],
-            Paragraph(f"<font size=7>{item['descricao'][:70]}</font>", styles['Normal']),
-            Paragraph(f"<font size=6>{justificativa[:80]}</font>", styles['Normal']),
-            item['unidade'][:5],
+            item.get('catmat', ''),  # Código COMPLETO
+            Paragraph(f"<font size=7>{descricao}</font>", styles['Normal']),  # Descrição COMPLETA
+            Paragraph(f"<font size=6>{justificativa}</font>", styles['Normal']),  # Justificativa COMPLETA
+            item['unidade'],
             str(int(item.get('quantidade_total', 0))),
             f"R$ {item['valorUnitario']:,.2f}",
             f"R$ {item['valorTotal']:,.2f}",
-            item.get('prioridade', '')[:3],
-            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
+            item.get('prioridade', ''),  # Prioridade COMPLETA
+            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])  # Classificação COMPLETA
         ])
     
     # Linha de total
