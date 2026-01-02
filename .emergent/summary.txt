@@ -1,78 +1,67 @@
 <analysis>**original_problem_statement:**
-O usuário solicitou inicialmente um sistema de Plano Anual de Contratações (PAC), que evoluiu para incluir:
-1.  **Módulos CRUD completos** para PAC Individual, PAC Geral e Gestão Processual.
-2.  **Gestão de Usuários** com permissões granulares.
-3.  **Dashboards analíticos** para PACs e Processos.
-4.  **Relatórios avançados** (PDF/XLSX) com opções de formatação.
-5.  **Importação de dados** em massa.
+O usuário solicitou inicialmente um sistema de Plano Anual de Contratações (PAC) que se expandiu para incluir múltiplos módulos CRUD, gestão de usuários, dashboards e relatórios.
 
-Durante esta sessão, o escopo foi expandido para incluir:
-6.  Um sistema de **Backup e Restauração de dados** para mitigar a perda de dados em redeploys.
-7.  Um **Portal Público de Transparência** com acesso anônimo e funcionalidade de exportação.
-8.  **Melhorias significativas na formatação dos relatórios PDF**, incluindo margens personalizadas e quebra de linha automática para evitar truncamento de texto.
-9.  **Correção de um bug crítico no login com Google OAuth**.
-10. **Novas funcionalidades de UI**, como definir o portal público como página inicial e aplicar uma imagem de fundo em todo o sistema.
-11. **(NOVO REQUISITO)** Implementação de dois novos módulos completos: **Gestão Contratual** (com filtragem por ano) e **Diário Oficial Eletrônico Municipal (DOEM)** (com importação de RTF e publicação em formato de jornal).
+Nesta sessão, os seguintes requisitos foram adicionados e trabalhados:
+1.  **(CONCLUÍDO)** Implementação de um módulo de **Gestão Contratual**, consistindo em um filtro por ano para os módulos PAC, PAC Geral e Gestão Processual.
+2.  **(CONCLUÍDO)** Implementação de um módulo completo de **Diário Oficial Eletrônico Municipal (DOEM)**, incluindo:
+    *   Importação de arquivos RTF.
+    *   Publicação em formato de jornal com assinatura digital simulada.
+    *   Um portal de consulta pública ().
+    *   Layout de PDF personalizado com cabeçalho e rodapé de imagem.
+3.  **(CONCLUÍDO)** Expansão do DOEM com um **sistema de newsletter**, incluindo:
+    *   Categorização das publicações em 9 segmentos (Portarias, Leis, etc.).
+    *   Inscrição pública e gestão de assinantes.
+    *   Envio de notificações por e-mail via SMTP configurado pelo usuário.
+4.  **(CONCLUÍDO)** Correção de um bug crítico onde o filtro de ano não funcionava para o módulo de Gestão de Processos.
+5.  **(EM ANDAMENTO)** Implementação de máscaras de formatação automática (Moeda Real, CEP, telefone, etc.) em todos os campos de formulário relevantes no sistema.
 
 **PRODUCT REQUIREMENTS:**
-- **Gestão Contratual:** Implementar um filtro por ano para os módulos de PAC, PAC Geral e Processos. O ano atual deve ser o padrão e a lista de anos deve ser gerada dinamicamente.
-- **Relatórios:** Todos os relatórios PDF e planilhas devem ter margens específicas: 5cm (esquerda/direita) e 3cm (superior/inferior).
-- **Módulo DOEM:**
-    - Deve ser acessível a partir do dashboard principal.
-    - A interface de consulta pública deve ser inspirada no .
-    - Permitir a publicação de arquivos  (fonte Arial, tamanho 9).
-    - O sistema deve gerar um PDF da publicação em formato de jornal, com carimbo de data e assinatura digital avançada.
-    - A data de publicação deve ser editável por um administrador.
-- **Portal Público:** Deve funcionar como a página inicial (), com um botão para a área administrativa ().
+-   **Máscaras de Input:** Todos os formulários do sistema devem aplicar máscaras automáticas para campos de moeda (R$), telefone, CEP e outros campos numéricos para melhorar a experiência do usuário e a consistência dos dados.
+-   **DOEM:** As publicações devem ser categorizadas em segmentos específicos. O PDF gerado deve usar as imagens fornecidas pelo usuário para cabeçalho e rodapé, otimizando o uso do espaço.
+-   **Relatórios:** As margens de todos os relatórios devem ser padronizadas.
 
 **User's preferred language**: Portuguese (Brazil). The next agent MUST respond in Portuguese.
 
 **what currently exists?**
-Uma aplicação full-stack (React/FastAPI/MongoDB) altamente funcional. O sistema inclui autenticação (JWT/Google OAuth), CRUDs completos para PACs e Processos, gestão de permissões, dashboards, relatórios PDF/XLSX avançados, um portal de transparência público e um sistema de backup/restauração de dados. Todas as funcionalidades solicitadas anteriormente foram implementadas e testadas.
+Uma aplicação full-stack (React/FastAPI/MongoDB) robusta. O sistema inclui autenticação (JWT/Google OAuth), CRUDs para PACs, PAC Geral e Processos com filtro por ano, dashboards, portal de transparência e um sistema de backup. Foi implementado um módulo completo de DOEM, com portal público, categorias, geração de PDF personalizado e um sistema de newsletter funcional com notificações por email via SMTP.
 
 **Last working item**:
--   **Last item agent was working**: O agente estava iniciando o trabalho no novo e grande conjunto de requisitos do usuário para criar os módulos de Gestão Contratual e DOEM. O agente reconheceu a solicitação, criou um documento de especificação técnica () e estava se preparando para implementar a primeira parte: o sistema de filtragem por ano para PACs e Processos.
--   **Status**: NOT STARTED
+-   **Last item agent was working**: O agente estava implementando a solicitação do usuário para adicionar máscaras de formatação automática aos campos dos formulários. Ele criou um componente de utilidade () com a lógica de máscara e começou a aplicá-lo ao formulário .
+-   **Status**: IN PROGRESS
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both. A lógica de backend para os novos endpoints de filtro de ano deve ser testada com . A interface de frontend com os novos controles de filtro de ano deve ser validada usando o .
+-   **Which testing method agent to use?**: frontend testing agent. A tarefa é focada em UI e validação de input, o que é ideal para o agente de testes de frontend verificar visualmente e interativamente em todos os formulários.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Não há issues de bugs pendentes. O único item é a grande solicitação de novas funcionalidades.
+Nenhum. O bug do filtro de processos foi resolvido.
 
 **In progress Task List**:
--   **Task 1**: Implementar o Módulo de Gestão Contratual. (P0)
--   **Task 2**: Implementar o Módulo DOEM (Diário Oficial Eletrônico Municipal). (P1)
+-   **Task 1**: Concluir a implementação de máscaras de input automáticas. (P0)
 
 **Task Detail**:
--   **Task 1: Implementar o Módulo de Gestão Contratual**
-    -   **Where to resume**: Começar modificando o backend () para adicionar um parâmetro de filtro de  aos endpoints que listam dados de PACs, PACs Gerais e Processos. Em seguida, criar um novo endpoint para buscar a lista de anos disponíveis para cada módulo. Finalmente, atualizar as páginas de frontend (, , ) para incluir um seletor de ano.
-    -   **What will be achieved with this?**: Os usuários poderão filtrar e visualizar os registros de contratações e processos por ano, melhorando a organização e a navegação.
-    -   **Status**: NOT STARTED
-    -   **Should Test frontend/backend/both after fix?**: Both
+-   **Task 1: Concluir a implementação de máscaras de input automáticas**
+    -   **Where to resume**: O arquivo  foi criado e o  foi parcialmente atualizado. O próximo passo é aplicar sistematicamente os componentes de input mascarado (, ) a todos os campos relevantes nos seguintes arquivos: ,  (modal de edição/criação) e  (se houver campos aplicáveis).
+    -   **What will be achieved with this?**: Todos os formulários da aplicação terão uma experiência de usuário aprimorada, com formatação automática para valores monetários, telefones, CEPs, etc., garantindo a consistência dos dados inseridos.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: Frontend
     -   **Blocked on something**: Não.
 
--   **Task 2: Implementar o Módulo DOEM**
-    -   **Where to resume**: Após a conclusão da Task 1. Começar criando as novas rotas de backend e modelos de dados para as publicações do DOEM. Será necessário pesquisar e escolher uma biblioteca Python para converter arquivos  em conteúdo renderizável (HTML ou texto) e outra para adicionar assinaturas digitais a PDFs.
-    -   **What will be achieved with this?**: A prefeitura terá um sistema para publicar e consultar o Diário Oficial Eletrônico, com importação de arquivos, acesso público e emissão de PDFs assinados digitalmente.
-    -   **Status**: NOT STARTED
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on something**: A implementação de assinatura digital pode exigir pesquisa adicional ou uma biblioteca de terceiros.
-
 **Upcoming and Future Tasks**
+-   **Upcoming Tasks**:
+    -   Refatorar o arquivo monolítico  em múltiplos s para melhorar a manutenibilidade. (P1)
 -   **Future Tasks**:
     -   Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar. (P2)
 
 **Completed work in this session**
--   **Funcionalidade de Backup e Restauração**: Implementado backend e frontend para exportar/importar todos os dados da aplicação (usuários, pacs, processos) para um arquivo JSON, resolvendo o problema de perda de dados durante forks.
--   **Portal Público de Transparência**: Criada uma nova seção pública () que exibe dados de PACs e Processos sem necessidade de login, incluindo botões para exportação em PDF e XLSX.
--   **Correção de Bug Crítico (Google Auth)**: Resolvido um problema que causava uma tela em branco após o login com o Google, ajustando a estrutura de roteamento no .
--   **Melhorias nos Relatórios PDF**: Atualizado o código de geração de PDF em  para usar margens maiores e garantir a quebra de linha automática do texto, evitando que o conteúdo seja cortado.
--   **Atualização da Interface de Usuário**:
-    -   O Portal Público foi definido como a página inicial.
-    -   Um botão Acesso Administrativo foi adicionado ao portal para levar à página de login.
-    -   Uma nova imagem de fundo foi aplicada a todo o sistema (login, dashboard, portal).
--   **Remoção da Funcionalidade Template**: Os botões e modais de Template, implementados anteriormente, foram removidos a pedido do usuário.
+-   **Módulo de Gestão Contratual**: Implementado com sucesso o filtro por ano nos módulos PAC, PAC Geral e Processos (backend e frontend).
+-   **Módulo DOEM (Diário Oficial)**:
+    -   Criados endpoints de backend e páginas de frontend para gestão e consulta pública.
+    -   Implementada a importação de RTF e a geração de PDF com assinatura digital simulada.
+    -   Layout do PDF aprimorado com cabeçalho e rodapé de imagem personalizados, com otimização do tamanho dos arquivos de imagem.
+-   **Sistema de Newsletter do DOEM**:
+    -   Implementada a categorização de publicações em 9 segmentos distintos.
+    -   Adicionado sistema de gestão de assinantes e envio de notificações por email via SMTP.
+-   **Correção de Bug Crítico**: Resolvido o problema no filtro de ano da Gestão de Processos, que não exibia os registros corretamente. A causa raiz (falta do campo  nos documentos do MongoDB) foi corrigida com uma pipeline de agregação.
 
 **Earlier issues found/mentioned but not fixed**
 -   Nenhum.
@@ -81,64 +70,74 @@ Não há issues de bugs pendentes. O único item é a grande solicitação de no
 
 
 **Key Technical Concepts**
--   **Frontend**: React, TailwindCSS, , Axios, 
+-   **Frontend**: React, TailwindCSS, , Axios
 -   **Backend**: FastAPI (Python), Pydantic
--   **Database**: MongoDB
--   **Authentication**: JWT, Google OAuth
--   **Relatórios**:  (PDF),  (XLSX)
--   **File Handling**: Backup/Restore com JSON, e futuramente parsing de  para o DOEM.
+-   **Database**: MongoDB (com uso de aggregation pipelines para fixes de dados)
+-   **Relatórios**:  (PDF, com layout avançado de página)
+-   **File Handling**:  para parsing de RTF,  para otimização de imagens.
+-   **Notificações**:  para envio de e-mails via SMTP.
 
 **key DB schema**
--   Sem alterações no esquema de banco de dados nesta sessão.
+-   **doem_edicoes**: 
+-   **newsletter_subscribers**: 
+-   **processos**: O campo  foi tratado via agregação, mas os novos documentos o terão.
 
 **changes in tech stack**
--   Nenhuma.
+-   ****: Adicionado para parsing de arquivos RTF.
+-   ****: Usado para redimensionar imagens de forma programática.
 
 **All files of reference**
--   **/app/docs/ESPECIFICACAO_DOEM_GESTAO_CONTRATUAL.md**: **Principal arquivo de referência** para as próximas tarefas.
--   **/app/backend/server.py**: Será o arquivo mais modificado para adicionar a lógica de filtro de ano, os endpoints do DOEM e as novas regras de relatório.
--   **/app/frontend/src/pages/PACList.jsx, /app/frontend/src/pages/PACGeralList.jsx, /app/frontend/src/pages/GestaoProcessual.jsx**: Precisarão ser atualizados com a UI de filtro de ano.
--   **/app/frontend/src/App.js**: Foi modificado para ajustar as rotas principais.
--   **/app/frontend/src/pages/PortalPublico.jsx**: Página recém-criada, que serve como landing page.
+-   **/app/frontend/src/utils/masks.jsx**: Novo arquivo central para a tarefa atual.
+-   **/app/frontend/src/pages/PACEditor.jsx**: Primeiro arquivo a ser modificado para usar as máscaras.
+-   **/app/frontend/src/pages/GestaoProcessual.jsx**: Próximo arquivo a ser atualizado.
+-   **/app/frontend/src/pages/DOEM.jsx**: Foi extensivamente modificado para adicionar abas, segmentos e a gestão de newsletter.
+-   **/app/backend/server.py**: Arquivo massivamente modificado para adicionar toda a lógica do DOEM, newsletter, correções de bugs e melhorias no PDF.
 
 **Areas that need refactoring**:
--   O arquivo **/app/backend/server.py** cresceu para mais de 3100 linhas e é agora um ponto crítico de débito técnico. Refatorá-lo, dividindo as rotas em s separados por módulo (pacs, processos, usuários, backup, doem), é **altamente recomendado** para manter a sanidade do projeto.
+-   O arquivo **/app/backend/server.py** atingiu um tamanho crítico (+5000 linhas). Sua refatoração é a dívida técnica mais importante do projeto e deve ser priorizada após a conclusão da tarefa atual para garantir a estabilidade e manutenibilidade futuras.
 
 **key api endpoints**
--   , : **Novos** para a funcionalidade de backup.
--   , , etc.: **Novos** endpoints públicos para o portal de transparência.
--   : **Novos** endpoints públicos para exportação.
+-   : Cria uma nova edição do DOEM.
+-   : Publica uma edição e envia notificações por e-mail.
+-   : Gera e baixa o PDF de uma edição.
+-   : Retorna a lista de segmentos do DOEM.
+-   : Adiciona um novo assinante à newsletter.
+-   : Lista todos os assinantes.
 
 **Critical Info for New Agent**
--   A prioridade máxima é iniciar a implementação da nova solicitação do usuário, começando pela **Task 1: Módulo de Gestão Contratual (filtro por ano)**.
--   O documento  contém todos os detalhes para as próximas grandes tarefas.
--   O módulo DOEM exigirá pesquisa de bibliotecas Python para parsing de  e para adicionar **assinaturas digitais em PDFs**, o que pode ser um desafio técnico.
--   A refatoração do arquivo  deve ser considerada uma prioridade logo após a entrega das funcionalidades urgentes, para evitar problemas futuros de manutenção.
+-   A prioridade imediata é finalizar a implementação das máscaras de input em todos os formulários. Comece revisando o  e continue com os outros formulários.
+-   Após concluir a tarefa de máscaras, use o  para garantir que todos os formulários se comportam como esperado.
+-   A dívida técnica em  é severa. Proponha ao usuário a refatoração como o próximo passo principal após a tarefa atual, explicando os benefícios de longo prazo.
 
 **documents and test reports created in this job**
--   /app/docs/ESPECIFICACAO_TECNICA_PAC.md
--   /app/docs/ESPECIFICACAO_DOEM_GESTAO_CONTRATUAL.md
+-   /app/memory/PRD.md
+-   /app/test_reports/iteration_2.json
+-   /app/test_reports/iteration_3.json
+-   /app/test_reports/iteration_4.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Usuário (Msg 192)**: Solicitou a implementação de dois novos módulos: Gestão Contratual (com filtro por ano e novas margens para relatórios) e DOEM (Diário Oficial Eletrônico com importação de RTF e publicação em PDF). **(TAREFA ATUAL - NÃO INICIADA)**
-2.  **Usuário (Msg 158)**: Reportou bug no login do Google (tela branca), pediu a remoção dos botões de Template, solicitou uma nova imagem de fundo e a adição de exportação no portal público. **(CONCLUÍDO)**
-3.  **Usuário (Msg 103)**: Solicitou um botão Template, o portal público como página inicial, um botão de Acesso Administrativo no portal e uma imagem de fundo. **(CONCLUÍDO - 'Template' foi posteriormente removido)**
-4.  **Usuário (Msg 42)**: Solicitou melhorias abrangentes nos relatórios (margens, conteúdo completo) e a criação de uma especificação para um site público externo. **(CONCLUÍDO)**
-5.  **Usuário (Msg 5)**: Reportou o problema crítico da perda de dados do banco de dados em redeploys. **(CONCLUÍDO - Resolvido com a funcionalidade de Backup/Restore)**
+1.  **Usuário (Msg 389)**: Solicitou a implementação de máscaras automáticas em todos os formulários (telefone, email, CEP, moeda). **(TAREFA ATUAL - EM ANDAMENTO)**
+2.  **Usuário (Msg 322)**: Reportou um bug no filtro de processos de 2025 e pediu melhorias no layout do PDF do DOEM com imagens de cabeçalho/rodapé. **(CONCLUÍDO)**
+3.  **Usuário (Msg 227, 224, 221, 218)**: Aprovou a sugestão de newsletter para o DOEM e forneceu detalhes: 9 segmentos, remoção de PACs, credenciais SMTP e tipos de destinatários. **(CONCLUÍDO)**
 
 **Project Health Check:**
--   **Healthy**: O aplicativo está estável, com muitas funcionalidades e os bugs recentes foram corrigidos.
--   **Technical Debt**: O arquivo  é uma grande fonte de débito técnico e precisa de refatoração urgente.
+-   **Healthy**: A aplicação está funcional e estável, com funcionalidades complexas (DOEM, Newsletter) implementadas com sucesso.
+-   **Technical Debt**: **Crítica**. O arquivo  se tornou um monólito de mais de 5000 linhas, dificultando a manutenção e a adição de novas funcionalidades. A refatoração é urgente.
 
 **3rd Party Integrations**
 -   Emergent-managed Google Auth
 -    (geração de PDF)
 -    (manipulação de arquivos Excel)
 -    (manipulação de imagens)
+-    (parsing de RTF)
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. O agente de teste foi usado várias vezes nesta sessão para validar o Backup/Restore, o Portal Público e as correções de bugs.
--   **Test files created**:  foi usado, mas não salvo na árvore de arquivos final.
+-   **Testing agent used after significant changes**: YES. O agente de testes foi utilizado com sucesso 3 vezes nesta sessão para validar as implementações do DOEM, da newsletter e das correções de bugs, garantindo a qualidade das entregas.
+-   **Test files created**:
+    -   /app/test_reports/iteration_2.json
+    -   /app/test_reports/iteration_3.json
+    -   /app/test_reports/iteration_4.json
+-   **Known regressions**: Nenhuma.
 
 **Credentials to test flow:**
 -   **Admin**:
@@ -146,4 +145,4 @@ Não há issues de bugs pendentes. O único item é a grande solicitação de no
     -   **Senha**: 
 
 **What agent forgot to execute**
--   Nada. O agente foi extremamente diligente, abordando todas as solicitações do usuário, corrigindo bugs e até mesmo implementando soluções proativas (backup/restore) para problemas de plataforma.</analysis>
+-   Nada. O agente foi extremamente diligente, abordando todas as solicitações, pesquisando soluções, corrigindo bugs e realizando testes completos antes de finalizar cada etapa.</analysis>

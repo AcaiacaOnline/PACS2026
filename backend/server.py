@@ -3914,7 +3914,7 @@ async def enviar_notificacao_doem(edicao: dict, pdf_buffer: BytesIO):
             {lista_pubs}
             
             <div style="text-align: center; margin: 20px 0;">
-                <a href="https://pac-system.preview.emergentagent.com/doem-publico" 
+                <a href="https://muni-docs.preview.emergentagent.com/doem-publico" 
                    style="background: #1F4E78; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                     📥 Acessar o DOEM
                 </a>
@@ -3925,7 +3925,7 @@ async def enviar_notificacao_doem(edicao: dict, pdf_buffer: BytesIO):
             <p style="margin: 0;">Prefeitura Municipal de Acaiaca - MG</p>
             <p style="margin: 5px 0 0 0; opacity: 0.8;">Este é um email automático. Não responda.</p>
             <p style="margin: 5px 0 0 0; opacity: 0.7;">
-                <a href="https://pac-system.preview.emergentagent.com/newsletter/cancelar" style="color: #90caf9;">Cancelar inscrição</a>
+                <a href="https://muni-docs.preview.emergentagent.com/newsletter/cancelar" style="color: #90caf9;">Cancelar inscrição</a>
             </p>
         </div>
     </body>
@@ -4827,7 +4827,7 @@ async def inscricao_publica_newsletter(inscricao: NewsletterInscricaoPublica):
                 <p>Você solicitou inscrição na newsletter do Diário Oficial Eletrônico de Acaiaca.</p>
                 <p>Clique no botão abaixo para confirmar:</p>
                 <div style="text-align: center; margin: 20px 0;">
-                    <a href="https://pac-system.preview.emergentagent.com/api/public/newsletter/confirmar/{token}" 
+                    <a href="https://muni-docs.preview.emergentagent.com/api/public/newsletter/confirmar/{token}" 
                        style="background: #2E7D32; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                         ✅ Confirmar Inscrição
                     </a>
@@ -4871,7 +4871,7 @@ async def confirmar_inscricao(token: str):
         <body style="font-family: Arial; text-align: center; padding: 50px;">
             <h1 style="color: #2E7D32;">✅ Inscrição Confirmada!</h1>
             <p>Você receberá notificações quando novas edições do DOEM forem publicadas.</p>
-            <a href="https://pac-system.preview.emergentagent.com/doem-publico" style="color: #1F4E78;">Acessar o DOEM</a>
+            <a href="https://muni-docs.preview.emergentagent.com/doem-publico" style="color: #1F4E78;">Acessar o DOEM</a>
         </body>
         </html>
         """,
