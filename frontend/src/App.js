@@ -27,7 +27,8 @@ function App() {
       <Toaster position="top-right" />
       <BrowserRouter>
         <Routes>
-          {/* Rota Pública - Portal de Transparência */}
+          {/* Rota Pública - Portal de Transparência (PÁGINA INICIAL) */}
+          <Route path="/" element={<PortalPublico />} />
           <Route path="/transparencia" element={<PortalPublico />} />
           
           {/* Rotas Protegidas */}
@@ -43,7 +44,6 @@ function App() {
           <Route path="/gestao-processual/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </div>
