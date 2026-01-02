@@ -577,6 +577,161 @@ const DOEM = () => {
             })
           )}
         </div>
+          </>
+        ) : (
+          /* Seção de Newsletter */
+          <div className="space-y-6">
+            {/* Estatísticas */}
+            {newsletterStats && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-3xl font-bold text-primary">{newsletterStats.total}</div>
+                  <div className="text-sm text-muted-foreground">Total de Inscritos</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-3xl font-bold text-green-600">{newsletterStats.ativos}</div>
+                  <div className="text-sm text-muted-foreground">Ativos e Confirmados</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-3xl font-bold text-yellow-600">{newsletterStats.pendentes}</div>
+                  <div className="text-sm text-muted-foreground">Pendentes de Confirmação</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground mb-2">Por Tipo:</div>
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between"><span>Público:</span> <span className="font-bold">{newsletterStats.por_tipo?.publico || 0}</span></div>
+                    <div className="flex justify-between"><span>Manual:</span> <span className="font-bold">{newsletterStats.por_tipo?.manual || 0}</span></div>
+                    <div className="flex justify-between"><span>Usuários:</span> <span className="font-bold">{newsletterStats.por_tipo?.usuario || 0}</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Adicionar Inscrito */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Users size={20} />
+                Adicionar Inscrito Manualmente
+              </h3>
+              <form onSubmit={handleAddInscrito} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={newInscrito.email}
+                  onChange={(e) => setNewInscrito({ ...newInscrito, email: e.target.value })}
+                  className="px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Nome"
+                  value={newInscrito.nome}
+                  onChange={(e) => setNewInscrito({ ...newInscrito, nome: e.target.value })}
+                  className="px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                  required
+                />
+                <select
+                  multiple
+                  value={newInscrito.segmentos_interesse}
+                  onChange={(e) => setNewInscrito({ 
+                    ...newInscrito, 
+                    segmentos_interesse: Array.from(e.target.selectedOptions, o => o.value) 
+                  })}
+                  className="px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                >
+                  <option value="">Todos os segmentos</option>
+                  {DOEM_SEGMENTOS.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  <Plus size={18} />
+                  Adicionar
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de Inscritos */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Mail size={20} />
+                  Lista de Inscritos ({inscritos.length})
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Nome</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Segmentos</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {inscritos.map((inscrito) => (
+                      <tr key={inscrito.inscrito_id} className={!inscrito.ativo ? 'opacity-50' : ''}>
+                        <td className="px-4 py-3 text-sm">{inscrito.nome}</td>
+                        <td className="px-4 py-3 text-sm">{inscrito.email}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            inscrito.tipo === 'publico' ? 'bg-blue-100 text-blue-700' :
+                            inscrito.tipo === 'manual' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {inscrito.tipo}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {inscrito.confirmado ? (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <CheckCircle size={14} /> Confirmado
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-yellow-600">
+                              <Clock size={14} /> Pendente
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {inscrito.segmentos_interesse?.length > 0 
+                            ? inscrito.segmentos_interesse.join(', ') 
+                            : 'Todos'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleToggleInscrito(inscrito.inscrito_id)}
+                              className={`px-2 py-1 text-xs rounded ${
+                                inscrito.ativo 
+                                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                            >
+                              {inscrito.ativo ? 'Desativar' : 'Ativar'}
+                            </button>
+                            <button
+                              onClick={() => handleRemoveInscrito(inscrito.inscrito_id)}
+                              className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal de Criação/Edição */}
         {showModal && (
