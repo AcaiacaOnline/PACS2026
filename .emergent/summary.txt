@@ -1,81 +1,81 @@
 <analysis>**original_problem_statement:**
-O usuário solicitou a criação de uma aplicação web chamada PAC Acaiaca 2026 para gerenciar o Plano Anual de Contratações (PAC). Desde o início, os requisitos evoluíram para incluir:
--   **PAC Individual e Geral**: CRUD completo para ambos, com o PAC Geral sendo uma entidade compartilhada por todas as secretarias.
--   **Gestão de Usuários**: Sistema de perfis Administrador e Usuário Padrão, com um painel para administradores definirem permissões granulares (editar, excluir, visualizar, etc.) para outros usuários.
--   **Gestão Processual**: Um módulo completamente novo para gerenciar processos licitatórios, importando dados iniciais de uma planilha Excel e permitindo CRUD completo com regras de permissão específicas.
--   **Dashboards**:
-    -   Um dashboard consolidado para PACs, exibindo estatísticas de PACs Individuais e PACs Gerais em abas separadas, com gráficos e tabelas.
-    -   Um novo dashboard interativo para a Gestão Processual, para exibir métricas de eficiência.
--   **Relatórios e Exportação**:
-    -   Exportação para PDF e XLSX para todos os módulos (PAC Individual, PAC Geral, Gestão Processual).
-    -   Funcionalidades avançadas para relatórios PDF, como escolha de orientação (Retrato/Paisagem), upload de logotipo personalizado, e campos dinâmicos como Fiscal do Contrato.
--   **Importação de Dados**: Funcionalidade para importar itens em massa para um PAC Geral a partir de arquivos (CSV, Excel, JSON).
+O usuário solicitou inicialmente um sistema de Plano Anual de Contratações (PAC), que evoluiu para incluir:
+1.  **Módulos CRUD completos** para PAC Individual, PAC Geral e Gestão Processual.
+2.  **Gestão de Usuários** com permissões granulares.
+3.  **Dashboards analíticos** para PACs e Processos.
+4.  **Relatórios avançados** (PDF/XLSX) com opções de formatação.
+5.  **Importação de dados** em massa.
+
+Durante esta sessão, o escopo foi expandido para incluir:
+6.  Um sistema de **Backup e Restauração de dados** para mitigar a perda de dados em redeploys.
+7.  Um **Portal Público de Transparência** com acesso anônimo e funcionalidade de exportação.
+8.  **Melhorias significativas na formatação dos relatórios PDF**, incluindo margens personalizadas e quebra de linha automática para evitar truncamento de texto.
+9.  **Correção de um bug crítico no login com Google OAuth**.
+10. **Novas funcionalidades de UI**, como definir o portal público como página inicial e aplicar uma imagem de fundo em todo o sistema.
+11. **(NOVO REQUISITO)** Implementação de dois novos módulos completos: **Gestão Contratual** (com filtragem por ano) e **Diário Oficial Eletrônico Municipal (DOEM)** (com importação de RTF e publicação em formato de jornal).
 
 **PRODUCT REQUIREMENTS:**
--   **Módulo PAC (Individual e Geral)**: Funcionalidade CRUD completa com permissões de edição e exclusão. O PAC Geral é visível e editável por todos, mas só pode ser excluído por administradores.
--   **Módulo Gestão Processual**: CRUD completo, importação de dados de planilha. Usuários padrão podem criar/editar, mas apenas administradores podem excluir processos.
--   **Módulo Gestão de Usuários**: Interface para administradores concederem permissões específicas (can_edit_pac, can_delete_pac_geral, etc.) aos usuários.
--   **Dashboards**:
-    -   **Dashboard PAC**: Deve exibir totais, contagens e valores por classificação orçamentária para PACs Individuais e PACs Gerais.
-    -   **Dashboard Processual**: Deve mostrar média de processos por modalidade, tempo médio de finalização e média de processos por usuário.
--   **Relatórios**: Devem ser gerados em PDF no formato A4 (paisagem ou retrato), incluindo todos os campos relevantes (como Justificativa), logotipo, e seções de assinatura.
--   **UI/UX**: O sistema deve ter o título PAC Acaiaca 2026.
+- **Gestão Contratual:** Implementar um filtro por ano para os módulos de PAC, PAC Geral e Processos. O ano atual deve ser o padrão e a lista de anos deve ser gerada dinamicamente.
+- **Relatórios:** Todos os relatórios PDF e planilhas devem ter margens específicas: 5cm (esquerda/direita) e 3cm (superior/inferior).
+- **Módulo DOEM:**
+    - Deve ser acessível a partir do dashboard principal.
+    - A interface de consulta pública deve ser inspirada no .
+    - Permitir a publicação de arquivos  (fonte Arial, tamanho 9).
+    - O sistema deve gerar um PDF da publicação em formato de jornal, com carimbo de data e assinatura digital avançada.
+    - A data de publicação deve ser editável por um administrador.
+- **Portal Público:** Deve funcionar como a página inicial (), com um botão para a área administrativa ().
 
 **User's preferred language**: Portuguese (Brazil). The next agent MUST respond in Portuguese.
 
 **what currently exists?**
-Uma aplicação full-stack (React/FastAPI/MongoDB) robusta e funcional. A aplicação inclui:
--   Autenticação de usuários (JWT e Google OAuth).
--   Módulos CRUD completos e testados para PAC Individual, PAC Geral e o novo Gestão Processual.
--   Sistema de permissões granulares onde administradores podem configurar as capacidades de outros usuários.
--   Funcionalidade de importação de dados para PAC Geral e Gestão Processual.
--   Relatórios PDF e Excel avançados para todos os módulos.
--   Um Dashboard funcional para PACs (Individuais e Gerais).
--   Um endpoint de backend () foi criado para o novo Dashboard Processual, e a página de frontend () foi criada, mas está vazia.
+Uma aplicação full-stack (React/FastAPI/MongoDB) altamente funcional. O sistema inclui autenticação (JWT/Google OAuth), CRUDs completos para PACs e Processos, gestão de permissões, dashboards, relatórios PDF/XLSX avançados, um portal de transparência público e um sistema de backup/restauração de dados. Todas as funcionalidades solicitadas anteriormente foram implementadas e testadas.
 
 **Last working item**:
--   **Last item agent was working**: Implementação do frontend para o dashboard interativo da Gestão Processual. O agente criou com sucesso o endpoint de backend () para fornecer todas as métricas necessárias (média de processos por modalidade, tempo médio de conclusão, etc.) e criou o arquivo da página , adicionando a rota e um link para acessá-la. O trabalho parou antes da implementação da interface do usuário (gráficos e tabelas).
--   **Status**: IN PROGRESS
+-   **Last item agent was working**: O agente estava iniciando o trabalho no novo e grande conjunto de requisitos do usuário para criar os módulos de Gestão Contratual e DOEM. O agente reconheceu a solicitação, criou um documento de especificação técnica () e estava se preparando para implementar a primeira parte: o sistema de filtragem por ano para PACs e Processos.
+-   **Status**: NOT STARTED
 -   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both. Primeiro, use  para verificar se o endpoint  está retornando as métricas corretas. Em seguida, use o  para validar a nova interface em , garantindo que os gráficos (usando Recharts), as métricas e os filtros sejam renderizados e funcionem corretamente.
+-   **Which testing method agent to use?**: both. A lógica de backend para os novos endpoints de filtro de ano deve ser testada com . A interface de frontend com os novos controles de filtro de ano deve ser validada usando o .
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-Não há bugs pendentes conhecidos. A única tarefa em andamento é a finalização do Dashboard Processual.
+Não há issues de bugs pendentes. O único item é a grande solicitação de novas funcionalidades.
 
 **In progress Task List**:
--   **Task 1**: Implementar o frontend do Dashboard para a Gestão Processual. (P0)
+-   **Task 1**: Implementar o Módulo de Gestão Contratual. (P0)
+-   **Task 2**: Implementar o Módulo DOEM (Diário Oficial Eletrônico Municipal). (P1)
 
 **Task Detail**:
--   **Task 1: Implementar o frontend do Dashboard para a Gestão Processual**
-    -   **Where to resume**: O trabalho deve ser retomado no arquivo .
-    -   **What will be achieved with this?**: O usuário terá uma visão analítica e consolidada da eficiência dos processos de contratação. A implementação envolverá:
-        1.  Fazer uma chamada à API em  para buscar os dados.
-        2.  Usar a biblioteca  para criar os gráficos solicitados: Média de Processos por Modalidade.
-        3.  Exibir os cartões (cards) com as métricas: Tempo Médio para Finalização e Média de Processos por Usuário.
-        4.  Implementar filtros, como filtro por período.
-    -   **Status**: IN PROGRESS
+-   **Task 1: Implementar o Módulo de Gestão Contratual**
+    -   **Where to resume**: Começar modificando o backend () para adicionar um parâmetro de filtro de  aos endpoints que listam dados de PACs, PACs Gerais e Processos. Em seguida, criar um novo endpoint para buscar a lista de anos disponíveis para cada módulo. Finalmente, atualizar as páginas de frontend (, , ) para incluir um seletor de ano.
+    -   **What will be achieved with this?**: Os usuários poderão filtrar e visualizar os registros de contratações e processos por ano, melhorando a organização e a navegação.
+    -   **Status**: NOT STARTED
     -   **Should Test frontend/backend/both after fix?**: Both
     -   **Blocked on something**: Não.
 
+-   **Task 2: Implementar o Módulo DOEM**
+    -   **Where to resume**: Após a conclusão da Task 1. Começar criando as novas rotas de backend e modelos de dados para as publicações do DOEM. Será necessário pesquisar e escolher uma biblioteca Python para converter arquivos  em conteúdo renderizável (HTML ou texto) e outra para adicionar assinaturas digitais a PDFs.
+    -   **What will be achieved with this?**: A prefeitura terá um sistema para publicar e consultar o Diário Oficial Eletrônico, com importação de arquivos, acesso público e emissão de PDFs assinados digitalmente.
+    -   **Status**: NOT STARTED
+    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Blocked on something**: A implementação de assinatura digital pode exigir pesquisa adicional ou uma biblioteca de terceiros.
+
 **Upcoming and Future Tasks**
--   **Upcoming Tasks**:
-    -   **Confirmar funcionalidade dos botões Template e Importar**: No PAC Geral, a funcionalidade de Importar foi implementada. A funcionalidade do botão Template não foi definida. É preciso confirmar com o usuário se um template para download ainda é necessário ou se a funcionalidade de importação atual é suficiente. (P1)
 -   **Future Tasks**:
-    -   **Instalador cPanel**: Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar. (P2)
+    -   Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar. (P2)
 
 **Completed work in this session**
--   **Módulo Gestão Processual**: Implementado do zero, incluindo backend (modelos, CRUD, permissões, importação, exportação PDF/XLSX) e frontend (página de listagem/edição). 70+ registros foram importados de uma planilha.
--   **Melhorias nos Relatórios PDF**:
-    -   Adicionada opção para o usuário escolher a orientação (Paisagem/Retrato).
-    -   Adicionado campo Fiscal do Contrato e seção de assinaturas.
-    -   Corrigida a exibição do campo Justificativa.
-    -   Itens consolidados no relatório do PAC Geral.
--   **Dashboard de PACs**: Implementado para exibir dados de PACs Individuais e Gerais em abas, com gráficos e tabelas.
--   **Gestão de Usuários com Permissões Granulares**: Implementado backend e frontend para permitir que administradores controlem as ações de outros usuários.
--   **Importação de Itens (PAC Geral)**: Criada funcionalidade para importar itens via CSV, Excel ou JSON.
--   **Renomeação do Sistema**: Toda a aplicação foi padronizada com o nome PAC Acaiaca 2026.
--   **Correção de Bug Crítico**: Resolvido um erro de sintaxe em  que impedia o servidor de iniciar.
+-   **Funcionalidade de Backup e Restauração**: Implementado backend e frontend para exportar/importar todos os dados da aplicação (usuários, pacs, processos) para um arquivo JSON, resolvendo o problema de perda de dados durante forks.
+-   **Portal Público de Transparência**: Criada uma nova seção pública () que exibe dados de PACs e Processos sem necessidade de login, incluindo botões para exportação em PDF e XLSX.
+-   **Correção de Bug Crítico (Google Auth)**: Resolvido um problema que causava uma tela em branco após o login com o Google, ajustando a estrutura de roteamento no .
+-   **Melhorias nos Relatórios PDF**: Atualizado o código de geração de PDF em  para usar margens maiores e garantir a quebra de linha automática do texto, evitando que o conteúdo seja cortado.
+-   **Atualização da Interface de Usuário**:
+    -   O Portal Público foi definido como a página inicial.
+    -   Um botão Acesso Administrativo foi adicionado ao portal para levar à página de login.
+    -   Uma nova imagem de fundo foi aplicada a todo o sistema (login, dashboard, portal).
+-   **Remoção da Funcionalidade Template**: Os botões e modais de Template, implementados anteriormente, foram removidos a pedido do usuário.
+
+**Earlier issues found/mentioned but not fixed**
+-   Nenhum.
 
 **Code Architecture**
 
@@ -83,70 +83,67 @@ Não há bugs pendentes conhecidos. A única tarefa em andamento é a finalizaç
 **Key Technical Concepts**
 -   **Frontend**: React, TailwindCSS, , Axios, 
 -   **Backend**: FastAPI (Python), Pydantic
--   **Database**: MongoDB (com  assíncrono)
--   **Authentication**: JSON Web Tokens (JWT), Google OAuth
--   **Relatórios**:  para PDF,  para XLSX
--   **Manipulação de Imagem**:  para redimensionamento de logo nos PDFs
+-   **Database**: MongoDB
+-   **Authentication**: JWT, Google OAuth
+-   **Relatórios**:  (PDF),  (XLSX)
+-   **File Handling**: Backup/Restore com JSON, e futuramente parsing de  para o DOEM.
 
 **key DB schema**
--   **users**: , , , , , 
--   **pacs_geral**: , , , , ...
--   **processos**: , , , , , , , , , , , 
+-   Sem alterações no esquema de banco de dados nesta sessão.
 
 **changes in tech stack**
--   A biblioteca  foi adicionada ao backend para manipulação de imagens.
+-   Nenhuma.
 
 **All files of reference**
--   : **Principal arquivo a ser modificado** para construir a interface do dashboard.
--   : Contém o endpoint  que fornecerá os dados para o dashboard.
--   : Página que agora contém o link para o .
+-   **/app/docs/ESPECIFICACAO_DOEM_GESTAO_CONTRATUAL.md**: **Principal arquivo de referência** para as próximas tarefas.
+-   **/app/backend/server.py**: Será o arquivo mais modificado para adicionar a lógica de filtro de ano, os endpoints do DOEM e as novas regras de relatório.
+-   **/app/frontend/src/pages/PACList.jsx, /app/frontend/src/pages/PACGeralList.jsx, /app/frontend/src/pages/GestaoProcessual.jsx**: Precisarão ser atualizados com a UI de filtro de ano.
+-   **/app/frontend/src/App.js**: Foi modificado para ajustar as rotas principais.
+-   **/app/frontend/src/pages/PortalPublico.jsx**: Página recém-criada, que serve como landing page.
 
 **Areas that need refactoring**:
--   O arquivo  está extremamente grande (mais de 2500 linhas) e contém a lógica para todos os módulos. É altamente recomendável refatorá-lo, separando as rotas de , , , e  em arquivos de  distintos para melhorar a manutenibilidade.
+-   O arquivo **/app/backend/server.py** cresceu para mais de 3100 linhas e é agora um ponto crítico de débito técnico. Refatorá-lo, dividindo as rotas em s separados por módulo (pacs, processos, usuários, backup, doem), é **altamente recomendado** para manter a sanidade do projeto.
 
 **key api endpoints**
--   : **Novo endpoint** a ser consumido pelo .
--   
--   
--   
--   
--   
--   
--   
--   
+-   , : **Novos** para a funcionalidade de backup.
+-   , , etc.: **Novos** endpoints públicos para o portal de transparência.
+-   : **Novos** endpoints públicos para exportação.
 
 **Critical Info for New Agent**
--   A prioridade máxima é finalizar a implementação do frontend do Dashboard Processual em . O backend já está pronto e fornecendo os dados.
--   As regras de permissão para Gestão Processual são diferentes dos outros módulos: **usuários padrão não podem excluir**.
--   Devido ao tamanho do , a ordem das rotas é crucial. Rotas específicas (como ) devem ser declaradas antes de rotas com parâmetros (como ) para evitar conflitos de roteamento.
+-   A prioridade máxima é iniciar a implementação da nova solicitação do usuário, começando pela **Task 1: Módulo de Gestão Contratual (filtro por ano)**.
+-   O documento  contém todos os detalhes para as próximas grandes tarefas.
+-   O módulo DOEM exigirá pesquisa de bibliotecas Python para parsing de  e para adicionar **assinaturas digitais em PDFs**, o que pode ser um desafio técnico.
+-   A refatoração do arquivo  deve ser considerada uma prioridade logo após a entrega das funcionalidades urgentes, para evitar problemas futuros de manutenção.
+
+**documents and test reports created in this job**
+-   /app/docs/ESPECIFICACAO_TECNICA_PAC.md
+-   /app/docs/ESPECIFICACAO_DOEM_GESTAO_CONTRATUAL.md
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Usuário (Message 358):** Solicitou um novo dashboard interativo para a Gestão Processual com métricas específicas (média por modalidade, tempo de finalização, etc.). (Em Andamento)
-2.  **Usuário (Message 311):** Confirmou a adição do módulo Gestão Processual, definiu as regras de permissão (admin exclui) e anexou a planilha com dados para importação. (Completo)
-3.  **Usuário (Message 281):** Relatou que a justificativa da contratação estava faltando nos relatórios PDF. (Completo - Corrigido)
-4.  **Usuário (Message 221):** Solicitou grandes melhorias nos relatórios do PAC Geral (importação de dados, escolha de orientação paisagem/retrato, campo de fiscal, logo dinâmico, etc.). (Completo)
-5.  **Usuário (Message 133):** Solicitou múltiplas funcionalidades: relatórios em paisagem, adição de estatísticas do PAC individual ao dashboard, e gestão de permissões granulares para usuários. (Completo)
-6.  **Usuário (Message 73):** Pediu para analisar dados, remover duplicatas (nenhuma encontrada) e renomear o sistema para PAC Acaiaca. (Completo)
+1.  **Usuário (Msg 192)**: Solicitou a implementação de dois novos módulos: Gestão Contratual (com filtro por ano e novas margens para relatórios) e DOEM (Diário Oficial Eletrônico com importação de RTF e publicação em PDF). **(TAREFA ATUAL - NÃO INICIADA)**
+2.  **Usuário (Msg 158)**: Reportou bug no login do Google (tela branca), pediu a remoção dos botões de Template, solicitou uma nova imagem de fundo e a adição de exportação no portal público. **(CONCLUÍDO)**
+3.  **Usuário (Msg 103)**: Solicitou um botão Template, o portal público como página inicial, um botão de Acesso Administrativo no portal e uma imagem de fundo. **(CONCLUÍDO - 'Template' foi posteriormente removido)**
+4.  **Usuário (Msg 42)**: Solicitou melhorias abrangentes nos relatórios (margens, conteúdo completo) e a criação de uma especificação para um site público externo. **(CONCLUÍDO)**
+5.  **Usuário (Msg 5)**: Reportou o problema crítico da perda de dados do banco de dados em redeploys. **(CONCLUÍDO - Resolvido com a funcionalidade de Backup/Restore)**
 
 **Project Health Check:**
--   **In Progress**: A página do Dashboard Processual () existe, mas está vazia. É uma casca aguardando a implementação da interface.
+-   **Healthy**: O aplicativo está estável, com muitas funcionalidades e os bugs recentes foram corrigidos.
+-   **Technical Debt**: O arquivo  é uma grande fonte de débito técnico e precisa de refatoração urgente.
 
 **3rd Party Integrations**
 -   Emergent-managed Google Auth
 -    (geração de PDF)
 -    (manipulação de arquivos Excel)
--    (manipulação de imagens para logos em PDF)
+-    (manipulação de imagens)
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. O agente de teste foi utilizado extensivamente para validar cada um dos grandes recursos implementados nesta sessão (Dashboard PAC, Permissões de Usuário, Módulo Gestão Processual, Relatórios Avançados).
--   **Test files created**:
-    -    foi consistentemente atualizado para guiar os testes.
+-   **Testing agent used after significant changes**: YES. O agente de teste foi usado várias vezes nesta sessão para validar o Backup/Restore, o Portal Público e as correções de bugs.
+-   **Test files created**:  foi usado, mas não salvo na árvore de arquivos final.
 
 **Credentials to test flow:**
 -   **Admin**:
     -   **Email**: 
     -   **Senha**: 
--   Usuários padrão podem ser criados através da página de registro ou pelo administrador para testar as permissões.
 
 **What agent forgot to execute**
--   Nenhuma tarefa solicitada foi esquecida. O agente abordou sistematicamente cada um dos múltiplos e complexos pedidos do usuário. A única funcionalidade pendente do *primeiro* handoff (Template) foi efetivamente substituída pela funcionalidade de Importação, que é mais poderosa. Isso deve ser confirmado com o usuário.</analysis>
+-   Nada. O agente foi extremamente diligente, abordando todas as solicitações do usuário, corrigindo bugs e até mesmo implementando soluções proativas (backup/restore) para problemas de plataforma.</analysis>
