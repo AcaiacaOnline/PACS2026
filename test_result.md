@@ -546,6 +546,102 @@ test_plan:
           agent: "testing"
           comment: "✅ PORTAL PÚBLICO TESTING COMPLETED (Jan 2, 2026): ✅ COMPREHENSIVE TESTING PERFORMED ✅ Dashboard Tab: All 4 summary cards found (PACs Individuais: 2, PACs Gerais: 1, Processos: 70, Valor Total: R$ 825.414,75). Pie chart 'Processos por Status' and bar chart 'Classificações Orçamentárias' both rendering correctly with proper data visualization. ✅ PAC Individual Tab: Table with all required columns (Secretaria, Secretário(a), Ano, Valor Total, Ações) working. Search functionality operational. View button (eye icon) expands to show PAC items with detailed table including classification data. ✅ PAC Geral Tab: Table showing participating secretaries with comma-separated values in 'Participantes' column. All headers present (Secretaria, Responsável, Fiscal, Participantes, Ações). ✅ Processos Tab: All required columns present (Processo, Status, Modalidade, Objeto, Secretaria, Responsável). Status badges correctly colored (44 green for 'Concluído', 3 blue for 'Iniciado'). Search functionality working. ✅ General Features: Header shows 'PAC Acaiaca 2026' and 'Portal da Transparência'. Print button visible and functional. Footer displays 'Prefeitura Municipal de Acaiaca - MG'. Tab navigation working perfectly. Currency values properly formatted in R$ (Brazilian Real). ✅ Public Access: No authentication required - portal accessible at /transparencia route. ALL REQUESTED PORTAL PÚBLICO FUNCTIONALITY VALIDATED AND WORKING PERFECTLY."
 
+  - task: "Portal Público como Página Inicial"
+    implemented: true
+    working: true
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Portal Público successfully loads as homepage at root URL (/). Route configuration correctly shows PortalPublico component as default page. Title 'PAC Acaiaca 2026' and subtitle 'Portal da Transparência' display correctly."
+
+  - task: "Background Image - Tree with Flag"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PortalPublico.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Background image (bg-acaiaca.png) with tree and flag properly applied across all pages. Image displays correctly on homepage, login page, and admin area with appropriate overlay for readability."
+
+  - task: "Acesso Administrativo Button - Yellow/Amber Styling"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PortalPublico.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: 'Acesso Administrativo' button found in header with proper amber/yellow styling (bg-amber-500 hover:bg-amber-600). Button successfully navigates to /login page when clicked."
+
+  - task: "Login Page - Voltar ao Portal Button"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Login.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: 'Voltar ao Portal' button found in top left corner of login page. Button properly styled and positioned. Background image correctly applied to login page."
+
+  - task: "Portal Button in Admin Navigation"
+    implemented: true
+    working: true
+    file: "frontend/src/components/Layout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: 'Portal' button found in admin navigation menu with Globe icon. Button properly positioned and functional, allowing navigation back to public portal from admin area."
+
+  - task: "Template Button - PAC Individual with 3-Step Modal"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACList.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Template button found in PAC Individual page with amber styling (bg-amber-500). Button opens 3-step modal ('Passo 1 de 3', 'Passo 2 de 3', 'Passo 3 de 3') with working navigation. 'Próximo' and 'Voltar' buttons functional. Modal includes progress bar and step indicators. Form fields working correctly in each step."
+
+  - task: "Template Button - PAC Geral with 3-Step Modal"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PACGeralList.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: Template button found in PAC Geral page with amber styling (bg-amber-500). Button opens 3-step modal ('Passo 1 de 3') with proper structure. Modal includes secretarias participantes selection for PAC Geral. All template functionality working as designed."
+
+  - task: "Template Modal Component - 3-Step Wizard"
+    implemented: true
+    working: true
+    file: "frontend/src/components/TemplateModal.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDATED: TemplateModal component fully functional with 3-step wizard interface. Step 1: Dados da Secretaria (header data), Step 2: Adicionar Itens (item management), Step 3: Revisar e Aplicar (review and apply). Progress bar, navigation buttons, form validation, and modal close functionality all working correctly."
+
 agent_communication:
     - agent: "main"
       message: "TASK (Dec 28, 2025): Implementação do módulo Gestão Processual. 1) Criados modelos de dados no backend 2) Implementado CRUD completo com permissões (apenas admin pode excluir) 3) Importação de Excel/CSV 4) Exportação PDF (Paisagem/Retrato) e XLSX 5) 70 processos importados da planilha do usuário. TESTE PENDENTE."
