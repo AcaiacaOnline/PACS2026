@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Plus, Edit, Trash2, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2, Calendar } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -10,11 +10,19 @@ const PACGeralList = () => {
   const [pacs, setPacs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [anos, setAnos] = useState([]);
+  const [anoSelecionado, setAnoSelecionado] = useState(null);
 
   useEffect(() => {
-    fetchPACs();
+    fetchAnos();
     loadUser();
   }, []);
+
+  useEffect(() => {
+    if (anoSelecionado !== null) {
+      fetchPACs();
+    }
+  }, [anoSelecionado]);
 
   const loadUser = () => {
     const userData = localStorage.getItem('user');
@@ -23,9 +31,22 @@ const PACGeralList = () => {
     }
   };
 
-  const fetchPACs = async () => {
+  const fetchAnos = async () => {
     try {
-      const response = await api.get('/pacs-geral');
+      const response = await api.get('/pacs-geral/anos');
+      setAnos(response.data.anos);
+      setAnoSelecionado(response.data.ano_atual);
+    } catch (error) {
+      console.error('Erro ao carregar anos:', error);
+      setAnoSelecionado(new Date().getFullYear());
+    }
+  };
+
+  const fetchPACs = async () => {
+    setLoading(true);
+    try {
+      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+      const response = await api.get(`/pacs-geral${params}`);
       setPacs(response.data);
     } catch (error) {
       toast.error('Erro ao carregar PACs Gerais');
