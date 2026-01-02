@@ -2422,6 +2422,16 @@ async def create_processo(processo_data: ProcessoCreate, request: Request):
         'updated_at': now
     }
     
+    # Extrair ano do numero_processo se não fornecido (ex: PRC - 0006/2025)
+    if not processo_doc.get('ano'):
+        import re
+        numero = processo_doc.get('numero_processo', '')
+        match = re.search(r'/(\d{4})$', numero)
+        if match:
+            processo_doc['ano'] = int(match.group(1))
+        else:
+            processo_doc['ano'] = now.year
+    
     # Converter datas para o formato correto
     if processo_doc.get('data_inicio'):
         processo_doc['data_inicio'] = processo_doc['data_inicio'].isoformat() if isinstance(processo_doc['data_inicio'], datetime) else processo_doc['data_inicio']
