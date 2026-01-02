@@ -294,7 +294,24 @@ const GestaoProcessual = () => {
             <p className="text-muted-foreground mt-1">{processos.length} processo(s) cadastrado(s)</p>
           </div>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Seletor de Ano Visual */}
+            <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
+              <Calendar size={18} className="text-primary" />
+              <select
+                value={anoSelecionado || ''}
+                onChange={(e) => setAnoSelecionado(parseInt(e.target.value))}
+                data-testid="year-filter-select-processos"
+                className="bg-transparent border-none outline-none text-foreground font-semibold cursor-pointer"
+              >
+                {anos.map((ano) => (
+                  <option key={ano} value={ano}>
+                    📁 {ano}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
             <button
               onClick={() => navigate('/gestao-processual/dashboard')}
               className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
