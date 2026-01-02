@@ -1186,10 +1186,14 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     
     # Linha de total
     total = sum(item['valorTotal'] for item in items)
-    table_data.append(['', '', '', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", '', ''])
+    table_data.append(['', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", '', '', ''])
     
-    # Larguras para A4 Paisagem (277mm - margens = ~257mm disponível)
-    col_widths = [0.6*cm, 1.8*cm, 1.2*cm, 5*cm, 4*cm, 1*cm, 1*cm, 1.8*cm, 1.8*cm, 1.2*cm, 5*cm]
+    # Larguras otimizadas para campos COMPLETOS em A4 Paisagem
+    # Total disponível em paisagem: ~252mm (297 - 8 - 25 - margens internas)
+    if orientation.lower() == 'portrait':
+        col_widths = [0.6*cm, 1.5*cm, 4*cm, 1*cm, 0.8*cm, 1.8*cm, 1.8*cm, 1.2*cm, 3*cm, 3*cm]
+    else:
+        col_widths = [0.6*cm, 1.5*cm, 5*cm, 1*cm, 1*cm, 1.8*cm, 2*cm, 1.3*cm, 5*cm, 5*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
