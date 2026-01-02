@@ -819,28 +819,47 @@ const DOEM = () => {
                     </div>
                     
                     <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Segmento</label>
+                      <select
+                        value={newPub.segmento}
+                        onChange={(e) => setNewPub({ 
+                          ...newPub, 
+                          segmento: e.target.value,
+                          tipo: TIPOS_POR_SEGMENTO[e.target.value]?.[0] || 'Decreto'
+                        })}
+                        className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                      >
+                        {DOEM_SEGMENTOS.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
                       <label className="block text-sm font-medium text-foreground mb-1">Tipo</label>
                       <select
                         value={newPub.tipo}
                         onChange={(e) => setNewPub({ ...newPub, tipo: e.target.value })}
                         className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
                       >
-                        {TIPOS_PUBLICACAO.map(t => (
+                        {(TIPOS_POR_SEGMENTO[newPub.segmento] || []).map(t => (
                           <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
                     </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-foreground mb-1">Secretaria</label>
-                    <input
-                      type="text"
-                      value={newPub.secretaria}
-                      onChange={(e) => setNewPub({ ...newPub, secretaria: e.target.value })}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
-                      placeholder="Gabinete do Prefeito"
-                    />
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Secretaria</label>
+                      <input
+                        type="text"
+                        value={newPub.secretaria}
+                        onChange={(e) => setNewPub({ ...newPub, secretaria: e.target.value })}
+                        className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                        placeholder="Gabinete do Prefeito"
+                      />
+                    </div>
                   </div>
                   
                   <div className="mb-4">
