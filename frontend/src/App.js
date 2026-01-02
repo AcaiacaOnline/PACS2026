@@ -11,6 +11,7 @@ import GestaoProcessual from './pages/GestaoProcessual';
 import DashboardProcessual from './pages/DashboardProcessual';
 import Users from './pages/Users';
 import Backup from './pages/Backup';
+import PortalPublico from './pages/PortalPublico';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
@@ -26,6 +27,10 @@ function App() {
       <Toaster position="top-right" />
       <BrowserRouter>
         <Routes>
+          {/* Rota Pública - Portal de Transparência */}
+          <Route path="/transparencia" element={<PortalPublico />} />
+          
+          {/* Rotas Protegidas */}
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/pacs" element={<ProtectedRoute><PACList /></ProtectedRoute>} />
