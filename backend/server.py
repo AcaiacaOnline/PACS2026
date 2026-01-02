@@ -2558,33 +2558,23 @@ async def import_processos(file: UploadFile = File(...), request: Request = None
 
 @api_router.get("/processos/export/pdf")
 async def export_processos_pdf(request: Request, orientation: str = "landscape"):
-    """Exporta todos os processos para PDF com margens otimizadas para assinatura digital"""
+    """Exporta todos os processos para PDF com margens padronizadas"""
     user = await get_current_user(request)
     processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
     
-    # Margens otimizadas para assinatura digital
-    if orientation.lower() == 'portrait':
-        page_size = A4
-        left_margin = 10*mm
-        right_margin = 30*mm  # AMPLIADA PARA ASSINATURA DIGITAL
-        top_margin = 10*mm
-        bottom_margin = 10*mm
-    else:
-        page_size = landscape(A4)
-        left_margin = 8*mm
-        right_margin = 25*mm  # AMPLIADA PARA ASSINATURA DIGITAL
-        top_margin = 8*mm
-        bottom_margin = 8*mm
+    # Margens padronizadas conforme Lei 14.133/2021
+    # 5cm (esquerda/direita), 3cm (superior/inferior)
+    page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        rightMargin=right_margin, 
-        leftMargin=left_margin, 
-        topMargin=top_margin, 
-        bottomMargin=bottom_margin
+        leftMargin=REPORT_MARGIN_LEFT, 
+        rightMargin=REPORT_MARGIN_RIGHT, 
+        topMargin=REPORT_MARGIN_TOP, 
+        bottomMargin=REPORT_MARGIN_BOTTOM
     )
     
     elements = []
