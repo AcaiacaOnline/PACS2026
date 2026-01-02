@@ -60,8 +60,14 @@ const GestaoProcessual = () => {
 
   useEffect(() => {
     fetchUser();
-    fetchProcessos();
+    fetchAnos();
   }, []);
+
+  useEffect(() => {
+    if (anoSelecionado !== null) {
+      fetchProcessos();
+    }
+  }, [anoSelecionado]);
 
   const fetchUser = async () => {
     try {
