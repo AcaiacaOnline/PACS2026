@@ -4294,9 +4294,15 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
     top_margin = 35*mm  # Espaço para cabeçalho com imagem
     bottom_margin = 30*mm  # Espaço para rodapé com imagem
     
-    # Caminhos das imagens
-    brasao_path = ROOT_DIR / 'brasao_doem.png'
-    rodape_path = ROOT_DIR / 'rodape_doem.jpg'
+    # Caminhos das imagens (versões otimizadas)
+    brasao_path = ROOT_DIR / 'brasao_doem_small.png'
+    rodape_path = ROOT_DIR / 'rodape_doem_small.jpg'
+    
+    # Fallback para imagens originais se as otimizadas não existirem
+    if not brasao_path.exists():
+        brasao_path = ROOT_DIR / 'brasao_doem.png'
+    if not rodape_path.exists():
+        rodape_path = ROOT_DIR / 'rodape_doem.jpg'
     
     styles = getSampleStyleSheet()
     
