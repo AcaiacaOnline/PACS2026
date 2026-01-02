@@ -3700,6 +3700,588 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+# ============ MÓDULO DOEM - Diário Oficial Eletrônico Municipal ============
+
+doem_router = APIRouter(prefix="/api/doem", tags=["DOEM"])
+
+# ===== Funções Auxiliares DOEM =====
+
+def parse_rtf_publicacao(rtf_content: bytes) -> list:
+    """
+    Extrai publicações de arquivo RTF.
+    Formato esperado: === TÍTULO === seguido do texto
+    Retorna lista de dicionários com título e texto.
+    """
+    try:
+        # Tentar diferentes encodings
+        for encoding in ['utf-8', 'latin-1', 'cp1252']:
+            try:
+                text = rtf_to_text(rtf_content.decode(encoding))
+                break
+            except:
+                continue
+        else:
+            text = rtf_to_text(rtf_content.decode('latin-1', errors='ignore'))
+        
+        # Regex para extrair publicações separadas por ===
+        pattern = r'===\s*(.+?)\s*===\s*(.*?)(?====|$)'
+        matches = re.findall(pattern, text, re.DOTALL)
+        
+        publicacoes = []
+        for titulo, texto in matches:
+            publicacoes.append({
+                'titulo': titulo.strip(),
+                'texto': texto.strip()
+            })
+        
+        # Se não encontrou o padrão, usar o texto inteiro como uma publicação
+        if not publicacoes and text.strip():
+            # Tentar identificar título na primeira linha
+            lines = text.strip().split('\n')
+            titulo = lines[0].strip() if lines else "Publicação sem título"
+            texto = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ""
+            publicacoes.append({
+                'titulo': titulo,
+                'texto': texto
+            })
+        
+        return publicacoes
+    except Exception as e:
+        logging.error(f"Erro ao parsear RTF: {e}")
+        return []
+
+def gerar_assinatura_simulada(pdf_bytes: bytes) -> DOEMAssinatura:
+    """Gera uma assinatura digital simulada para o documento"""
+    hash_doc = hashlib.sha256(pdf_bytes).hexdigest()
+    return DOEMAssinatura(
+        assinado=True,
+        data_assinatura=datetime.now(timezone.utc),
+        hash_documento=hash_doc,
+        tipo_certificado="ICP-Brasil (Simulado)",
+        titular="Prefeitura Municipal de Acaiaca"
+    )
+
+async def get_doem_config() -> dict:
+    """Obtém ou cria configuração padrão do DOEM"""
+    config = await db.doem_config.find_one({'config_id': 'doem_config_main'}, {'_id': 0})
+    if not config:
+        config = {
+            'config_id': 'doem_config_main',
+            'nome_municipio': 'Acaiaca',
+            'uf': 'MG',
+            'prefeito': '',
+            'ano_inicio': 2026,
+            'ultimo_numero_edicao': 0,
+            'tipos_publicacao': [
+                "Decreto", "Portaria", "Lei", "Edital", 
+                "Aviso", "Extrato de Contrato", "Ata", "Outros"
+            ]
+        }
+        await db.doem_config.insert_one(config)
+    return config
+
+async def get_next_edicao_number() -> int:
+    """Obtém o próximo número de edição"""
+    config = await get_doem_config()
+    next_num = config.get('ultimo_numero_edicao', 0) + 1
+    await db.doem_config.update_one(
+        {'config_id': 'doem_config_main'},
+        {'$set': {'ultimo_numero_edicao': next_num}}
+    )
+    return next_num
+
+# ===== Endpoints Administrativos DOEM =====
+
+@doem_router.get("/config")
+async def get_config(request: Request):
+    """Obtém configurações do DOEM"""
+    await get_current_user(request)
+    config = await get_doem_config()
+    return config
+
+@doem_router.put("/config")
+async def update_config(config_update: DOEMConfigUpdate, request: Request):
+    """Atualiza configurações do DOEM"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem alterar configurações")
+    
+    update_data = {k: v for k, v in config_update.model_dump().items() if v is not None}
+    if update_data:
+        await db.doem_config.update_one(
+            {'config_id': 'doem_config_main'},
+            {'$set': update_data},
+            upsert=True
+        )
+    
+    return await get_doem_config()
+
+@doem_router.get("/edicoes")
+async def list_edicoes(request: Request, ano: int = None, status: str = None):
+    """Lista todas as edições do DOEM"""
+    await get_current_user(request)
+    
+    query = {}
+    if ano:
+        query['ano'] = ano
+    if status:
+        query['status'] = status
+    
+    edicoes = await db.doem_edicoes.find(query, {'_id': 0}).sort('data_publicacao', -1).to_list(500)
+    return edicoes
+
+@doem_router.get("/edicoes/anos")
+async def get_doem_anos(request: Request):
+    """Retorna lista de anos disponíveis no DOEM"""
+    await get_current_user(request)
+    
+    pipeline = [
+        {'$group': {'_id': '$ano'}},
+        {'$sort': {'_id': -1}}
+    ]
+    
+    result = await db.doem_edicoes.aggregate(pipeline).to_list(100)
+    anos = [r['_id'] for r in result if r['_id']]
+    
+    # Garantir que o ano atual esteja na lista
+    ano_atual = datetime.now().year
+    if ano_atual not in anos:
+        anos.append(ano_atual)
+    
+    anos.sort(reverse=True)
+    return {'anos': anos, 'ano_atual': ano_atual}
+
+@doem_router.post("/edicoes")
+async def create_edicao(edicao_data: DOEMEdicaoCreate, request: Request):
+    """Cria uma nova edição do DOEM"""
+    user = await get_current_user(request)
+    
+    edicao_id = f"doem_{uuid.uuid4().hex[:12]}"
+    numero_edicao = await get_next_edicao_number()
+    now = datetime.now(timezone.utc)
+    
+    # Data de publicação padrão: dia seguinte
+    data_pub = edicao_data.data_publicacao or (now + timedelta(days=1))
+    
+    # Converter publicações
+    publicacoes = []
+    for i, pub in enumerate(edicao_data.publicacoes):
+        publicacoes.append({
+            'publicacao_id': f"pub_{uuid.uuid4().hex[:8]}",
+            'titulo': pub.titulo,
+            'texto': pub.texto,
+            'secretaria': pub.secretaria,
+            'tipo': pub.tipo,
+            'ordem': pub.ordem or (i + 1)
+        })
+    
+    edicao_doc = {
+        'edicao_id': edicao_id,
+        'numero_edicao': numero_edicao,
+        'ano': data_pub.year,
+        'data_publicacao': data_pub,
+        'data_criacao': now,
+        'status': 'rascunho',
+        'publicacoes': publicacoes,
+        'criado_por': user.user_id,
+        'assinatura_digital': None,
+        'created_at': now,
+        'updated_at': now
+    }
+    
+    await db.doem_edicoes.insert_one(edicao_doc)
+    edicao_doc.pop('_id', None)
+    return edicao_doc
+
+@doem_router.get("/edicoes/{edicao_id}")
+async def get_edicao(edicao_id: str, request: Request):
+    """Obtém uma edição específica"""
+    await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    return edicao
+
+@doem_router.put("/edicoes/{edicao_id}")
+async def update_edicao(edicao_id: str, edicao_update: DOEMEdicaoUpdate, request: Request):
+    """Atualiza uma edição"""
+    user = await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') == 'publicado' and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Edições publicadas só podem ser alteradas por administradores")
+    
+    update_data = {}
+    
+    if edicao_update.data_publicacao:
+        update_data['data_publicacao'] = edicao_update.data_publicacao
+        update_data['ano'] = edicao_update.data_publicacao.year
+    
+    if edicao_update.status:
+        update_data['status'] = edicao_update.status
+    
+    if edicao_update.publicacoes is not None:
+        publicacoes = []
+        for i, pub in enumerate(edicao_update.publicacoes):
+            publicacoes.append({
+                'publicacao_id': f"pub_{uuid.uuid4().hex[:8]}",
+                'titulo': pub.titulo,
+                'texto': pub.texto,
+                'secretaria': pub.secretaria,
+                'tipo': pub.tipo,
+                'ordem': pub.ordem or (i + 1)
+            })
+        update_data['publicacoes'] = publicacoes
+    
+    if update_data:
+        update_data['updated_at'] = datetime.now(timezone.utc)
+        await db.doem_edicoes.update_one({'edicao_id': edicao_id}, {'$set': update_data})
+    
+    return await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+
+@doem_router.delete("/edicoes/{edicao_id}")
+async def delete_edicao(edicao_id: str, request: Request):
+    """Exclui uma edição (apenas rascunhos)"""
+    user = await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') != 'rascunho' and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas rascunhos podem ser excluídos")
+    
+    await db.doem_edicoes.delete_one({'edicao_id': edicao_id})
+    return {'message': 'Edição excluída com sucesso'}
+
+@doem_router.post("/import-rtf")
+async def import_rtf(file: UploadFile = File(...), request: Request = None):
+    """Importa um arquivo RTF e extrai as publicações"""
+    if request:
+        await get_current_user(request)
+    
+    if not file.filename.lower().endswith('.rtf'):
+        raise HTTPException(status_code=400, detail="Apenas arquivos RTF são aceitos")
+    
+    content = await file.read()
+    publicacoes = parse_rtf_publicacao(content)
+    
+    if not publicacoes:
+        raise HTTPException(status_code=400, detail="Não foi possível extrair publicações do arquivo RTF")
+    
+    return {
+        'filename': file.filename,
+        'publicacoes_extraidas': len(publicacoes),
+        'publicacoes': publicacoes
+    }
+
+@doem_router.post("/edicoes/{edicao_id}/publicar")
+async def publicar_edicao(edicao_id: str, request: Request):
+    """Publica uma edição e gera PDF assinado"""
+    user = await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if not edicao.get('publicacoes'):
+        raise HTTPException(status_code=400, detail="A edição não possui publicações")
+    
+    # Gerar PDF e assinatura
+    pdf_buffer = await gerar_pdf_doem(edicao)
+    assinatura = gerar_assinatura_simulada(pdf_buffer.getvalue())
+    
+    # Atualizar status
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {'$set': {
+            'status': 'publicado',
+            'assinatura_digital': assinatura.model_dump(),
+            'updated_at': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {
+        'message': 'Edição publicada com sucesso',
+        'assinatura': assinatura.model_dump()
+    }
+
+@doem_router.get("/edicoes/{edicao_id}/pdf")
+async def download_pdf_edicao(edicao_id: str, request: Request):
+    """Gera e baixa o PDF de uma edição"""
+    await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    pdf_buffer = await gerar_pdf_doem(edicao)
+    
+    filename = f"DOEM_Acaiaca_Edicao_{edicao['numero_edicao']}_{edicao['ano']}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+async def gerar_pdf_doem(edicao: dict) -> BytesIO:
+    """Gera PDF do DOEM em formato de jornal oficial"""
+    buffer = BytesIO()
+    config = await get_doem_config()
+    
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=REPORT_MARGIN_LEFT,
+        rightMargin=REPORT_MARGIN_RIGHT,
+        topMargin=REPORT_MARGIN_TOP,
+        bottomMargin=REPORT_MARGIN_BOTTOM
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos customizados
+    header_style = ParagraphStyle(
+        'DOEMHeader',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#1F4E78'),
+        alignment=TA_CENTER,
+        spaceAfter=4,
+        fontName='Helvetica-Bold'
+    )
+    
+    subheader_style = ParagraphStyle(
+        'DOEMSubheader',
+        parent=styles['Normal'],
+        fontSize=10,
+        alignment=TA_CENTER,
+        spaceAfter=2
+    )
+    
+    edition_style = ParagraphStyle(
+        'DOEMEdition',
+        parent=styles['Normal'],
+        fontSize=9,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#666666'),
+        spaceAfter=10
+    )
+    
+    section_style = ParagraphStyle(
+        'DOEMSection',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor('#1F4E78'),
+        fontName='Helvetica-Bold',
+        spaceBefore=10,
+        spaceAfter=6
+    )
+    
+    title_style = ParagraphStyle(
+        'DOEMTitle',
+        parent=styles['Heading3'],
+        fontSize=10,
+        fontName='Helvetica-Bold',
+        spaceBefore=8,
+        spaceAfter=4
+    )
+    
+    body_style = ParagraphStyle(
+        'DOEMBody',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica',
+        alignment=TA_JUSTIFY,
+        spaceAfter=6,
+        leading=12
+    )
+    
+    footer_style = ParagraphStyle(
+        'DOEMFooter',
+        parent=styles['Normal'],
+        fontSize=7,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#888888')
+    )
+    
+    # Cabeçalho do jornal
+    elements.append(Paragraph(f'<b>DIÁRIO OFICIAL ELETRÔNICO</b>', header_style))
+    elements.append(Paragraph(f'MUNICÍPIO DE {config["nome_municipio"].upper()} - {config["uf"]}', subheader_style))
+    
+    # Formatação da data
+    data_pub = edicao.get('data_publicacao')
+    if isinstance(data_pub, str):
+        data_pub = datetime.fromisoformat(data_pub.replace('Z', '+00:00'))
+    data_formatada = data_pub.strftime('%d de %B de %Y').replace('January', 'Janeiro').replace('February', 'Fevereiro').replace('March', 'Março').replace('April', 'Abril').replace('May', 'Maio').replace('June', 'Junho').replace('July', 'Julho').replace('August', 'Agosto').replace('September', 'Setembro').replace('October', 'Outubro').replace('November', 'Novembro').replace('December', 'Dezembro')
+    
+    elements.append(Paragraph(
+        f"Edição nº {edicao['numero_edicao']} | Ano {edicao['ano'] - config['ano_inicio'] + 1} | {data_formatada}",
+        edition_style
+    ))
+    
+    # Linha divisória
+    elements.append(Spacer(1, 5*mm))
+    
+    # Agrupar publicações por secretaria
+    publicacoes_por_secretaria = {}
+    for pub in edicao.get('publicacoes', []):
+        secretaria = pub.get('secretaria', 'Gabinete do Prefeito')
+        if secretaria not in publicacoes_por_secretaria:
+            publicacoes_por_secretaria[secretaria] = []
+        publicacoes_por_secretaria[secretaria].append(pub)
+    
+    # Seção: PODER EXECUTIVO
+    elements.append(Paragraph('<b>PODER EXECUTIVO</b>', section_style))
+    
+    # Publicações por secretaria
+    for secretaria, pubs in publicacoes_por_secretaria.items():
+        elements.append(Paragraph(f'<b>{secretaria.upper()}</b>', ParagraphStyle(
+            'Secretaria',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            spaceBefore=6,
+            spaceAfter=4,
+            textColor=colors.HexColor('#333333')
+        )))
+        
+        for pub in sorted(pubs, key=lambda x: x.get('ordem', 1)):
+            elements.append(Paragraph(f'<b>{pub["titulo"]}</b>', title_style))
+            
+            # Quebrar texto em parágrafos
+            texto = pub.get('texto', '').strip()
+            paragrafos = texto.split('\n\n') if '\n\n' in texto else [texto]
+            for paragrafo in paragrafos:
+                if paragrafo.strip():
+                    elements.append(Paragraph(paragrafo.strip(), body_style))
+            
+            elements.append(Spacer(1, 3*mm))
+    
+    # Rodapé com informação de assinatura
+    elements.append(Spacer(1, 10*mm))
+    
+    assinatura = edicao.get('assinatura_digital')
+    if assinatura and assinatura.get('assinado'):
+        elements.append(Paragraph(
+            f"Este documento foi assinado digitalmente em {assinatura.get('data_assinatura', '')[:10]}",
+            footer_style
+        ))
+        elements.append(Paragraph(
+            f"Hash SHA-256: {assinatura.get('hash_documento', '')[:32]}...",
+            footer_style
+        ))
+    
+    elements.append(Paragraph(
+        f"Prefeitura Municipal de {config['nome_municipio']} | CNPJ: 18.294.659/0001-71",
+        footer_style
+    ))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+# ===== Endpoints Públicos DOEM =====
+
+@public_router.get("/doem/edicoes")
+async def public_list_doem_edicoes(ano: int = None, limit: int = 20):
+    """Lista edições publicadas do DOEM (público)"""
+    query = {'status': 'publicado'}
+    if ano:
+        query['ano'] = ano
+    
+    edicoes = await db.doem_edicoes.find(query, {'_id': 0}).sort('data_publicacao', -1).to_list(limit)
+    return edicoes
+
+@public_router.get("/doem/edicoes/{edicao_id}")
+async def public_get_doem_edicao(edicao_id: str):
+    """Obtém uma edição publicada específica (público)"""
+    edicao = await db.doem_edicoes.find_one(
+        {'edicao_id': edicao_id, 'status': 'publicado'},
+        {'_id': 0}
+    )
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada ou não publicada")
+    return edicao
+
+@public_router.get("/doem/edicoes/{edicao_id}/pdf")
+async def public_download_doem_pdf(edicao_id: str):
+    """Download do PDF de uma edição publicada (público)"""
+    edicao = await db.doem_edicoes.find_one(
+        {'edicao_id': edicao_id, 'status': 'publicado'},
+        {'_id': 0}
+    )
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada ou não publicada")
+    
+    pdf_buffer = await gerar_pdf_doem(edicao)
+    
+    filename = f"DOEM_Acaiaca_Edicao_{edicao['numero_edicao']}_{edicao['ano']}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@public_router.get("/doem/anos")
+async def public_get_doem_anos():
+    """Lista anos disponíveis no DOEM (público)"""
+    pipeline = [
+        {'$match': {'status': 'publicado'}},
+        {'$group': {'_id': '$ano'}},
+        {'$sort': {'_id': -1}}
+    ]
+    
+    result = await db.doem_edicoes.aggregate(pipeline).to_list(100)
+    anos = [r['_id'] for r in result if r['_id']]
+    
+    ano_atual = datetime.now().year
+    if ano_atual not in anos:
+        anos.append(ano_atual)
+    
+    anos.sort(reverse=True)
+    return {'anos': anos}
+
+@public_router.get("/doem/busca")
+async def public_buscar_doem(q: str, ano: int = None):
+    """Busca publicações no DOEM (público)"""
+    if not q or len(q) < 3:
+        raise HTTPException(status_code=400, detail="Termo de busca deve ter pelo menos 3 caracteres")
+    
+    query = {
+        'status': 'publicado',
+        '$or': [
+            {'publicacoes.titulo': {'$regex': q, '$options': 'i'}},
+            {'publicacoes.texto': {'$regex': q, '$options': 'i'}}
+        ]
+    }
+    if ano:
+        query['ano'] = ano
+    
+    edicoes = await db.doem_edicoes.find(query, {'_id': 0}).sort('data_publicacao', -1).to_list(100)
+    
+    # Filtrar publicações que contêm o termo
+    resultados = []
+    for edicao in edicoes:
+        for pub in edicao.get('publicacoes', []):
+            if q.lower() in pub.get('titulo', '').lower() or q.lower() in pub.get('texto', '').lower():
+                resultados.append({
+                    'edicao_id': edicao['edicao_id'],
+                    'numero_edicao': edicao['numero_edicao'],
+                    'data_publicacao': edicao['data_publicacao'],
+                    'publicacao': pub
+                })
+    
+    return {'total': len(resultados), 'resultados': resultados[:50]}
+
+# Registrar router DOEM
+app.include_router(doem_router)
+
 app.include_router(api_router)
 app.include_router(public_router)  # Rotas públicas para transparência
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
