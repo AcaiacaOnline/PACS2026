@@ -1412,11 +1412,51 @@ async def get_pacs_geral_stats(request: Request):
     }
 
 # ===== ROTAS PAC GERAL =====
+
+@api_router.get("/pacs-geral/anos")
+async def get_pacs_geral_anos(request: Request):
+    """Retorna lista de anos disponíveis nos PACs Gerais"""
+    user = await get_current_user(request)
+    
+    # Buscar anos distintos dos PACs Gerais
+    pipeline = [
+        {'$match': {'ano': {'$exists': True, '$ne': None}}},
+        {'$group': {'_id': '$ano'}},
+        {'$sort': {'_id': -1}}
+    ]
+    
+    result = await db.pacs_geral.aggregate(pipeline).to_list(100)
+    anos = [r['_id'] for r in result if r['_id']]
+    
+    # Converter para inteiros se necessário
+    anos_int = []
+    for ano in anos:
+        try:
+            anos_int.append(int(ano))
+        except (ValueError, TypeError):
+            pass
+    
+    # Garantir que 2026 e o ano atual estejam na lista (PAC Geral começa em 2026)
+    ano_atual = datetime.now().year
+    anos_base = list(range(2026, ano_atual + 1))
+    
+    for ano in anos_base:
+        if ano not in anos_int:
+            anos_int.append(ano)
+    
+    anos_int.sort(reverse=True)
+    return {'anos': anos_int, 'ano_atual': ano_atual}
+
 @api_router.get("/pacs-geral", response_model=List[PACGeral])
-async def get_pacs_geral(request: Request):
+async def get_pacs_geral(request: Request, ano: str = None):
     user = await get_current_user(request)
     # Todos os usuários podem ver todos os PACs Gerais
-    pacs = await db.pacs_geral.find({}, {'_id': 0}).to_list(1000)
+    
+    query = {}
+    if ano:
+        query['ano'] = str(ano)
+    
+    pacs = await db.pacs_geral.find(query, {'_id': 0}).to_list(1000)
     return pacs
 
 @api_router.post("/pacs-geral", response_model=PACGeral)
