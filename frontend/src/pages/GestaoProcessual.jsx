@@ -117,7 +117,8 @@ const GestaoProcessual = () => {
         data_contrato: processo.data_contrato ? processo.data_contrato.split('T')[0] : '',
         secretaria: processo.secretaria || '',
         secretario: processo.secretario || '',
-        observacoes: processo.observacoes || ''
+        observacoes: processo.observacoes || '',
+        ano: processo.ano || anoSelecionado
       });
     } else {
       setEditingProcesso(null);
@@ -133,7 +134,8 @@ const GestaoProcessual = () => {
         data_contrato: '',
         secretaria: '',
         secretario: '',
-        observacoes: ''
+        observacoes: '',
+        ano: anoSelecionado
       });
     }
     setShowModal(true);
