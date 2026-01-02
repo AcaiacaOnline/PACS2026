@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, FileText, ClipboardList, BarChart3, Download, Printer,
-  Search, Filter, ChevronRight, ExternalLink, Shield, Eye, LogIn, Lock
+  Search, Shield, Eye, Lock, FileSpreadsheet
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell
 } from 'recharts';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const COLORS = ['#1F4E78', '#2E7D32', '#F57C00', '#7B1FA2', '#C62828', '#00838F'];
 
@@ -28,6 +29,7 @@ const PortalPublico = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemDetails, setItemDetails] = useState([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -72,6 +74,42 @@ const PortalPublico = () => {
     }
   };
 
+  const handleExportPDF = async (type, id, orientation = 'landscape') => {
+    setExporting(true);
+    try {
+      let endpoint = '';
+      let filename = '';
+      
+      if (type === 'pac') {
+        endpoint = `/api/public/pacs/${id}/export/pdf?orientation=${orientation}`;
+        filename = `PAC_${id}.pdf`;
+      } else if (type === 'pac-geral') {
+        endpoint = `/api/public/pacs-geral/${id}/export/pdf?orientation=${orientation}`;
+        filename = `PAC_Geral_${id}.pdf`;
+      } else if (type === 'processos') {
+        endpoint = `/api/public/processos/export/pdf?orientation=${orientation}`;
+        filename = `Processos_PAC.pdf`;
+      }
+      
+      const response = await publicApi.get(endpoint, { responseType: 'blob' });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('PDF exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -92,9 +130,7 @@ const PortalPublico = () => {
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-2">
-            <FileText className="w-8 h-8 opacity-80" />
-          </div>
+          <FileText className="w-8 h-8 opacity-80 mb-2" />
           <div className="text-sm opacity-90">PACs Individuais</div>
           <div className="text-3xl font-bold">{stats?.resumo?.total_pacs_individuais || 0}</div>
           <div className="text-sm mt-1 opacity-75">
@@ -103,9 +139,7 @@ const PortalPublico = () => {
         </div>
 
         <div className="bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-2">
-            <Building2 className="w-8 h-8 opacity-80" />
-          </div>
+          <Building2 className="w-8 h-8 opacity-80 mb-2" />
           <div className="text-sm opacity-90">PACs Gerais</div>
           <div className="text-3xl font-bold">{stats?.resumo?.total_pacs_gerais || 0}</div>
           <div className="text-sm mt-1 opacity-75">
@@ -114,17 +148,13 @@ const PortalPublico = () => {
         </div>
 
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-2">
-            <ClipboardList className="w-8 h-8 opacity-80" />
-          </div>
+          <ClipboardList className="w-8 h-8 opacity-80 mb-2" />
           <div className="text-sm opacity-90">Processos</div>
           <div className="text-3xl font-bold">{stats?.resumo?.total_processos || 0}</div>
         </div>
 
         <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-xl shadow-lg text-white">
-          <div className="flex items-center justify-between mb-2">
-            <BarChart3 className="w-8 h-8 opacity-80" />
-          </div>
+          <BarChart3 className="w-8 h-8 opacity-80 mb-2" />
           <div className="text-sm opacity-90">Valor Total</div>
           <div className="text-2xl font-bold">
             {formatCurrency((stats?.resumo?.valor_total_pac || 0) + (stats?.resumo?.valor_total_pac_geral || 0))}
@@ -134,7 +164,6 @@ const PortalPublico = () => {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Processos por Status */}
         <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b">
             <h3 className="text-lg font-bold text-gray-800">Processos por Status</h3>
@@ -163,7 +192,6 @@ const PortalPublico = () => {
           </div>
         </div>
 
-        {/* Classificações Principais */}
         <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b">
             <h3 className="text-lg font-bold text-gray-800">Classificações Orçamentárias</h3>
@@ -231,13 +259,23 @@ const PortalPublico = () => {
                   {formatCurrency(pac.total_value)}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <button
-                    onClick={() => fetchItemDetails('pac', pac.pac_id)}
-                    className="text-blue-600 hover:text-blue-800 p-1"
-                    title="Ver Itens"
-                  >
-                    <Eye size={18} />
-                  </button>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => fetchItemDetails('pac', pac.pac_id)}
+                      className="text-blue-600 hover:text-blue-800 p-1"
+                      title="Ver Itens"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF('pac', pac.pac_id)}
+                      className="text-red-600 hover:text-red-800 p-1"
+                      title="Exportar PDF"
+                      disabled={exporting}
+                    >
+                      <Download size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -248,13 +286,31 @@ const PortalPublico = () => {
       {selectedItem?.type === 'pac' && itemDetails.length > 0 && (
         <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow overflow-hidden mt-4">
           <div className="bg-blue-50 px-4 py-3 border-b flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Itens do PAC</h3>
-            <button
-              onClick={() => { setSelectedItem(null); setItemDetails([]); }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+            <h3 className="font-semibold text-gray-800">Itens do PAC ({itemDetails.length})</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleExportPDF('pac', selectedItem.id, 'landscape')}
+                className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                disabled={exporting}
+              >
+                <Download size={14} />
+                PDF Paisagem
+              </button>
+              <button
+                onClick={() => handleExportPDF('pac', selectedItem.id, 'portrait')}
+                className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                disabled={exporting}
+              >
+                <Download size={14} />
+                PDF Retrato
+              </button>
+              <button
+                onClick={() => { setSelectedItem(null); setItemDetails([]); }}
+                className="text-gray-500 hover:text-gray-700 ml-2"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -313,17 +369,27 @@ const PortalPublico = () => {
                 <td className="px-4 py-3 text-sm">{pac.nome_secretaria}</td>
                 <td className="px-4 py-3 text-sm">{pac.secretario}</td>
                 <td className="px-4 py-3 text-sm">{pac.fiscal_contrato || '-'}</td>
-                <td className="px-4 py-3 text-sm">
+                <td className="px-4 py-3 text-sm max-w-xs truncate">
                   {pac.secretarias_selecionadas?.join(', ')}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <button
-                    onClick={() => fetchItemDetails('pac-geral', pac.pac_geral_id)}
-                    className="text-blue-600 hover:text-blue-800 p-1"
-                    title="Ver Itens"
-                  >
-                    <Eye size={18} />
-                  </button>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => fetchItemDetails('pac-geral', pac.pac_geral_id)}
+                      className="text-blue-600 hover:text-blue-800 p-1"
+                      title="Ver Itens"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF('pac-geral', pac.pac_geral_id)}
+                      className="text-red-600 hover:text-red-800 p-1"
+                      title="Exportar PDF"
+                      disabled={exporting}
+                    >
+                      <Download size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -334,13 +400,31 @@ const PortalPublico = () => {
       {selectedItem?.type === 'pac-geral' && itemDetails.length > 0 && (
         <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow overflow-hidden mt-4">
           <div className="bg-green-50 px-4 py-3 border-b flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Itens do PAC Geral</h3>
-            <button
-              onClick={() => { setSelectedItem(null); setItemDetails([]); }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+            <h3 className="font-semibold text-gray-800">Itens do PAC Geral ({itemDetails.length})</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleExportPDF('pac-geral', selectedItem.id, 'landscape')}
+                className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                disabled={exporting}
+              >
+                <Download size={14} />
+                PDF Paisagem
+              </button>
+              <button
+                onClick={() => handleExportPDF('pac-geral', selectedItem.id, 'portrait')}
+                className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                disabled={exporting}
+              >
+                <Download size={14} />
+                PDF Retrato
+              </button>
+              <button
+                onClick={() => { setSelectedItem(null); setItemDetails([]); }}
+                className="text-gray-500 hover:text-gray-700 ml-2"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -384,7 +468,7 @@ const PortalPublico = () => {
 
   const renderProcessos = () => (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center justify-between gap-4 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -394,6 +478,16 @@ const PortalPublico = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white/90"
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleExportPDF('processos', null, 'landscape')}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+            disabled={exporting}
+          >
+            <Download size={18} />
+            Exportar PDF
+          </button>
         </div>
       </div>
 
@@ -448,11 +542,8 @@ const PortalPublico = () => {
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{ 
-        backgroundImage: 'url(/bg-acaiaca.png)',
-      }}
+      style={{ backgroundImage: 'url(/bg-acaiaca.png)' }}
     >
-      {/* Overlay para melhorar legibilidade */}
       <div className="min-h-screen bg-black/30 backdrop-blur-[2px]">
         {/* Header */}
         <header className="bg-[#1F4E78]/95 backdrop-blur-sm text-white shadow-lg print:hidden">
