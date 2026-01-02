@@ -1237,16 +1237,22 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     ]))
     
     elements.append(table)
-    elements.append(Spacer(1, 8*mm))
+    elements.append(Spacer(1, 10*mm))
     
-    # Assinaturas na mesma página se couber
+    # Área de Assinaturas - otimizada para assinatura digital
+    # As assinaturas são posicionadas à esquerda, deixando espaço na margem direita
+    elements.append(Paragraph('<b>ASSINATURAS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=8)))
+    
     sig_data = [
-        ['_' * 45, '_' * 45],
+        ['_' * 50, '_' * 50],
         [pac['secretario'], pac['fiscal']],
-        ['Secretário(a) Responsável', 'Fiscal do Contrato']
+        ['Secretário(a) Responsável', 'Fiscal do Contrato'],
+        ['', ''],
+        ['Data: ___/___/______', 'Data: ___/___/______']
     ]
     
-    sig_table = Table(sig_data, colWidths=[12*cm, 12*cm])
+    # Largura reduzida para deixar espaço para assinatura digital na margem direita
+    sig_table = Table(sig_data, colWidths=[10*cm, 10*cm])
     sig_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTSIZE', (0, 0), (-1, -1), 9),
@@ -1254,6 +1260,7 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
         ('FONTSIZE', (0, 2), (-1, 2), 8),
         ('TOPPADDING', (0, 0), (-1, 0), 0),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 2),
+        ('TOPPADDING', (0, 4), (-1, 4), 8),
     ]))
     
     elements.append(sig_table)
