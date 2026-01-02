@@ -310,6 +310,7 @@ const DOEM = () => {
       titulo: p.titulo,
       texto: p.texto,
       secretaria: 'Gabinete do Prefeito',
+      segmento: 'Decretos',
       tipo: 'Decreto',
       ordem: formData.publicacoes.length + i + 1
     }));
@@ -322,6 +323,52 @@ const DOEM = () => {
     setImportedPubs([]);
     setShowImportModal(false);
     toast.success('Publicações adicionadas à edição');
+  };
+
+  // Funções de Newsletter
+  const handleAddInscrito = async (e) => {
+    e.preventDefault();
+    if (!newInscrito.email || !newInscrito.nome) {
+      toast.error('Preencha email e nome');
+      return;
+    }
+    
+    try {
+      await api.post('/newsletter/inscritos', {
+        ...newInscrito,
+        confirmado: true
+      });
+      toast.success('Inscrito adicionado com sucesso!');
+      setNewInscrito({ email: '', nome: '', segmentos_interesse: [] });
+      setShowNewsletterModal(false);
+      fetchInscritos();
+      fetchNewsletterStats();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao adicionar inscrito');
+    }
+  };
+
+  const handleToggleInscrito = async (inscritoId) => {
+    try {
+      await api.put(`/newsletter/inscritos/${inscritoId}/toggle`);
+      fetchInscritos();
+      fetchNewsletterStats();
+    } catch (error) {
+      toast.error('Erro ao alterar status');
+    }
+  };
+
+  const handleRemoveInscrito = async (inscritoId) => {
+    if (!window.confirm('Tem certeza que deseja remover este inscrito?')) return;
+    
+    try {
+      await api.delete(`/newsletter/inscritos/${inscritoId}`);
+      toast.success('Inscrito removido');
+      fetchInscritos();
+      fetchNewsletterStats();
+    } catch (error) {
+      toast.error('Erro ao remover inscrito');
+    }
   };
 
   const formatDate = (dateStr) => {
