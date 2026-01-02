@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, Plus, FolderOpen, FileText } from 'lucide-react';
+import { Edit, Trash2, Plus, FolderOpen } from 'lucide-react';
 import Layout from '../components/Layout';
-import TemplateModal from '../components/TemplateModal';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -11,7 +10,6 @@ const PACList = () => {
   const [pacs, setPacs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -52,27 +50,6 @@ const PACList = () => {
     }
   };
 
-  const handleApplyTemplate = async (templateData) => {
-    try {
-      // Criar novo PAC com os dados do template
-      const pacResponse = await api.post('/pacs', templateData.header);
-      const pacId = pacResponse.data.pac_id;
-      
-      // Adicionar itens ao PAC
-      for (const item of templateData.items) {
-        const { id, ...itemData } = item;
-        itemData.valorTotal = itemData.quantidade * itemData.valorUnitario;
-        await api.post(`/pacs/${pacId}/items`, itemData);
-      }
-      
-      toast.success(`PAC criado com ${templateData.items.length} itens!`);
-      fetchPACs();
-      navigate(`/pacs/${pacId}/edit`);
-    } catch (error) {
-      toast.error('Erro ao aplicar template');
-    }
-  };
-
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -103,24 +80,14 @@ const PACList = () => {
             <h2 className="text-3xl font-heading font-bold text-foreground">Meus PACs Salvos</h2>
             <p className="text-muted-foreground mt-1">{pacs.length} PAC(s) cadastrado(s)</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowTemplateModal(true)}
-              className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors shadow-sm"
-              title="Usar Template"
-            >
-              <FileText size={18} />
-              Template
-            </button>
-            <button
-              onClick={() => navigate('/pacs/new')}
-              data-testid="create-pac-btn"
-              className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
-            >
-              <Plus size={18} />
-              Criar Novo PAC
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/pacs/new')}
+            data-testid="create-pac-btn"
+            className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+            Criar Novo PAC
+          </button>
         </div>
 
         {pacs.length === 0 ? (
