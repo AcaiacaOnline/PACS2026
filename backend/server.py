@@ -2020,11 +2020,13 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
         str(int(total_qtd)), '', f"R$ {total:,.2f}", '', ''
     ])
     
-    # Larguras das colunas ajustadas para relatório com Justificativa
+    # Larguras otimizadas para campos COMPLETOS
+    # Paisagem: ~244mm disponíveis (297 - 8 - 25 - margens internas)
+    # Retrato: ~150mm disponíveis (210 - 10 - 30 - margens internas)
     if orientation.lower() == 'portrait':
-        col_widths = [0.6*cm, 1.3*cm, 4*cm, 3.5*cm, 0.9*cm, 1.2*cm, 1.8*cm, 1.8*cm, 0.8*cm, 2.8*cm]
+        col_widths = [0.5*cm, 1.2*cm, 3.5*cm, 3*cm, 0.8*cm, 1*cm, 1.5*cm, 1.6*cm, 0.8*cm, 2.5*cm]
     else:
-        col_widths = [0.7*cm, 1.5*cm, 5.5*cm, 5*cm, 1.2*cm, 1.5*cm, 2.2*cm, 2.4*cm, 1*cm, 4.5*cm]
+        col_widths = [0.6*cm, 1.5*cm, 5*cm, 5*cm, 1*cm, 1.2*cm, 2*cm, 2.2*cm, 1*cm, 4.5*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
