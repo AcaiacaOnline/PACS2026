@@ -521,9 +521,10 @@ const GestaoProcessual = () => {
                     <input
                       type="text"
                       value={formData.numero_processo}
-                      onChange={(e) => setFormData({ ...formData, numero_processo: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, numero_processo: maskProcesso(e.target.value) })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
                       placeholder="PRC - 0001/2025"
+                      maxLength={16}
                       required
                     />
                   </div>
