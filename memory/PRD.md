@@ -8,9 +8,11 @@ Sistema completo de Plano Anual de Contratações (PAC) para a Prefeitura Munici
 - **Backend**: FastAPI (Python) + MongoDB
 - **Autenticação**: JWT + Google OAuth (via Emergent)
 - **Relatórios**: ReportLab (PDF) + OpenPyXL (Excel)
+- **Email**: SMTP SSL (mail.acaiaca.mg.gov.br:465)
 
 ## Credenciais de Teste
 - **Admin**: cristiano.abdo@acaiaca.mg.gov.br / Cris@820906
+- **SMTP**: naoresponda@acaiaca.mg.gov.br / Pma@3120
 
 ---
 
@@ -42,72 +44,84 @@ Sistema completo de Plano Anual de Contratações (PAC) para a Prefeitura Munici
 - [x] Importação em massa (Excel)
 - [x] Exportação PDF/XLSX
 
-### 5. DOEM - Diário Oficial Eletrônico Municipal ✨ NOVO
-- [x] **Página administrativa** (/doem)
+### 5. DOEM - Diário Oficial Eletrônico Municipal ✨
+- [x] **9 Segmentos de Publicação**:
+  - Portarias
+  - Leis
+  - Decretos
+  - Resoluções
+  - Editais
+  - Prestações de Contas
+  - Processos Administrativos
+  - Publicações do Legislativo
+  - Publicações do Terceiro Setor
+- [x] **Tipos dinâmicos por segmento** (ex: Decreto → "Decreto", "Decreto Regulamentar")
+- [x] **Página Administrativa** (`/doem`)
   - Criar/editar edições
-  - Adicionar publicações (decreto, portaria, lei, edital, etc.)
   - Importar arquivo RTF
-  - Publicar edição com assinatura digital (SIMULADA)
+  - Publicar com assinatura digital (SIMULADA)
   - Download PDF em formato de jornal oficial
-- [x] **Portal público** (/doem-publico)
-  - Visualização por ano (acordeão)
+- [x] **Portal Público** (`/doem-publico`)
+  - Interface inspirada no jornalminasgerais.mg.gov.br
   - Busca de publicações
   - Download de PDFs
-  - Interface inspirada no jornalminasgerais.mg.gov.br
 
-### 6. Portal de Transparência
+### 6. Sistema de Newsletter ✨ NOVO
+- [x] **Gestão de Inscritos** (admin)
+  - Adicionar manualmente
+  - Ativar/desativar
+  - Excluir
+  - Estatísticas (total, ativos, pendentes, por tipo)
+- [x] **Inscrição Pública**
+  - Formulário público com confirmação por email
+  - Seleção de segmentos de interesse
+- [x] **Notificações Automáticas**
+  - Envio via SMTP próprio ao publicar edição
+  - Email HTML com lista de publicações
+  - PDF anexo da edição
+
+### 7. Portal de Transparência
 - [x] Acesso público sem login
 - [x] Dashboard com estatísticas
 - [x] Visualização de PACs e Processos
 - [x] Exportação pública PDF/XLSX
 - [x] Link para DOEM público
 
-### 7. Backup e Restauração
+### 8. Backup e Restauração
 - [x] Exportação completa de dados (JSON)
 - [x] Importação/restauração de backup
 - [x] Proteção contra perda de dados
-
-### 8. Relatórios
-- [x] PDF com margens padronizadas (5cm E/D, 3cm S/I)
-- [x] Excel formatado
-- [x] Quebra de linha automática
 
 ---
 
 ## Endpoints de API Principais
 
-### Autenticação
-- `POST /api/auth/login` - Login JWT
-- `POST /api/auth/register` - Registro
-- `GET /api/auth/me` - Usuário atual
-- `GET /api/auth/google-login` - OAuth Google
-
-### PAC Individual
-- `GET /api/pacs/anos` - Anos disponíveis
-- `GET /api/pacs?ano=2026` - Listar com filtro
-- `POST /api/pacs` - Criar PAC
-- `GET /api/pacs/{id}/export/pdf` - Exportar PDF
-
-### PAC Geral
-- `GET /api/pacs-geral/anos` - Anos disponíveis
-- `GET /api/pacs-geral?ano=2026` - Listar com filtro
-
-### Processos
-- `GET /api/processos/anos` - Anos disponíveis
-- `GET /api/processos?ano=2025` - Listar com filtro
-
 ### DOEM
-- `GET /api/doem/config` - Configuração
+- `GET /api/doem/segmentos` - Lista 9 segmentos e tipos
 - `GET /api/doem/edicoes` - Listar edições
 - `POST /api/doem/edicoes` - Criar edição
-- `POST /api/doem/import-rtf` - Importar RTF
-- `POST /api/doem/edicoes/{id}/publicar` - Publicar
-- `GET /api/doem/edicoes/{id}/pdf` - Download PDF
+- `POST /api/doem/edicoes/{id}/publicar` - Publicar (envia notificações)
 
-### Públicos
-- `GET /api/public/doem/edicoes` - Edições publicadas
-- `GET /api/public/doem/busca?q=termo` - Buscar
-- `GET /api/public/doem/edicoes/{id}/pdf` - Download
+### Newsletter
+- `GET /api/newsletter/inscritos` - Listar inscritos (admin)
+- `POST /api/newsletter/inscritos` - Adicionar inscrito (admin)
+- `PUT /api/newsletter/inscritos/{id}/toggle` - Ativar/desativar
+- `DELETE /api/newsletter/inscritos/{id}` - Remover
+- `GET /api/newsletter/estatisticas` - Estatísticas
+- `POST /api/public/newsletter/inscrever` - Inscrição pública
+
+---
+
+## Configuração SMTP
+
+As credenciais estão em `/app/backend/.env`:
+```
+SMTP_SERVER=mail.acaiaca.mg.gov.br
+SMTP_PORT=465
+SMTP_EMAIL=naoresponda@acaiaca.mg.gov.br
+SMTP_PASSWORD=Pma@3120
+SMTP_USE_SSL=true
+```
 
 ---
 
@@ -117,17 +131,13 @@ Sistema completo de Plano Anual de Contratações (PAC) para a Prefeitura Munici
 A assinatura digital do DOEM está **SIMULADA**:
 - Gera hash SHA-256 do documento
 - Não usa certificado ICP-Brasil real
-- O certificado .pfx do usuário foi anexado mas não integrado
-- Para produção: integrar com biblioteca `endesive` ou similar
 
 ### Margens de Relatórios
-Todas as exportações PDF usam margens padronizadas:
 - Esquerda/Direita: 5cm (50mm)
 - Superior/Inferior: 3cm (30mm)
 
 ### Débito Técnico
-- O arquivo `server.py` possui +4000 linhas e precisa de refatoração
-- Recomendado: dividir em routers por módulo (pacs, processos, doem, etc.)
+- O arquivo `server.py` possui +4500 linhas e precisa de refatoração
 
 ---
 
@@ -142,33 +152,30 @@ Todas as exportações PDF usam margens padronizadas:
 
 ### P2 - Baixa Prioridade
 - [ ] Finalizar versão cPanel (PHP/MySQL)
-- [ ] Notificações por email
 - [ ] Histórico de alterações
 
 ---
 
 ## Histórico de Versões
 
+### v1.4.0 - 02/01/2026
+- ✅ Expandido DOEM com 9 segmentos de publicação
+- ✅ Tipos de publicação dinâmicos por segmento
+- ✅ Sistema completo de Newsletter
+- ✅ Gestão de inscritos (admin)
+- ✅ Inscrição pública com confirmação por email
+- ✅ Notificações automáticas via SMTP próprio
+
 ### v1.3.0 - 02/01/2026
-- ✅ Implementado filtro de ano para PAC, PAC Geral e Processos
-- ✅ Criado módulo DOEM completo (admin + público)
-- ✅ Importação de RTF para publicações
-- ✅ Geração de PDF em formato jornal oficial
-- ✅ Assinatura digital simulada
-- ✅ Link DOEM no Portal de Transparência
+- ✅ Filtro de ano para PAC, PAC Geral e Processos
+- ✅ Módulo DOEM básico
 
 ### v1.2.0 - 01/01/2026
 - Sistema de Backup e Restauração
 - Portal Público de Transparência
-- Correção Google OAuth
-- Melhorias nas margens dos PDFs
 
 ### v1.1.0
 - Gestão Processual com Dashboard
-- Importação de processos em massa
-- Permissões granulares
 
 ### v1.0.0
 - MVP inicial com PAC Individual e PAC Geral
-- Autenticação JWT e Google OAuth
-- Relatórios PDF/XLSX
