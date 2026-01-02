@@ -1033,7 +1033,12 @@ async def export_xlsx(pac_id: str, request: Request):
     return StreamingResponse(output, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.xlsx'})
 
 @api_router.get("/pacs/{pac_id}/export/pdf")
-async def export_pdf(pac_id: str, request: Request):
+async def export_pdf(pac_id: str, request: Request, orientation: str = "landscape"):
+    """
+    Exporta PAC Individual para PDF com margens otimizadas para assinatura digital.
+    Args:
+        orientation: 'landscape' (paisagem) ou 'portrait' (retrato)
+    """
     user = await get_current_user(request)
     pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
     if not pac:
@@ -1041,14 +1046,29 @@ async def export_pdf(pac_id: str, request: Request):
     items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
-    # A4 Paisagem com margens mínimas para impressão
+    
+    # Configuração de margens otimizadas para assinatura digital
+    # Margem direita ampliada para permitir assinatura digital em lote
+    if orientation.lower() == 'portrait':
+        page_size = A4
+        left_margin = 10*mm
+        right_margin = 30*mm  # AMPLIADA PARA ASSINATURA DIGITAL
+        top_margin = 10*mm
+        bottom_margin = 10*mm
+    else:
+        page_size = landscape(A4)
+        left_margin = 8*mm
+        right_margin = 25*mm  # AMPLIADA PARA ASSINATURA DIGITAL
+        top_margin = 8*mm
+        bottom_margin = 8*mm
+    
     doc = SimpleDocTemplate(
         buffer, 
-        pagesize=landscape(A4),  # A4 Paisagem
-        leftMargin=10*mm, 
-        rightMargin=10*mm, 
-        topMargin=10*mm, 
-        bottomMargin=10*mm,
+        pagesize=page_size,
+        leftMargin=left_margin, 
+        rightMargin=right_margin, 
+        topMargin=top_margin, 
+        bottomMargin=bottom_margin,
         title=f'PAC {pac["secretaria"]} 2026'
     )
     
