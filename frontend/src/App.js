@@ -96,6 +96,7 @@ const AppRoutes = () => {
       {/* Rota Pública - Portal de Transparência (PÁGINA INICIAL) */}
       <Route path="/" element={<PortalPublico />} />
       <Route path="/transparencia" element={<PortalPublico />} />
+      <Route path="/doem-publico" element={<DOEMPublico />} />
       
       {/* Rotas Protegidas */}
       <Route path="/login" element={<Login />} />
@@ -108,6 +109,7 @@ const AppRoutes = () => {
       <Route path="/pacs-geral/new" element={<ProtectedRoute><PACGeralEditor /></ProtectedRoute>} />
       <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
       <Route path="/gestao-processual/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
+      <Route path="/doem" element={<ProtectedRoute><DOEM /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
     </Routes>
