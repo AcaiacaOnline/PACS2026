@@ -4202,8 +4202,8 @@ async def import_rtf(file: UploadFile = File(...), request: Request = None):
     }
 
 @doem_router.post("/edicoes/{edicao_id}/publicar")
-async def publicar_edicao(edicao_id: str, request: Request):
-    """Publica uma edição e gera PDF assinado"""
+async def publicar_edicao(edicao_id: str, request: Request, background_tasks: BackgroundTasks, enviar_notificacao: bool = True):
+    """Publica uma edição e gera PDF assinado, opcionalmente envia notificações"""
     user = await get_current_user(request)
     
     edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
@@ -4223,12 +4223,29 @@ async def publicar_edicao(edicao_id: str, request: Request):
         {'$set': {
             'status': 'publicado',
             'assinatura_digital': assinatura.model_dump(),
+            'notificacao_enviada': False,
             'updated_at': datetime.now(timezone.utc)
         }}
     )
     
+    # Enviar notificações em background
+    notificacao_msg = ""
+    if enviar_notificacao:
+        edicao_atualizada = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+        pdf_buffer.seek(0)  # Reset buffer position
+        try:
+            enviados = await enviar_notificacao_doem(edicao_atualizada, pdf_buffer)
+            await db.doem_edicoes.update_one(
+                {'edicao_id': edicao_id},
+                {'$set': {'notificacao_enviada': True}}
+            )
+            notificacao_msg = f" Notificações enviadas para {enviados} destinatário(s)."
+        except Exception as e:
+            logging.error(f"Erro ao enviar notificações: {e}")
+            notificacao_msg = " Falha ao enviar notificações."
+    
     return {
-        'message': 'Edição publicada com sucesso',
+        'message': f'Edição publicada com sucesso!{notificacao_msg}',
         'assinatura': assinatura.model_dump()
     }
 
