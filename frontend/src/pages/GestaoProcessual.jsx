@@ -34,6 +34,8 @@ const GestaoProcessual = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterModalidade, setFilterModalidade] = useState('');
+  const [anos, setAnos] = useState([]);
+  const [anoSelecionado, setAnoSelecionado] = useState(null);
   
   const [showModal, setShowModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
