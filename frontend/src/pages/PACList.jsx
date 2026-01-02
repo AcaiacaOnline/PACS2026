@@ -101,14 +101,32 @@ const PACList = () => {
             <h2 className="text-3xl font-heading font-bold text-foreground">Meus PACs Salvos</h2>
             <p className="text-muted-foreground mt-1">{pacs.length} PAC(s) cadastrado(s)</p>
           </div>
-          <button
-            onClick={() => navigate('/pacs/new')}
-            data-testid="create-pac-btn"
-            className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
-          >
-            <Plus size={18} />
-            Criar Novo PAC
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Seletor de Ano */}
+            <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
+              <Calendar size={18} className="text-primary" />
+              <select
+                value={anoSelecionado || ''}
+                onChange={(e) => setAnoSelecionado(parseInt(e.target.value))}
+                data-testid="year-filter-select"
+                className="bg-transparent border-none outline-none text-foreground font-semibold cursor-pointer"
+              >
+                {anos.map((ano) => (
+                  <option key={ano} value={ano}>
+                    📁 {ano}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => navigate('/pacs/new')}
+              data-testid="create-pac-btn"
+              className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
+            >
+              <Plus size={18} />
+              Criar Novo PAC
+            </button>
+          </div>
         </div>
 
         {pacs.length === 0 ? (
