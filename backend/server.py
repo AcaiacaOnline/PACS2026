@@ -1868,10 +1868,10 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        rightMargin=margin, 
-        leftMargin=margin, 
-        topMargin=margin, 
-        bottomMargin=margin
+        rightMargin=25*mm if orientation.lower() == 'landscape' else 30*mm,  # AMPLIADA PARA ASSINATURA DIGITAL
+        leftMargin=margin if orientation.lower() == 'portrait' else 8*mm, 
+        topMargin=margin if orientation.lower() == 'portrait' else 8*mm, 
+        bottomMargin=margin if orientation.lower() == 'portrait' else 8*mm
     )
     
     elements = []
