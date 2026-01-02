@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogIn, UserPlus } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { LogIn, UserPlus, ArrowLeft, Building2 } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
@@ -74,15 +74,30 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed"
       style={{
-        backgroundImage: 'url("https://images.unsplash.com/photo-1551135049-8a33b5883817?crop=entropy&cs=srgb&fm=jpg&q=85")',
-        backgroundBlendMode: 'overlay',
-        backgroundColor: 'rgba(0,0,0,0.6)'
+        backgroundImage: 'url("/bg-acaiaca.png")'
       }}
     >
-      <div className="bg-card p-8 rounded-xl shadow-2xl w-full max-w-md backdrop-blur-sm bg-opacity-95 border border-border">
+      {/* Overlay escuro */}
+      <div className="absolute inset-0 bg-black/50"></div>
+      
+      {/* Botão Voltar ao Portal */}
+      <Link 
+        to="/" 
+        className="absolute top-4 left-4 flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors backdrop-blur-sm z-10"
+      >
+        <ArrowLeft size={18} />
+        Voltar ao Portal
+      </Link>
+
+      <div className="relative bg-card p-8 rounded-xl shadow-2xl w-full max-w-md backdrop-blur-md bg-opacity-95 border border-border z-10">
         <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
+            <div className="bg-primary p-3 rounded-xl">
+              <Building2 className="text-primary-foreground w-10 h-10" />
+            </div>
+          </div>
           <h1 className="text-3xl font-heading font-bold text-foreground">PAC Acaiaca 2026</h1>
           <p className="text-muted-foreground text-sm mt-2">Plano Anual de Contratações</p>
           <p className="text-muted-foreground text-xs mt-1">Prefeitura Municipal de Acaiaca - MG</p>
@@ -90,7 +105,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
           <h2 className="text-lg font-semibold text-foreground border-b border-border pb-2">
-            {mode === 'login' ? 'Acesso ao Sistema' : 'Novo Cadastro'}
+            {mode === 'login' ? 'Acesso Administrativo' : 'Novo Cadastro'}
           </h2>
 
           {mode === 'register' && (
