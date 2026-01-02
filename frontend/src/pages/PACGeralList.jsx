@@ -88,13 +88,31 @@ const PACGeralList = () => {
               <p className="text-muted-foreground">Plano Anual de Contratações Compartilhado</p>
             </div>
           </div>
-          <button
-            onClick={() => navigate('/pacs-geral/new')}
-            className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
-          >
-            <Plus size={20} />
-            <span>Novo PAC Geral</span>
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Seletor de Ano */}
+            <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2">
+              <Calendar size={18} className="text-primary" />
+              <select
+                value={anoSelecionado || ''}
+                onChange={(e) => setAnoSelecionado(parseInt(e.target.value))}
+                data-testid="year-filter-select-geral"
+                className="bg-transparent border-none outline-none text-foreground font-semibold cursor-pointer"
+              >
+                {anos.map((ano) => (
+                  <option key={ano} value={ano}>
+                    📁 {ano}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => navigate('/pacs-geral/new')}
+              className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-md"
+            >
+              <Plus size={20} />
+              <span>Novo PAC Geral</span>
+            </button>
+          </div>
         </div>
 
         {loading ? (
