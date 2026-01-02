@@ -181,6 +181,7 @@ class PACGeral(BaseModel):
     email: EmailStr
     endereco: str
     cep: str
+    ano: str = "2026"  # Ano do PAC Geral
     secretarias_selecionadas: List[str]  # AD, FA, SA, SE, AS, AG, OB, TR, CUL
     created_at: datetime
     updated_at: datetime
@@ -193,6 +194,7 @@ class PACGeralCreate(BaseModel):
     email: EmailStr
     endereco: str
     cep: str
+    ano: str = "2026"  # Ano do PAC Geral
     secretarias_selecionadas: List[str]
 
 class PACGeralUpdate(BaseModel):
@@ -203,6 +205,7 @@ class PACGeralUpdate(BaseModel):
     email: Optional[EmailStr] = None
     endereco: Optional[str] = None
     cep: Optional[str] = None
+    ano: Optional[str] = None  # Ano do PAC Geral
     secretarias_selecionadas: Optional[List[str]] = None
 
 class PACGeralItem(BaseModel):
