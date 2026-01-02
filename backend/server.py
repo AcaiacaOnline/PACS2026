@@ -4168,12 +4168,21 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
     
     assinatura = edicao.get('assinatura_digital')
     if assinatura and assinatura.get('assinado'):
+        # Formatar data de assinatura
+        data_ass = assinatura.get('data_assinatura', '')
+        if isinstance(data_ass, datetime):
+            data_ass_str = data_ass.strftime('%d/%m/%Y')
+        elif isinstance(data_ass, str):
+            data_ass_str = data_ass[:10]
+        else:
+            data_ass_str = str(data_ass)[:10] if data_ass else ''
+        
         elements.append(Paragraph(
-            f"Este documento foi assinado digitalmente em {assinatura.get('data_assinatura', '')[:10]}",
+            f"Este documento foi assinado digitalmente em {data_ass_str}",
             footer_style
         ))
         elements.append(Paragraph(
-            f"Hash SHA-256: {assinatura.get('hash_documento', '')[:32]}...",
+            f"Hash SHA-256: {str(assinatura.get('hash_documento', ''))[:32]}...",
             footer_style
         ))
     
