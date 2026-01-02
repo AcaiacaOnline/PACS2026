@@ -2,16 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Newspaper, Plus, Search, Edit, Trash2, FileText, 
-  Upload, X, Save, Calendar, Eye, Download, CheckCircle, Clock, Send
+  Upload, X, Save, Calendar, Eye, Download, CheckCircle, Clock, Send, Users, Mail
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
-const TIPOS_PUBLICACAO = [
-  'Decreto', 'Portaria', 'Lei', 'Edital', 
-  'Aviso', 'Extrato de Contrato', 'Ata', 'Outros'
+// Segmentos do DOEM
+const DOEM_SEGMENTOS = [
+  "Portarias",
+  "Leis",
+  "Decretos",
+  "Resoluções",
+  "Editais",
+  "Prestações de Contas",
+  "Processos Administrativos",
+  "Publicações do Legislativo",
+  "Publicações do Terceiro Setor"
 ];
+
+// Tipos por segmento
+const TIPOS_POR_SEGMENTO = {
+  "Portarias": ["Portaria", "Portaria Conjunta"],
+  "Leis": ["Lei Ordinária", "Lei Complementar", "Emenda à Lei Orgânica"],
+  "Decretos": ["Decreto", "Decreto Regulamentar"],
+  "Resoluções": ["Resolução", "Resolução Conjunta"],
+  "Editais": ["Edital de Licitação", "Edital de Convocação", "Edital de Seleção", "Aviso de Licitação"],
+  "Prestações de Contas": ["Prestação de Contas", "Relatório de Gestão", "Balanço"],
+  "Processos Administrativos": ["Extrato de Contrato", "Termo Aditivo", "Ata de Registro de Preços", "Homologação", "Ratificação"],
+  "Publicações do Legislativo": ["Projeto de Lei", "Ata de Sessão", "Parecer", "Moção", "Requerimento"],
+  "Publicações do Terceiro Setor": ["Termo de Parceria", "Convênio", "Prestação de Contas OSC", "Chamamento Público"]
+};
 
 const STATUS_COLORS = {
   'rascunho': 'bg-gray-100 text-gray-800',
@@ -33,11 +54,15 @@ const DOEM = () => {
   const [anos, setAnos] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('edicoes'); // edicoes, newsletter
   
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [editingEdicao, setEditingEdicao] = useState(null);
   const [importedPubs, setImportedPubs] = useState([]);
+  const [inscritos, setInscritos] = useState([]);
+  const [newsletterStats, setNewsletterStats] = useState(null);
   
   const [formData, setFormData] = useState({
     data_publicacao: '',
@@ -48,6 +73,15 @@ const DOEM = () => {
     titulo: '',
     texto: '',
     secretaria: 'Gabinete do Prefeito',
+    segmento: 'Decretos',
+    tipo: 'Decreto'
+  });
+  
+  const [newInscrito, setNewInscrito] = useState({
+    email: '',
+    nome: '',
+    segmentos_interesse: []
+  });
     tipo: 'Decreto'
   });
 
