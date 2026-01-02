@@ -2515,33 +2515,33 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape")
     elements.append(Paragraph('GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS', subtitle_style))
     elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=6)))
     
-    # Tabela de processos
+    # Tabela de processos - campos COMPLETOS
     if orientation.lower() == 'portrait':
         table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Secretaria']]
         for idx, p in enumerate(processos, start=1):
             table_data.append([
                 str(idx),
-                p.get('numero_processo', '')[:20],
-                p.get('status', '')[:15],
-                Paragraph(f"<font size=6>{p.get('modalidade', '')[:25]}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('objeto', '')[:60]}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('secretaria', '')[:30]}</font>", styles['Normal'])
+                p.get('numero_processo', ''),  # COMPLETO
+                p.get('status', ''),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal'])  # COMPLETO
             ])
-        col_widths = [0.6*cm, 2.5*cm, 2*cm, 3*cm, 6*cm, 4*cm]
+        col_widths = [0.5*cm, 2*cm, 1.8*cm, 3*cm, 5.5*cm, 3.5*cm]
     else:
         table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Responsável', 'Secretaria', 'Observações']]
         for idx, p in enumerate(processos, start=1):
             table_data.append([
                 str(idx),
-                p.get('numero_processo', '')[:22],
-                p.get('status', '')[:12],
-                Paragraph(f"<font size=6>{p.get('modalidade', '')[:20]}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('objeto', '')[:80]}</font>", styles['Normal']),
-                p.get('responsavel', '')[:15],
-                Paragraph(f"<font size=6>{p.get('secretaria', '')[:25]}</font>", styles['Normal']),
-                Paragraph(f"<font size=5>{p.get('observacoes', '')[:50]}</font>", styles['Normal'])
+                p.get('numero_processo', ''),  # COMPLETO
+                p.get('status', ''),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),  # COMPLETO
+                p.get('responsavel', ''),  # COMPLETO
+                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal']),  # COMPLETO
+                Paragraph(f"<font size=5>{p.get('observacoes', '')}</font>", styles['Normal'])  # COMPLETO
             ])
-        col_widths = [0.6*cm, 2.5*cm, 1.8*cm, 2.5*cm, 7*cm, 2*cm, 4*cm, 4*cm]
+        col_widths = [0.5*cm, 2.2*cm, 1.6*cm, 2.5*cm, 6.5*cm, 2*cm, 4*cm, 4*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
