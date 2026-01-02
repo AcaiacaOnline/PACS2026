@@ -4527,6 +4527,249 @@ async def public_buscar_doem(q: str, ano: int = None):
     
     return {'total': len(resultados), 'resultados': resultados[:50]}
 
+# ============ ENDPOINTS DE SEGMENTOS ============
+
+@doem_router.get("/segmentos")
+async def get_doem_segmentos(request: Request):
+    """Retorna lista de segmentos e tipos de publicação do DOEM"""
+    await get_current_user(request)
+    config = await get_doem_config()
+    return {
+        'segmentos': config.get('segmentos', DOEM_SEGMENTOS),
+        'tipos_publicacao': config.get('tipos_publicacao', DOEM_TIPOS_PUBLICACAO)
+    }
+
+@public_router.get("/doem/segmentos")
+async def public_get_doem_segmentos():
+    """Retorna lista de segmentos do DOEM (público)"""
+    config = await get_doem_config()
+    return {
+        'segmentos': config.get('segmentos', DOEM_SEGMENTOS),
+        'tipos_publicacao': config.get('tipos_publicacao', DOEM_TIPOS_PUBLICACAO)
+    }
+
+# ============ ENDPOINTS DE NEWSLETTER ============
+
+newsletter_router = APIRouter(prefix="/api/newsletter", tags=["Newsletter"])
+
+@newsletter_router.get("/inscritos")
+async def listar_inscritos(request: Request):
+    """Lista todos os inscritos na newsletter (admin only)"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem ver a lista de inscritos")
+    
+    inscritos = await db.doem_newsletter.find({}, {'_id': 0}).to_list(1000)
+    return inscritos
+
+@newsletter_router.post("/inscritos")
+async def adicionar_inscrito_manual(inscricao: NewsletterInscricaoManual, request: Request):
+    """Adiciona inscrito manualmente (admin only)"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem adicionar inscritos")
+    
+    # Verificar se já existe
+    existente = await db.doem_newsletter.find_one({'email': inscricao.email})
+    if existente:
+        raise HTTPException(status_code=400, detail="Este email já está inscrito")
+    
+    now = datetime.now(timezone.utc)
+    inscrito_doc = {
+        'inscrito_id': f"news_{uuid.uuid4().hex[:12]}",
+        'email': inscricao.email,
+        'nome': inscricao.nome,
+        'tipo': 'manual',
+        'ativo': True,
+        'segmentos_interesse': inscricao.segmentos_interesse,
+        'data_inscricao': now,
+        'data_confirmacao': now if inscricao.confirmado else None,
+        'confirmado': inscricao.confirmado,
+        'token_confirmacao': None
+    }
+    
+    await db.doem_newsletter.insert_one(inscrito_doc)
+    inscrito_doc.pop('_id', None)
+    return inscrito_doc
+
+@newsletter_router.delete("/inscritos/{inscrito_id}")
+async def remover_inscrito(inscrito_id: str, request: Request):
+    """Remove um inscrito (admin only)"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem remover inscritos")
+    
+    result = await db.doem_newsletter.delete_one({'inscrito_id': inscrito_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Inscrito não encontrado")
+    
+    return {'message': 'Inscrito removido com sucesso'}
+
+@newsletter_router.put("/inscritos/{inscrito_id}/toggle")
+async def toggle_inscrito(inscrito_id: str, request: Request):
+    """Ativa/desativa um inscrito (admin only)"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem alterar status")
+    
+    inscrito = await db.doem_newsletter.find_one({'inscrito_id': inscrito_id})
+    if not inscrito:
+        raise HTTPException(status_code=404, detail="Inscrito não encontrado")
+    
+    novo_status = not inscrito.get('ativo', True)
+    await db.doem_newsletter.update_one(
+        {'inscrito_id': inscrito_id},
+        {'$set': {'ativo': novo_status}}
+    )
+    
+    return {'message': f'Inscrito {"ativado" if novo_status else "desativado"} com sucesso', 'ativo': novo_status}
+
+@newsletter_router.get("/estatisticas")
+async def estatisticas_newsletter(request: Request):
+    """Retorna estatísticas da newsletter (admin only)"""
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores")
+    
+    total = await db.doem_newsletter.count_documents({})
+    ativos = await db.doem_newsletter.count_documents({'ativo': True, 'confirmado': True})
+    pendentes = await db.doem_newsletter.count_documents({'confirmado': False})
+    
+    # Por tipo
+    por_tipo = await db.doem_newsletter.aggregate([
+        {'$group': {'_id': '$tipo', 'count': {'$sum': 1}}}
+    ]).to_list(10)
+    
+    return {
+        'total': total,
+        'ativos': ativos,
+        'pendentes': pendentes,
+        'por_tipo': {t['_id']: t['count'] for t in por_tipo}
+    }
+
+# Endpoint público para inscrição
+@public_router.post("/newsletter/inscrever")
+async def inscricao_publica_newsletter(inscricao: NewsletterInscricaoPublica):
+    """Inscrição pública na newsletter do DOEM"""
+    # Verificar se já existe
+    existente = await db.doem_newsletter.find_one({'email': inscricao.email})
+    if existente:
+        if existente.get('confirmado'):
+            raise HTTPException(status_code=400, detail="Este email já está inscrito e confirmado")
+        else:
+            # Reenviar email de confirmação
+            return {'message': 'Um email de confirmação foi enviado anteriormente. Verifique sua caixa de entrada.'}
+    
+    now = datetime.now(timezone.utc)
+    token = uuid.uuid4().hex
+    
+    inscrito_doc = {
+        'inscrito_id': f"news_{uuid.uuid4().hex[:12]}",
+        'email': inscricao.email,
+        'nome': inscricao.nome,
+        'tipo': 'publico',
+        'ativo': True,
+        'segmentos_interesse': inscricao.segmentos_interesse,
+        'data_inscricao': now,
+        'data_confirmacao': None,
+        'confirmado': False,
+        'token_confirmacao': token
+    }
+    
+    await db.doem_newsletter.insert_one(inscrito_doc)
+    
+    # Enviar email de confirmação
+    try:
+        corpo_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #1F4E78, #2E7D32); padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0;">📰 DOEM Acaiaca</h1>
+            </div>
+            <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6;">
+                <h2 style="color: #1F4E78;">Confirme sua inscrição</h2>
+                <p>Olá {inscricao.nome},</p>
+                <p>Você solicitou inscrição na newsletter do Diário Oficial Eletrônico de Acaiaca.</p>
+                <p>Clique no botão abaixo para confirmar:</p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="https://pac-system.preview.emergentagent.com/api/public/newsletter/confirmar/{token}" 
+                       style="background: #2E7D32; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                        ✅ Confirmar Inscrição
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        enviar_email_smtp(inscricao.email, "Confirme sua inscrição - DOEM Acaiaca", corpo_html)
+    except Exception as e:
+        logging.error(f"Erro ao enviar email de confirmação: {e}")
+    
+    return {'message': 'Inscrição recebida! Verifique seu email para confirmar.'}
+
+@public_router.get("/newsletter/confirmar/{token}")
+async def confirmar_inscricao(token: str):
+    """Confirma inscrição na newsletter"""
+    inscrito = await db.doem_newsletter.find_one({'token_confirmacao': token})
+    if not inscrito:
+        raise HTTPException(status_code=404, detail="Token inválido ou expirado")
+    
+    if inscrito.get('confirmado'):
+        return Response(
+            content="<html><body><h1>Inscrição já confirmada!</h1><p>Você já está inscrito na newsletter do DOEM.</p></body></html>",
+            media_type="text/html"
+        )
+    
+    await db.doem_newsletter.update_one(
+        {'token_confirmacao': token},
+        {'$set': {
+            'confirmado': True,
+            'data_confirmacao': datetime.now(timezone.utc),
+            'token_confirmacao': None
+        }}
+    )
+    
+    return Response(
+        content="""
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1 style="color: #2E7D32;">✅ Inscrição Confirmada!</h1>
+            <p>Você receberá notificações quando novas edições do DOEM forem publicadas.</p>
+            <a href="https://pac-system.preview.emergentagent.com/doem-publico" style="color: #1F4E78;">Acessar o DOEM</a>
+        </body>
+        </html>
+        """,
+        media_type="text/html"
+    )
+
+@public_router.get("/newsletter/cancelar/{email}")
+async def cancelar_inscricao(email: str):
+    """Cancela inscrição na newsletter"""
+    result = await db.doem_newsletter.update_one(
+        {'email': email},
+        {'$set': {'ativo': False}}
+    )
+    
+    return Response(
+        content="""
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1 style="color: #666;">Inscrição Cancelada</h1>
+            <p>Você não receberá mais notificações do DOEM.</p>
+            <p><small>Para se inscrever novamente, acesse o portal do DOEM.</small></p>
+        </body>
+        </html>
+        """,
+        media_type="text/html"
+    )
+
+# Registrar router Newsletter
+app.include_router(newsletter_router)
+
 # Registrar router DOEM
 app.include_router(doem_router)
 
