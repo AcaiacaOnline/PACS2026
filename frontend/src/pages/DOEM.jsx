@@ -783,9 +783,14 @@ const DOEM = () => {
                     <div key={index} className="bg-muted/50 p-4 rounded-lg mb-3">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                            {pub.tipo}
-                          </span>
+                          <div className="flex gap-2 mb-1">
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                              {pub.segmento}
+                            </span>
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                              {pub.tipo}
+                            </span>
+                          </div>
                           <h5 className="font-semibold text-foreground mt-1">{pub.titulo}</h5>
                           <p className="text-xs text-muted-foreground">{pub.secretaria}</p>
                         </div>
