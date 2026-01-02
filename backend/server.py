@@ -328,20 +328,48 @@ class ProcessoUpdate(BaseModel):
 
 # ============ MODELOS DOEM (Diário Oficial Eletrônico Municipal) ============
 
+# Segmentos/Categorias do DOEM
+DOEM_SEGMENTOS = [
+    "Portarias",
+    "Leis",
+    "Decretos",
+    "Resoluções",
+    "Editais",
+    "Prestações de Contas",
+    "Processos Administrativos",
+    "Publicações do Legislativo",
+    "Publicações do Terceiro Setor"
+]
+
+# Tipos de publicação por segmento
+DOEM_TIPOS_PUBLICACAO = {
+    "Portarias": ["Portaria", "Portaria Conjunta"],
+    "Leis": ["Lei Ordinária", "Lei Complementar", "Emenda à Lei Orgânica"],
+    "Decretos": ["Decreto", "Decreto Regulamentar"],
+    "Resoluções": ["Resolução", "Resolução Conjunta"],
+    "Editais": ["Edital de Licitação", "Edital de Convocação", "Edital de Seleção", "Aviso de Licitação"],
+    "Prestações de Contas": ["Prestação de Contas", "Relatório de Gestão", "Balanço"],
+    "Processos Administrativos": ["Extrato de Contrato", "Termo Aditivo", "Ata de Registro de Preços", "Homologação", "Ratificação"],
+    "Publicações do Legislativo": ["Projeto de Lei", "Ata de Sessão", "Parecer", "Moção", "Requerimento"],
+    "Publicações do Terceiro Setor": ["Termo de Parceria", "Convênio", "Prestação de Contas OSC", "Chamamento Público"]
+}
+
 class DOEMPublicacao(BaseModel):
     """Publicação individual dentro de uma edição do DOEM"""
     publicacao_id: str
     titulo: str
     texto: str
     secretaria: str
-    tipo: str  # decreto, portaria, lei, edital, aviso, extrato, ata, outros
+    segmento: str = "Decretos"  # Categoria principal
+    tipo: str  # Tipo específico dentro do segmento
     ordem: int = 1
 
 class DOEMPublicacaoCreate(BaseModel):
     titulo: str
     texto: str
     secretaria: str = "Gabinete do Prefeito"
-    tipo: str = "decreto"
+    segmento: str = "Decretos"
+    tipo: str = "Decreto"
     ordem: int = 1
 
 class DOEMAssinatura(BaseModel):
@@ -364,6 +392,7 @@ class DOEMEdicao(BaseModel):
     publicacoes: List[DOEMPublicacao] = []
     criado_por: str
     assinatura_digital: Optional[DOEMAssinatura] = None
+    notificacao_enviada: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -385,16 +414,44 @@ class DOEMConfig(BaseModel):
     prefeito: str = ""
     ano_inicio: int = 2026
     ultimo_numero_edicao: int = 0
-    tipos_publicacao: List[str] = [
-        "Decreto", "Portaria", "Lei", "Edital", 
-        "Aviso", "Extrato de Contrato", "Ata", "Outros"
-    ]
+    segmentos: List[str] = DOEM_SEGMENTOS
+    tipos_publicacao: Dict[str, List[str]] = DOEM_TIPOS_PUBLICACAO
 
 class DOEMConfigUpdate(BaseModel):
     nome_municipio: Optional[str] = None
     uf: Optional[str] = None
     prefeito: Optional[str] = None
-    tipos_publicacao: Optional[List[str]] = None
+    segmentos: Optional[List[str]] = None
+    tipos_publicacao: Optional[Dict[str, List[str]]] = None
+
+# ============ MODELOS NEWSLETTER/NOTIFICAÇÕES ============
+
+class NewsletterInscrito(BaseModel):
+    """Inscrito na newsletter do DOEM"""
+    model_config = ConfigDict(extra="ignore")
+    inscrito_id: str
+    email: EmailStr
+    nome: str
+    tipo: str = "publico"  # publico, usuario, manual
+    ativo: bool = True
+    segmentos_interesse: List[str] = []  # Segmentos de interesse (vazio = todos)
+    data_inscricao: datetime
+    data_confirmacao: Optional[datetime] = None
+    confirmado: bool = False
+    token_confirmacao: Optional[str] = None
+
+class NewsletterInscricaoPublica(BaseModel):
+    """Dados para inscrição pública na newsletter"""
+    email: EmailStr
+    nome: str
+    segmentos_interesse: List[str] = []
+
+class NewsletterInscricaoManual(BaseModel):
+    """Dados para inscrição manual (admin)"""
+    email: EmailStr
+    nome: str
+    segmentos_interesse: List[str] = []
+    confirmado: bool = True
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
