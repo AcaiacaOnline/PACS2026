@@ -1204,18 +1204,23 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
         ('FONTSIZE', (0, 0), (-1, 0), 7),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+        ('WORDWRAP', (0, 0), (-1, 0), True),
         
-        # Corpo
+        # Corpo - fonte 7pt para legibilidade
         ('FONTSIZE', (0, 1), (-1, -2), 7),
-        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
-        ('ALIGN', (5, 1), (9, -1), 'CENTER'),
-        ('ALIGN', (7, 1), (8, -1), 'RIGHT'),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # #
+        ('ALIGN', (3, 1), (4, -1), 'CENTER'),  # Unidade, Qtd
+        ('ALIGN', (5, 1), (6, -1), 'RIGHT'),   # Valores
+        ('ALIGN', (7, 1), (7, -1), 'CENTER'),  # Prioridade
         ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+        ('WORDWRAP', (2, 1), (2, -1), True),   # Descrição
+        ('WORDWRAP', (8, 1), (8, -1), True),   # Justificativa
+        ('WORDWRAP', (9, 1), (9, -1), True),   # Classificação
         
-        # Linhas alternadas
+        # Linhas alternadas para legibilidade
         ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F2F2F2')]),
         
-        # Total
+        # Linha de Total - destaque
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFC000')),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ('FONTSIZE', (0, -1), (-1, -1), 9),
@@ -1224,11 +1229,11 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
         
-        # Padding
+        # Padding adequado
         ('LEFTPADDING', (0, 0), (-1, -1), 3),
         ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     
     elements.append(table)
