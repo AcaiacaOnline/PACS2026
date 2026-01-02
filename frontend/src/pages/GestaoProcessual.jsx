@@ -54,7 +54,8 @@ const GestaoProcessual = () => {
     data_contrato: '',
     secretaria: '',
     secretario: '',
-    observacoes: ''
+    observacoes: '',
+    ano: null
   });
 
   useEffect(() => {
