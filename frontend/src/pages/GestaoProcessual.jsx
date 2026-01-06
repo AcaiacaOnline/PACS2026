@@ -544,7 +544,7 @@ const GestaoProcessual = () => {
             />
           </div>
 
-          {filteredProcessos.length === 0 && (
+          {processos.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <ClipboardList size={48} className="mx-auto mb-4 opacity-50" />
               <p>Nenhum processo encontrado</p>
