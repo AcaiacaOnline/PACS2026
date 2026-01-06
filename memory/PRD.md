@@ -18,24 +18,30 @@ Sistema completo de gestão municipal que inclui:
 ### ✅ IMPLEMENTADO E FUNCIONANDO
 
 #### Módulo 1: Paginação Configurável com Backend
-- **Backend**: Endpoint `/api/processos/paginado` com parâmetros:
-  - `page`, `page_size`, `ano`, `search`, `status`, `modalidade`
+- **Backend**: Endpoints paginados implementados:
+  - `/api/processos/paginado` - Gestão Processual
+  - `/api/pacs/paginado` - PAC (NOVO)
+  - `/api/pacs-geral/paginado` - PAC Geral (NOVO)
 - **Frontend**: Componente `Pagination.jsx` reutilizável
 - Opções: 20, 30, 50 ou 100 itens por página
-- Implementado em: Gestão Processual, Usuários
-- **Status**: COMPLETO E TESTADO
+- **Default**: 20 itens por página
+- **Status**: COMPLETO E TESTADO (15/15 testes passaram)
 
 #### Módulo 2: Campos de Assinatura Digital do Usuário
 - CPF, Cargo, Telefone, CEP, Endereço
 - Máscaras de formatação automática
 - **Status**: COMPLETO E TESTADO
 
-#### Módulo 3: Assinatura Digital em PDFs - LATERAL ESQUERDA
-- **ATUALIZADO**: Selo vertical compacto na LATERAL ESQUERDA
+#### Módulo 3: Assinatura Digital Refinada em PDFs
+- **ATUALIZADO**: Design elegante e refinado
+- Posição: lateral DIREITA do documento
+- Esquema de cores: azul escuro elegante (#1a365d)
+- Cantos arredondados com sombra sutil
+- Header: "DOCUMENTO ASSINADO DIGITALMENTE"
+- Informações do assinante com nome, cargo e CPF mascarado
 - QR Code para validação
-- Lista de assinantes com CPF mascarado (LGPD)
-- Código de validação único
-- Aplicado em: DOEM, PAC, Relatório de Processos
+- Código de validação destacado
+- Aplicado em: DOEM, PAC, PAC Geral, Relatório de Processos
 - **Status**: COMPLETO E TESTADO
 
 #### Módulo 4: Painel de Validação de Documentos
@@ -46,7 +52,7 @@ Sistema completo de gestão municipal que inclui:
 
 #### Módulo 5: Assinatura em Lote
 - Interface para adicionar múltiplos assinantes antes de publicar
-- PDF exibe todos os assinantes no selo compacto
+- PDF exibe todos os assinantes no selo
 - QR Code único valida todas as assinaturas
 - **Status**: COMPLETO E TESTADO
 
@@ -56,16 +62,9 @@ Sistema completo de gestão municipal que inclui:
 - Enviado automaticamente na publicação
 - **Status**: COMPLETO
 
-#### Módulo 7: Histórico de Assinaturas - NOVO
-- **Backend**:
-  - `GET /api/assinaturas/historico` - Lista paginada de assinaturas do usuário
-  - `GET /api/assinaturas/estatisticas` - Estatísticas de assinaturas
+#### Módulo 7: Histórico de Assinaturas
+- **Backend**: `/api/assinaturas/historico` e `/api/assinaturas/estatisticas`
 - **Frontend**: Página `/historico-assinaturas`
-  - Cards de estatísticas (Total, Válidos, Últimos 30 dias, Tipos)
-  - Tabela com documentos assinados
-  - Busca e paginação
-  - Link para validação de cada documento
-- **Menu**: Link "Assinaturas" na navegação
 - **Status**: COMPLETO E TESTADO (11/11 testes passaram)
 
 ---
@@ -75,6 +74,8 @@ Sistema completo de gestão municipal que inclui:
 ### Paginação
 ```
 GET /api/processos/paginado?page=1&page_size=20&ano=2025&search=texto
+GET /api/pacs/paginado?page=1&page_size=20&ano=2026&search=texto
+GET /api/pacs-geral/paginado?page=1&page_size=20&ano=2026&search=texto
 Response: { items: [], total: 74, page: 1, page_size: 20, total_pages: 4 }
 ```
 
@@ -92,13 +93,10 @@ GET /api/validar/{codigo}
 POST /api/validar/verificar { validation_code: "DOC-XXX" }
 ```
 
-### Histórico de Assinaturas (NOVO)
+### Histórico de Assinaturas
 ```
 GET /api/assinaturas/historico?page=1&page_size=10
-Response: { items: [{signature_id, document_type, validation_code, created_at, is_valid, total_signers, my_signature}], total, page, page_size, total_pages }
-
 GET /api/assinaturas/estatisticas
-Response: { total_assinaturas, assinaturas_validas, assinaturas_invalidas, ultimos_30_dias, por_tipo, ultima_assinatura }
 ```
 
 ---
@@ -118,12 +116,12 @@ Response: { total_assinaturas, assinaturas_validas, assinaturas_invalidas, ultim
 ## Próximos Passos (Backlog)
 
 ### P1 - Alta Prioridade
-1. **Refatoração do server.py** (~5500 linhas)
+1. **Refatoração do server.py** (~6000 linhas)
    - Dividir em múltiplos APIRouters
    - Organizar em módulos: auth, pacs, processos, doem, assinaturas
 
 ### P2 - Média Prioridade
-2. Aplicar paginação em outras listagens (PAC, PAC Geral)
+2. Melhorar validação de dados de assinatura do usuário (CPF, Cargo obrigatórios)
 
 ### P3 - Baixa Prioridade
 3. Versão cPanel (PHP/MySQL)
@@ -132,15 +130,17 @@ Response: { total_assinaturas, assinaturas_validas, assinaturas_invalidas, ultim
 
 ## Última Atualização
 **Data**: 06/01/2026
-**Versão**: 2.7.0
+**Versão**: 2.8.0
 
 ### Changelog desta sessão:
-- Selo de assinatura movido para LATERAL ESQUERDA do documento
-- Implementado histórico de assinaturas completo (/historico-assinaturas)
-- Adicionados endpoints /api/assinaturas/historico e /api/assinaturas/estatisticas
-- Link "Assinaturas" adicionado ao menu de navegação
-- 11 testes automatizados criados e passando
+- Selo de assinatura refinado com design elegante (lateral direita)
+- Endpoints paginados para PAC e PAC Geral implementados
+- Frontend atualizado para usar paginação em PAC e PAC Geral
+- Gestão Processual confirmada com 20 itens por página
+- 15 testes automatizados de paginação passando
+- Testes de PDF com assinatura digital passando
 
 ### Testes Automatizados
+- `/app/tests/test_pagination_endpoints.py` - 15 testes passando
 - `/app/tests/test_historico_assinaturas.py` - 11 testes passando
-- `/app/test_reports/iteration_7.json` - Relatório completo
+- `/app/test_reports/iteration_8.json` - Relatório completo
