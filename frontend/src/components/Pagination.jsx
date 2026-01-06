@@ -78,7 +78,7 @@ const Pagination = ({
               className="px-2 py-1 border border-input bg-background rounded-md text-sm focus:ring-2 focus:ring-ring outline-none cursor-pointer"
               data-testid="page-size-selector"
             >
-              {PAGE_SIZE_OPTIONS.map((size) => (
+              {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
                   {size}
                 </option>
