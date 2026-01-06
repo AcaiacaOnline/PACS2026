@@ -4449,7 +4449,8 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
         doc_id=edicao_id,
         doc_type=f"DOEM - Edição {edicao.get('numero_edicao', '')} / {edicao.get('ano', '')}",
         signers=signers,
-        hash_doc=assinatura.hash_documento
+        hash_doc=assinatura.hash_documento,
+        validation_code=assinatura.validation_code
     )
     
     # Atualizar status
