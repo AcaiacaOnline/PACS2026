@@ -16,174 +16,107 @@ Sistema completo de gestão municipal que inclui:
 
 ### ✅ IMPLEMENTADO E FUNCIONANDO
 
-#### Módulo 1: Paginação Configurável
-- Componente `Pagination.jsx` reutilizável
-- Hook `usePagination()` com persistência em localStorage
+#### Módulo 1: Paginação Configurável com Backend
+- **Backend**: Endpoint `/api/processos/paginado` com parâmetros:
+  - `page`, `page_size`, `ano`, `search`, `status`, `modalidade`
+- **Frontend**: Componente `Pagination.jsx` reutilizável
 - Opções: 20, 30, 50 ou 100 itens por página
 - Implementado em: Gestão Processual, Usuários
 - **Status**: COMPLETO E TESTADO
 
 #### Módulo 2: Campos de Assinatura Digital do Usuário
-- Novos campos no cadastro de usuário:
-  - CPF (com máscara XXX.XXX.XXX-XX)
-  - Cargo Ocupado
-  - Telefone (com máscara (XX) XXXXX-XXXX)
-  - CEP (com máscara XXXXX-XXX)
-  - Endereço Completo
-- Seção "Dados para Assinatura Digital" no formulário
+- CPF, Cargo, Telefone, CEP, Endereço
+- Máscaras de formatação automática
 - **Status**: COMPLETO E TESTADO
 
-#### Módulo 3: Assinatura Digital Visual em PDFs
-- Selo de assinatura na lateral direita de todas as páginas
-- Informações exibidas:
-  - Nome do assinante
-  - Cargo
-  - CPF mascarado (conformidade LGPD)
-  - Data e hora da assinatura
-  - Código de validação
-  - QR Code para validação rápida
+#### Módulo 3: Assinatura Digital Compacta em PDFs
+- **NOVO**: Selo compacto horizontal (12mm de altura) na parte inferior
+- QR Code no lado esquerdo
+- Lista de assinantes com CPF mascarado (LGPD)
+- Código de validação
+- Aplicado em: DOEM, PAC, Relatório de Processos
 - **Status**: COMPLETO E TESTADO
 
 #### Módulo 4: Painel de Validação de Documentos
-- URL pública: `/validar`
+- URL: `/validar`
 - API: `POST /api/validar/verificar`
-- Funcionalidades:
-  - Inserção de código de validação
-  - Verificação de autenticidade
-  - Exibição de dados do documento
-  - Dados dos assinantes com CPF mascarado
+- Validação de múltiplos assinantes
 - **Status**: COMPLETO E TESTADO
 
-#### 🆕 Módulo 5: Assinatura em Lote
-- Permite múltiplos assinantes em um único documento
-- Interface no DOEM para gerenciar assinantes antes de publicar
-- Endpoints:
-  - `GET /api/doem/usuarios-disponiveis` - Lista usuários disponíveis
-  - `GET /api/doem/edicoes/{id}/assinantes` - Lista assinantes de uma edição
-  - `POST /api/doem/edicoes/{id}/assinantes` - Adiciona assinante
-  - `DELETE /api/doem/edicoes/{id}/assinantes/{user_id}` - Remove assinante
-- O selo no PDF exibe TODOS os assinantes
-- O QR Code único valida todas as assinaturas
+#### Módulo 5: Assinatura em Lote
+- Interface para adicionar múltiplos assinantes antes de publicar
+- PDF exibe todos os assinantes no selo compacto
+- QR Code único valida todas as assinaturas
 - **Status**: COMPLETO E TESTADO
 
-#### Módulo DOEM (Anterior)
-- Gestão de edições do Diário Oficial
-- Importação de RTF
-- Publicação com assinatura digital
-- Portal público de consulta
-- Sistema de Newsletter com 9 segmentos
-- Notificações por email via SMTP
+#### Módulo 6: Notificações por Email para Assinantes
+- **NOVO**: Cada assinante recebe email de confirmação
+- Template HTML profissional com:
+  - Código de validação
+  - Link direto para validação
+  - Dados da assinatura (nome, cargo, CPF mascarado)
+- Enviado automaticamente na publicação
 - **Status**: COMPLETO
+
+---
+
+## Endpoints de API Importantes
+
+### Paginação
+```
+GET /api/processos/paginado?page=1&page_size=20&ano=2025&search=texto
+Response: { items: [], total: 74, page: 1, page_size: 20, total_pages: 4 }
+```
+
+### Assinatura em Lote
+```
+GET /api/doem/usuarios-disponiveis
+GET /api/doem/edicoes/{id}/assinantes
+POST /api/doem/edicoes/{id}/assinantes { user_id: "xxx" }
+DELETE /api/doem/edicoes/{id}/assinantes/{user_id}
+```
+
+### Validação de Documentos
+```
+GET /api/validar/{codigo}
+POST /api/validar/verificar { validation_code: "DOC-XXX" }
+```
 
 ---
 
 ## Arquitetura Técnica
 
-### Frontend (React)
-```
-/app/frontend/src/
-├── components/
-│   ├── Layout.jsx
-│   ├── Pagination.jsx
-│   └── ui/                     # Shadcn components
-├── pages/
-│   ├── ValidarDocumento.jsx
-│   ├── DOEM.jsx               # Inclui modal de assinantes em lote
-│   ├── DOEMPublico.jsx
-│   ├── Users.jsx
-│   ├── GestaoProcessual.jsx
-│   └── ...
-└── utils/
-    ├── api.js
-    └── masks.jsx
-```
+### Dependências Novas
+- `PyPDF2==3.0.1` - Manipulação de PDFs
+- `qrcode==8.2` - Geração de QR Codes
 
-### Backend (FastAPI)
-```
-/app/backend/
-├── server.py                   # ~5500+ linhas (PRECISA REFATORAÇÃO)
-├── brasao_doem_small.png
-├── rodape_doem_small.jpg
-└── requirements.txt
-```
-
-### Banco de Dados (MongoDB)
-Collections principais:
-- `users` - Usuários com signature_data
-- `pacs` - PACs individuais
-- `pacs_geral` - PACs consolidados
-- `processos` - Processos licitatórios
-- `doem_edicoes` - Edições do DOEM com assinantes em lote
-- `document_signatures` - Assinaturas para validação
-- `newsletter_subscribers` - Assinantes da newsletter
+### Banco de Dados
+- `document_signatures` - Armazena assinaturas para validação
+- `doem_edicoes.assinatura_digital.assinantes[]` - Lista de assinantes
 
 ---
 
 ## Próximos Passos (Backlog)
 
 ### P1 - Alta Prioridade
-1. **Refatoração do server.py**
+1. **Refatoração do server.py** (~5600 linhas)
    - Dividir em múltiplos APIRouters
-   - Arquitetura sugerida:
-     ```
-     /app/backend/
-     ├── routes/
-     │   ├── auth.py
-     │   ├── pacs.py
-     │   ├── processos.py
-     │   ├── doem.py
-     │   └── validation.py
-     ├── models/
-     ├── services/
-     └── server.py (apenas bootstrap)
-     ```
 
 ### P2 - Média Prioridade
-2. **Aplicar assinatura digital em todos os relatórios**
-   - PDFs de PAC
-   - PDFs de PAC Geral
-   - Relatórios de Processos
+2. Aplicar paginação em outras listagens (PAC, PAC Geral)
 
 ### P3 - Baixa Prioridade
-3. **Versão cPanel (PHP/MySQL)**
-   - Pasta: `/app/cpanel-version`
-   - Status: Em espera
-
----
-
-## Credenciais de Teste
-
-| Tipo | Email | Senha |
-|------|-------|-------|
-| Admin | cristiano.abdo@acaiaca.mg.gov.br | Cris@820906 |
-
----
-
-## URLs Importantes
-
-| Recurso | URL |
-|---------|-----|
-| Portal Público | `/` |
-| DOEM Público | `/doem-publico` |
-| Validar Documento | `/validar` |
-| Dashboard Admin | `/dashboard` |
-| Gestão Processual | `/gestao-processual` |
-| DOEM Admin | `/doem` |
+3. Versão cPanel (PHP/MySQL)
 
 ---
 
 ## Última Atualização
 **Data**: 06/01/2026
-**Versão**: 2.5.0
+**Versão**: 2.6.0
 
 ### Changelog desta sessão:
-- Implementada paginação configurável em Gestão Processual e Usuários (Módulo 1)
-- Adicionados campos de assinatura no cadastro de usuário (Módulo 2)
-- Implementado sistema de assinatura digital visual em PDFs (Módulo 3)
-- Criado painel público de validação de documentos (Módulo 4)
-- **NOVO**: Implementado sistema de assinatura em lote (Módulo 5)
-  - Interface no DOEM para gerenciar múltiplos assinantes
-  - PDFs exibem todos os assinantes no selo
-  - Validação mostra lista completa de assinantes
-- Corrigidos bugs críticos de null pointer em assinatura_digital
-- Todos os módulos testados e funcionando
+- Selo de assinatura reduzido para 2 linhas (12mm) na parte inferior
+- Paginação implementada no backend (`/api/processos/paginado`)
+- Assinatura digital aplicada em todos os relatórios (PAC, Processos)
+- Notificações por email para assinantes implementadas
+- Corrigidos bugs de indentação e imports
