@@ -866,6 +866,341 @@ REPORT_MARGIN_RIGHT = 50*mm   # 5cm
 REPORT_MARGIN_TOP = 30*mm     # 3cm
 REPORT_MARGIN_BOTTOM = 30*mm  # 3cm
 
+# ===== CONSTANTES PARA PAGINAÇÃO DE ITENS =====
+ITEMS_PER_PAGE = 15  # Máximo de 15 itens por página conforme solicitado
+
+# ===== ESTILOS DE PDF PROFISSIONAIS =====
+def get_professional_styles():
+    """Retorna estilos profissionais para relatórios PDF"""
+    styles = getSampleStyleSheet()
+    
+    # Cores do tema
+    cor_primaria = colors.HexColor('#1F4E78')  # Azul escuro institucional
+    cor_secundaria = colors.HexColor('#2E75B6')  # Azul médio
+    cor_destaque = colors.HexColor('#FFC000')  # Amarelo dourado
+    cor_texto = colors.HexColor('#333333')  # Cinza escuro
+    cor_subtexto = colors.HexColor('#666666')  # Cinza médio
+    
+    custom_styles = {
+        'title': ParagraphStyle(
+            'ProfTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            textColor=cor_primaria,
+            alignment=TA_CENTER,
+            spaceAfter=4,
+            fontName='Helvetica-Bold',
+            leading=22
+        ),
+        'subtitle': ParagraphStyle(
+            'ProfSubtitle',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=cor_primaria,
+            alignment=TA_CENTER,
+            spaceAfter=3,
+            fontName='Helvetica-Bold'
+        ),
+        'section_header': ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Heading3'],
+            fontSize=11,
+            textColor=cor_primaria,
+            alignment=TA_LEFT,
+            spaceAfter=6,
+            spaceBefore=12,
+            fontName='Helvetica-Bold',
+            borderPadding=4
+        ),
+        'body': ParagraphStyle(
+            'ProfBody',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=cor_texto,
+            alignment=TA_JUSTIFY,
+            spaceAfter=6,
+            leading=14
+        ),
+        'small': ParagraphStyle(
+            'ProfSmall',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=cor_subtexto,
+            alignment=TA_LEFT,
+            spaceAfter=2
+        ),
+        'legal': ParagraphStyle(
+            'Legal',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Oblique',
+            spaceAfter=8
+        ),
+        'footer': ParagraphStyle(
+            'ProfFooter',
+            parent=styles['Normal'],
+            fontSize=7,
+            textColor=colors.grey,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Oblique'
+        ),
+        'table_cell': ParagraphStyle(
+            'TableCell',
+            parent=styles['Normal'],
+            fontSize=7,
+            textColor=cor_texto,
+            alignment=TA_LEFT,
+            leading=9
+        ),
+        'table_header': ParagraphStyle(
+            'TableHeader',
+            parent=styles['Normal'],
+            fontSize=7,
+            textColor=colors.white,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+    }
+    
+    return custom_styles, cor_primaria, cor_secundaria, cor_destaque
+
+def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool = False):
+    """Cria cabeçalho profissional para relatórios PAC"""
+    elements = []
+    cor_primaria = colors.HexColor('#1F4E78')
+    
+    # Logo path
+    logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
+    
+    # Título principal
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA', styles['title']))
+    elements.append(Paragraph('Estado de Minas Gerais', ParagraphStyle('Estado', fontSize=10, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=8)))
+    
+    if is_pac_geral:
+        elements.append(Paragraph('PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES CONSOLIDADO', styles['subtitle']))
+    else:
+        elements.append(Paragraph('PAC - PLANO ANUAL DE CONTRATAÇÕES', styles['subtitle']))
+    
+    elements.append(Paragraph(f'<i>Exercício {pac_data.get("ano", "2026")} - Lei Federal nº 14.133/2021</i>', styles['legal']))
+    elements.append(Spacer(1, 3*mm))
+    
+    return elements
+
+def create_info_box(pac_data: dict, styles: dict, is_pac_geral: bool = False):
+    """Cria caixa de informações do PAC"""
+    info_style = styles['small']
+    cor_primaria = colors.HexColor('#1F4E78')
+    
+    if is_pac_geral:
+        info_data = [
+            [
+                Paragraph(f'<b>PAC Geral:</b> {pac_data.get("nome_secretaria", "")}', info_style),
+                Paragraph(f'<b>Exercício:</b> {pac_data.get("ano", "")}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Secretário(a):</b> {pac_data.get("secretario", "")}', info_style),
+                Paragraph(f'<b>Fiscal do Contrato:</b> {pac_data.get("fiscal_contrato", "")}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Telefone:</b> {pac_data.get("telefone", "")}', info_style),
+                Paragraph(f'<b>E-mail:</b> {pac_data.get("email", "")}', info_style),
+            ]
+        ]
+        col_widths = [14*cm, 14*cm]
+    else:
+        info_data = [
+            [
+                Paragraph(f'<b>Secretaria/Órgão:</b> {pac_data.get("secretaria", "")}', info_style),
+                Paragraph(f'<b>Exercício:</b> {pac_data.get("ano", "")}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Secretário(a) Responsável:</b> {pac_data.get("secretario", "")}', info_style),
+                Paragraph(f'<b>Fiscal do Contrato:</b> {pac_data.get("fiscal", "")}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Telefone:</b> {pac_data.get("telefone", "")}', info_style),
+                Paragraph(f'<b>E-mail:</b> {pac_data.get("email", "")}', info_style),
+            ],
+            [
+                Paragraph(f'<b>Endereço:</b> {pac_data.get("endereco", "")}', info_style),
+                '',
+            ]
+        ]
+        col_widths = [14*cm, 14*cm]
+    
+    info_table = Table(info_data, colWidths=col_widths)
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F5F5F5')),
+        ('BOX', (0, 0), (-1, -1), 1.5, cor_primaria),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E0E0E0')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    
+    return info_table
+
+def create_items_table_paginated(items: list, styles: dict, orientation: str = 'landscape', start_index: int = 1):
+    """
+    Cria tabela de itens com formatação profissional.
+    Retorna lista de elementos (tabelas) para uma página.
+    """
+    cor_primaria = colors.HexColor('#1F4E78')
+    cor_destaque = colors.HexColor('#FFC000')
+    
+    # Cabeçalhos
+    headers = [
+        '#', 
+        'Código\nCATMAT', 
+        'Descrição do Objeto', 
+        'Unidade', 
+        'Qtd', 
+        'Valor\nUnitário', 
+        'Valor\nTotal', 
+        'Prioridade',
+        'Justificativa',
+        'Classificação\nOrçamentária'
+    ]
+    
+    table_data = [headers]
+    
+    for idx, item in enumerate(items, start=start_index):
+        # Classificação Orçamentária
+        classificacao_text = ''
+        if item.get('codigo_classificacao'):
+            classificacao_text = f"{item['codigo_classificacao']}"
+            if item.get('subitem_classificacao'):
+                classificacao_text += f"\n{item['subitem_classificacao']}"
+        
+        descricao = item.get('descricao', '')
+        justificativa = item.get('justificativa', '') or 'N/I'
+        
+        table_data.append([
+            str(idx),
+            item.get('catmat', ''),
+            Paragraph(f"<font size=7>{descricao}</font>", styles['table_cell']),
+            item.get('unidade', ''),
+            str(int(item.get('quantidade', 0))),
+            f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            item.get('prioridade', ''),
+            Paragraph(f"<font size=6>{justificativa}</font>", styles['table_cell']),
+            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['table_cell'])
+        ])
+    
+    # Larguras de coluna otimizadas
+    if orientation.lower() == 'portrait':
+        col_widths = [0.5*cm, 1.3*cm, 3.5*cm, 0.9*cm, 0.7*cm, 1.5*cm, 1.5*cm, 1*cm, 2.5*cm, 2.5*cm]
+    else:
+        col_widths = [0.5*cm, 1.4*cm, 5.5*cm, 1*cm, 0.8*cm, 1.6*cm, 1.8*cm, 1.2*cm, 5*cm, 4.5*cm]
+    
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        # Cabeçalho
+        ('BACKGROUND', (0, 0), (-1, 0), cor_primaria),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 7),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+        
+        # Corpo
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # #
+        ('ALIGN', (3, 1), (4, -1), 'CENTER'),  # Unidade, Qtd
+        ('ALIGN', (5, 1), (6, -1), 'RIGHT'),   # Valores
+        ('ALIGN', (7, 1), (7, -1), 'CENTER'),  # Prioridade
+        ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+        
+        # Linhas alternadas
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
+        
+        # Bordas
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
+        ('BOX', (0, 0), (-1, -1), 1, cor_primaria),
+        
+        # Padding
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    
+    return table
+
+def create_total_row(total_value: float, styles: dict, orientation: str = 'landscape'):
+    """Cria linha de total com destaque"""
+    cor_destaque = colors.HexColor('#FFC000')
+    
+    total_formatted = f"R$ {total_value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    
+    if orientation.lower() == 'portrait':
+        col_widths = [0.5*cm, 1.3*cm, 3.5*cm, 0.9*cm, 0.7*cm, 1.5*cm, 1.5*cm, 1*cm, 2.5*cm, 2.5*cm]
+    else:
+        col_widths = [0.5*cm, 1.4*cm, 5.5*cm, 1*cm, 0.8*cm, 1.6*cm, 1.8*cm, 1.2*cm, 5*cm, 4.5*cm]
+    
+    total_data = [['', '', Paragraph('<b>VALOR TOTAL ESTIMADO:</b>', styles['body']), '', '', '', total_formatted, '', '', '']]
+    
+    total_table = Table(total_data, colWidths=col_widths)
+    total_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), cor_destaque),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (6, 0), (6, 0), 'RIGHT'),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1F4E78')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    
+    return total_table
+
+def create_signature_section(pac_data: dict, styles: dict, is_pac_geral: bool = False):
+    """Cria seção de assinaturas profissional"""
+    elements = []
+    
+    elements.append(Spacer(1, 8*mm))
+    elements.append(Paragraph('<b>ASSINATURAS E VALIDAÇÃO</b>', styles['section_header']))
+    elements.append(Spacer(1, 4*mm))
+    
+    if is_pac_geral:
+        responsavel = pac_data.get('secretario', '')
+        fiscal = pac_data.get('fiscal_contrato', '')
+    else:
+        responsavel = pac_data.get('secretario', '')
+        fiscal = pac_data.get('fiscal', '')
+    
+    sig_data = [
+        ['_' * 45, '_' * 45],
+        [Paragraph(f'<b>{responsavel}</b>', styles['body']), Paragraph(f'<b>{fiscal}</b>', styles['body'])],
+        ['Secretário(a) Responsável', 'Fiscal do Contrato'],
+        ['', ''],
+        [f'Acaiaca/MG, ___/___/______', f'Acaiaca/MG, ___/___/______']
+    ]
+    
+    sig_table = Table(sig_data, colWidths=[10*cm, 10*cm])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTSIZE', (0, 2), (-1, 2), 8),
+        ('TEXTCOLOR', (0, 2), (-1, 2), colors.grey),
+        ('TOPPADDING', (0, 0), (-1, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 2),
+        ('TOPPADDING', (0, 4), (-1, 4), 10),
+    ]))
+    
+    elements.append(sig_table)
+    
+    return elements
+
+def create_footer_text():
+    """Cria texto de rodapé padrão"""
+    return f'<font size=7><i>Documento gerado eletronicamente pelo Sistema PAC Acaiaca em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento</i></font>'
+
 @api_router.get("/pacs/anos")
 async def get_pacs_anos(request: Request):
     """Retorna lista de anos disponíveis nos PACs individuais"""
