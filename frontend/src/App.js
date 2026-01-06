@@ -13,6 +13,7 @@ import Backup from './pages/Backup';
 import PortalPublico from './pages/PortalPublico';
 import DOEM from './pages/DOEM';
 import DOEMPublico from './pages/DOEMPublico';
+import ValidarDocumento from './pages/ValidarDocumento';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import api from './utils/api';
@@ -97,6 +98,7 @@ const AppRoutes = () => {
       <Route path="/" element={<PortalPublico />} />
       <Route path="/transparencia" element={<PortalPublico />} />
       <Route path="/doem-publico" element={<DOEMPublico />} />
+      <Route path="/validar" element={<ValidarDocumento />} />
       
       {/* Rotas Protegidas */}
       <Route path="/login" element={<Login />} />
