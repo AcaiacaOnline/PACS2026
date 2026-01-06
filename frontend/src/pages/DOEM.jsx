@@ -1041,6 +1041,123 @@ const DOEM = () => {
             </div>
           </div>
         )}
+
+        {/* Modal de Assinantes em Lote */}
+        {showAssinantesModal && edicaoParaAssinar && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+              <div className="flex justify-between items-center p-4 border-b border-border bg-purple-50 dark:bg-purple-900/20">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <PenTool size={20} className="text-purple-600" />
+                    Assinatura em Lote
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Edição nº {edicaoParaAssinar.numero_edicao} / {edicaoParaAssinar.ano}
+                  </p>
+                </div>
+                <button onClick={closeAssinantesModal} className="p-2 hover:bg-muted rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[70vh]">
+                {/* Assinantes Atuais */}
+                <div className="mb-6">
+                  <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-600" />
+                    Assinantes Selecionados ({assinantesEdicao.length})
+                  </h4>
+                  
+                  {assinantesEdicao.length === 0 ? (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-center">
+                      <p className="text-yellow-700 dark:text-yellow-300 text-sm">
+                        Nenhum assinante selecionado. O usuário que publicar será o único assinante.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {assinantesEdicao.map((assinante) => (
+                        <div key={assinante.user_id} className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                          <div>
+                            <p className="font-semibold text-foreground">{assinante.nome}</p>
+                            <p className="text-xs text-muted-foreground">{assinante.cargo || 'Cargo não informado'}</p>
+                            <p className="text-xs text-muted-foreground">{assinante.email}</p>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveAssinante(assinante.user_id)}
+                            className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            title="Remover assinante"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Adicionar Assinante */}
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <UserPlus size={16} className="text-purple-600" />
+                    Adicionar Assinante
+                  </h4>
+                  
+                  <div className="space-y-2">
+                    {usuariosDisponiveis
+                      .filter(u => !assinantesEdicao.some(a => a.user_id === u.user_id))
+                      .map((usuario) => (
+                        <div key={usuario.user_id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3 hover:bg-muted transition-colors">
+                          <div>
+                            <p className="font-medium text-foreground">{usuario.nome}</p>
+                            <p className="text-xs text-muted-foreground">{usuario.cargo || 'Sem cargo cadastrado'}</p>
+                            <p className="text-xs text-muted-foreground">{usuario.email}</p>
+                            {!usuario.tem_dados_assinatura && (
+                              <span className="text-xs text-yellow-600">⚠️ Dados de assinatura incompletos</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleAddAssinante(usuario.user_id)}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            <Plus size={14} />
+                            Adicionar
+                          </button>
+                        </div>
+                      ))}
+                    
+                    {usuariosDisponiveis.filter(u => !assinantesEdicao.some(a => a.user_id === u.user_id)).length === 0 && (
+                      <p className="text-muted-foreground text-center py-4">
+                        Todos os usuários já foram adicionados.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Informações */}
+                <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h5 className="font-semibold text-blue-700 dark:text-blue-300 text-sm mb-2">ℹ️ Como funciona a assinatura em lote:</h5>
+                  <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1 list-disc list-inside">
+                    <li>Todos os assinantes selecionados aparecerão no selo do documento PDF</li>
+                    <li>O QR Code único validará todas as assinaturas de uma vez</li>
+                    <li>CPFs serão exibidos mascarados para conformidade com a LGPD</li>
+                    <li>Se nenhum assinante for selecionado, o publicador será o único assinante</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 p-4 border-t border-border bg-muted/50">
+                <button
+                  onClick={closeAssinantesModal}
+                  className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
