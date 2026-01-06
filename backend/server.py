@@ -4254,6 +4254,76 @@ async def get_doem_config() -> dict:
             'config_id': 'doem_config_main',
             'nome_municipio': 'Acaiaca',
             'uf': 'MG',
+
+async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str) -> tuple:
+    """
+    Adiciona assinatura digital a qualquer PDF gerado pelo sistema.
+    Retorna o buffer modificado e o código de validação.
+    """
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from PyPDF2 import PdfReader, PdfWriter
+    
+    # Buscar dados de assinatura do usuário
+    user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+    user_signature = user_doc.get('signature_data') or {} if user_doc else {}
+    
+    signer = {
+        'nome': user.name,
+        'cpf': user_signature.get('cpf', ''),
+        'cargo': user_signature.get('cargo', ''),
+        'email': user.email
+    }
+    
+    # Gerar código de validação
+    validation_code = generate_validation_code()
+    
+    # Calcular hash do documento original
+    pdf_buffer.seek(0)
+    hash_doc = hashlib.sha256(pdf_buffer.read()).hexdigest()
+    pdf_buffer.seek(0)
+    
+    # Salvar registro de assinatura
+    await save_document_signature(
+        doc_id=doc_id,
+        doc_type=doc_type,
+        signers=[signer],
+        hash_doc=hash_doc,
+        validation_code=validation_code
+    )
+    
+    # Ler o PDF original
+    reader = PdfReader(pdf_buffer)
+    writer = PdfWriter()
+    
+    # Para cada página, adicionar o selo de assinatura
+    for page_num, page in enumerate(reader.pages):
+        # Criar overlay com a assinatura
+        overlay_buffer = BytesIO()
+        page_width = float(page.mediabox.width)
+        page_height = float(page.mediabox.height)
+        
+        overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+        
+        # Desenhar selo de assinatura
+        qr_url = f"https://muni-docs.preview.emergentagent.com/validar?code={validation_code}"
+        draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+        
+        overlay_canvas.save()
+        overlay_buffer.seek(0)
+        
+        # Mesclar overlay com a página original
+        overlay_reader = PdfReader(overlay_buffer)
+        if len(overlay_reader.pages) > 0:
+            page.merge_page(overlay_reader.pages[0])
+        
+        writer.add_page(page)
+    
+    # Gerar novo PDF
+    output_buffer = BytesIO()
+    writer.write(output_buffer)
+    output_buffer.seek(0)
+    
+    return output_buffer, validation_code
             'prefeito': '',
             'ano_inicio': 2026,
             'ultimo_numero_edicao': 0,
