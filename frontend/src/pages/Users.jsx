@@ -77,6 +77,13 @@ const Users = () => {
           can_export: user.is_admin,
           can_manage_users: user.is_admin,
           is_full_admin: user.is_admin
+        },
+        signature_data: user.signature_data || {
+          cpf: '',
+          cargo: '',
+          endereco: '',
+          cep: '',
+          telefone: ''
         }
       });
     } else {
@@ -94,6 +101,13 @@ const Users = () => {
           can_export: false,
           can_manage_users: false,
           is_full_admin: false
+        },
+        signature_data: {
+          cpf: '',
+          cargo: '',
+          endereco: '',
+          cep: '',
+          telefone: ''
         }
       });
     }
