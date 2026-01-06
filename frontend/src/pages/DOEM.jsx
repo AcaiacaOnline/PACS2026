@@ -157,6 +157,65 @@ const DOEM = () => {
     }
   };
 
+  // ===== Funções de Assinatura em Lote =====
+  const fetchUsuariosDisponiveis = async () => {
+    try {
+      const response = await api.get('/doem/usuarios-disponiveis');
+      setUsuariosDisponiveis(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+    }
+  };
+
+  const fetchAssinantesEdicao = async (edicaoId) => {
+    try {
+      const response = await api.get(`/doem/edicoes/${edicaoId}/assinantes`);
+      setAssinantesEdicao(response.data.assinantes || []);
+    } catch (error) {
+      console.error('Erro ao carregar assinantes:', error);
+      setAssinantesEdicao([]);
+    }
+  };
+
+  const openAssinantesModal = async (edicao) => {
+    setEdicaoParaAssinar(edicao);
+    await fetchUsuariosDisponiveis();
+    await fetchAssinantesEdicao(edicao.edicao_id);
+    setShowAssinantesModal(true);
+  };
+
+  const closeAssinantesModal = () => {
+    setShowAssinantesModal(false);
+    setEdicaoParaAssinar(null);
+    setAssinantesEdicao([]);
+  };
+
+  const handleAddAssinante = async (userId) => {
+    if (!edicaoParaAssinar) return;
+    
+    try {
+      const response = await api.post(`/doem/edicoes/${edicaoParaAssinar.edicao_id}/assinantes`, {
+        user_id: userId
+      });
+      toast.success(response.data.message);
+      setAssinantesEdicao(response.data.assinantes);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao adicionar assinante');
+    }
+  };
+
+  const handleRemoveAssinante = async (userId) => {
+    if (!edicaoParaAssinar) return;
+    
+    try {
+      const response = await api.delete(`/doem/edicoes/${edicaoParaAssinar.edicao_id}/assinantes/${userId}`);
+      toast.success(response.data.message);
+      setAssinantesEdicao(response.data.assinantes);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao remover assinante');
+    }
+  };
+
   const openModal = (edicao = null) => {
     if (edicao) {
       setEditingEdicao(edicao);
