@@ -4417,8 +4417,8 @@ async def get_assinantes_edicao(edicao_id: str, request: Request):
     if not edicao:
         raise HTTPException(status_code=404, detail="Edição não encontrada")
     
-    assinatura = edicao.get('assinatura_digital', {})
-    assinantes = assinatura.get('assinantes', [])
+    assinatura = edicao.get('assinatura_digital') or {}
+    assinantes = assinatura.get('assinantes') or []
     
     return {
         'edicao_id': edicao_id,
@@ -4488,8 +4488,8 @@ async def remove_assinante_edicao(edicao_id: str, user_id: str, request: Request
     if edicao.get('status') == 'publicado':
         raise HTTPException(status_code=400, detail="Não é possível remover assinantes de edições já publicadas")
     
-    assinatura = edicao.get('assinatura_digital', {})
-    assinantes = assinatura.get('assinantes', [])
+    assinatura = edicao.get('assinatura_digital') or {}
+    assinantes = assinatura.get('assinantes') or []
     
     assinantes = [a for a in assinantes if a.get('user_id') != user_id]
     
