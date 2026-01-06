@@ -4,6 +4,7 @@ import { Edit, Trash2, Plus, FolderOpen, Calendar } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import Pagination, { usePagination } from '../components/Pagination';
 
 const PACList = () => {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ const PACList = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [anos, setAnos] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
+  const [totalPacs, setTotalPacs] = useState(0);
+  
+  // Paginação
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(20);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -22,7 +27,7 @@ const PACList = () => {
     if (anoSelecionado !== null) {
       fetchPACs();
     }
-  }, [anoSelecionado]);
+  }, [anoSelecionado, currentPage, pageSize]);
 
   const fetchCurrentUser = async () => {
     try {
@@ -47,11 +52,25 @@ const PACList = () => {
   const fetchPACs = async () => {
     setLoading(true);
     try {
-      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
-      const response = await api.get(`/pacs${params}`);
-      setPacs(response.data);
+      const params = new URLSearchParams();
+      if (anoSelecionado) params.append('ano', anoSelecionado);
+      params.append('page', currentPage);
+      params.append('page_size', pageSize);
+      
+      const response = await api.get(`/pacs/paginado?${params.toString()}`);
+      setPacs(response.data.items);
+      setTotalPacs(response.data.total);
     } catch (error) {
       toast.error('Erro ao carregar PACs');
+      // Fallback para endpoint antigo
+      try {
+        const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+        const response = await api.get(`/pacs${params}`);
+        setPacs(response.data);
+        setTotalPacs(response.data.length);
+      } catch (e) {
+        console.error('Erro no fallback:', e);
+      }
     } finally {
       setLoading(false);
     }
