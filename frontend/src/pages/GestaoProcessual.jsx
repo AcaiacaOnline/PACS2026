@@ -284,22 +284,36 @@ const GestaoProcessual = () => {
     }
   };
 
-  const filteredProcessos = processos.filter(p => {
-    const matchSearch = 
-      p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.secretaria?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = !filterStatus || p.status === filterStatus;
-    const matchModalidade = !filterModalidade || p.modalidade === filterModalidade;
-    return matchSearch && matchStatus && matchModalidade;
-  });
-
-  // Dados paginados
-  const paginatedProcessos = paginateData(filteredProcessos, currentPage, pageSize);
-
-  // Reset página quando filtros mudam
+  // Os dados já vêm paginados e filtrados do backend
+  const paginatedProcessos = processos;
+  
+  // Total de itens para a paginação (estimativa baseada nos dados carregados)
+  // Em uma implementação ideal, o backend retornaria o total
+  const [totalProcessos, setTotalProcessos] = useState(0);
+  
+  // Buscar contagem total quando filtros mudam
   useEffect(() => {
-    resetPage();
+    const fetchTotal = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (anoSelecionado) params.append('ano', anoSelecionado);
+        if (searchTerm) params.append('search', searchTerm);
+        if (filterStatus) params.append('status', filterStatus);
+        if (filterModalidade) params.append('modalidade', filterModalidade);
+        params.append('page', 1);
+        params.append('page_size', 1);
+        
+        const response = await api.get(`/processos/paginado?${params.toString()}`);
+        setTotalProcessos(response.data.total || 0);
+      } catch (error) {
+        console.error('Erro ao buscar total:', error);
+      }
+    };
+    
+    if (anoSelecionado !== null) {
+      fetchTotal();
+      resetPage();
+    }
   }, [searchTerm, filterStatus, filterModalidade, anoSelecionado]);
 
   const formatDate = (dateStr) => {
