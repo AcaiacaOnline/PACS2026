@@ -404,6 +404,10 @@ class DOEMAssinatura(BaseModel):
     hash_documento: Optional[str] = None
     tipo_certificado: str = "ICP-Brasil (Simulado)"
     titular: str = "Prefeitura Municipal de Acaiaca"
+    validation_code: Optional[str] = None
+    cpf: Optional[str] = None
+    cargo: Optional[str] = None
+    email: Optional[str] = None
 
 class DOEMEdicao(BaseModel):
     """Edição do Diário Oficial"""
