@@ -4008,15 +4008,24 @@ def parse_rtf_publicacao(rtf_content: bytes) -> list:
         logging.error(f"Erro ao parsear RTF: {e}")
         return []
 
-def gerar_assinatura_simulada(pdf_bytes: bytes) -> DOEMAssinatura:
-    """Gera uma assinatura digital simulada para o documento"""
+def gerar_assinatura_simulada(pdf_bytes: bytes, user_info: dict = None) -> DOEMAssinatura:
+    """Gera uma assinatura digital simulada para o documento com código de validação"""
     hash_doc = hashlib.sha256(pdf_bytes).hexdigest()
+    validation_code = generate_validation_code()
+    
+    # Informações do assinante
+    titular = user_info.get('nome', 'Prefeitura Municipal de Acaiaca') if user_info else 'Prefeitura Municipal de Acaiaca'
+    
     return DOEMAssinatura(
         assinado=True,
         data_assinatura=datetime.now(timezone.utc),
         hash_documento=hash_doc,
         tipo_certificado="ICP-Brasil (Simulado)",
-        titular="Prefeitura Municipal de Acaiaca"
+        titular=titular,
+        validation_code=validation_code,
+        cpf=user_info.get('cpf', '') if user_info else '',
+        cargo=user_info.get('cargo', '') if user_info else '',
+        email=user_info.get('email', '') if user_info else ''
     )
 
 # ===== Sistema de Assinatura Digital Avançada =====
