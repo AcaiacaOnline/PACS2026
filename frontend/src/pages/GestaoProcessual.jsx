@@ -345,7 +345,7 @@ const GestaoProcessual = () => {
               <ClipboardList size={32} />
               Gestão Processual
             </h2>
-            <p className="text-muted-foreground mt-1">{processos.length} processo(s) cadastrado(s)</p>
+            <p className="text-muted-foreground mt-1">{totalProcessos} processo(s) cadastrado(s)</p>
           </div>
           
           <div className="flex flex-wrap gap-2 items-center">
