@@ -1684,6 +1684,43 @@ async def get_pacs_geral(request: Request, ano: str = None):
     pacs = await db.pacs_geral.find(query, {'_id': 0}).to_list(1000)
     return pacs
 
+@api_router.get("/pacs-geral/paginado")
+async def get_pacs_geral_paginado(
+    request: Request,
+    ano: str = None,
+    page: int = 1,
+    page_size: int = 20,
+    search: str = None
+):
+    """Retorna PACs Gerais com paginação"""
+    user = await get_current_user(request)
+    
+    query = {}
+    if ano:
+        query['ano'] = str(ano)
+    
+    if search:
+        query['$or'] = [
+            {'nome_secretaria': {'$regex': search, '$options': 'i'}},
+            {'secretario': {'$regex': search, '$options': 'i'}},
+            {'fiscal_contrato': {'$regex': search, '$options': 'i'}}
+        ]
+    
+    # Contar total
+    total = await db.pacs_geral.count_documents(query)
+    
+    # Buscar com paginação
+    skip = (page - 1) * page_size
+    pacs = await db.pacs_geral.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(page_size).to_list(page_size)
+    
+    return {
+        'items': pacs,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size
+    }
+
 @api_router.post("/pacs-geral", response_model=PACGeral)
 async def create_pac_geral(pac_data: PACGeralCreate, request: Request):
     user = await get_current_user(request)
