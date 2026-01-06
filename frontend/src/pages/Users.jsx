@@ -272,6 +272,22 @@ const Users = () => {
     return activePerms.join(', ') || 'Sem permissões';
   };
 
+  // Filtrar usuários
+  const filteredUsers = users.filter(user => {
+    const matchSearch = 
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchSearch;
+  });
+
+  // Dados paginados
+  const paginatedUsers = paginateData(filteredUsers, currentPage, pageSize);
+
+  // Reset página quando filtro muda
+  useEffect(() => {
+    resetPage();
+  }, [searchTerm]);
+
   if (loading) {
     return (
       <Layout>
