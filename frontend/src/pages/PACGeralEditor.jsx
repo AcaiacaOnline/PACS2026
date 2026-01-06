@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import ClassificacaoSelector from '../components/ClassificacaoSelector';
 import QuantidadeSecretarias from '../components/QuantidadeSecretarias';
+import Pagination, { usePagination } from '../components/Pagination';
 import { ArrowLeft, Save, Plus, Edit, Trash2, FileText, FileSpreadsheet, Download, Upload, X } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -12,6 +13,9 @@ const PACGeralEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id && id !== 'new';
+  
+  // Paginação de itens
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(15);
 
   const [pac, setPac] = useState({
     nome_secretaria: '',
