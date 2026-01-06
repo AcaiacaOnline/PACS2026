@@ -1,185 +1,183 @@
-# PAC Acaiaca 2026 - Product Requirements Document (PRD)
+# Sistema PAC - Prefeitura Municipal de Acaiaca
+## Plano Anual de Contratações e Gestão Municipal
 
-## Visão Geral
-Sistema completo de Plano Anual de Contratações (PAC) para a Prefeitura Municipal de Acaiaca - MG, desenvolvido em conformidade com a Lei Federal nº 14.133/2021.
+### Visão Geral
+Sistema completo de gestão municipal que inclui:
+- **PAC (Plano Anual de Contratações)** - Gestão individual por secretaria
+- **PAC Geral** - Visão consolidada de todas as secretarias
+- **Gestão Processual** - Controle de processos licitatórios
+- **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
+- **Portal de Transparência** - Acesso público às informações
+- **Newsletter** - Sistema de notificações por email
 
-## Stack Tecnológica
-- **Frontend**: React + TailwindCSS + Shadcn/UI + Recharts
-- **Backend**: FastAPI (Python) + MongoDB
-- **Autenticação**: JWT + Google OAuth (via Emergent)
-- **Relatórios**: ReportLab (PDF) + OpenPyXL (Excel)
-- **Email**: SMTP SSL (mail.acaiaca.mg.gov.br:465)
+---
+
+## Status das Funcionalidades
+
+### ✅ IMPLEMENTADO E FUNCIONANDO
+
+#### Módulo 1: Paginação Configurável
+- Componente `Pagination.jsx` reutilizável
+- Hook `usePagination()` com persistência em localStorage
+- Opções: 20, 30, 50 ou 100 itens por página
+- Implementado em: Gestão Processual
+- **Status**: COMPLETO E TESTADO
+
+#### Módulo 2: Campos de Assinatura Digital do Usuário
+- Novos campos no cadastro de usuário:
+  - CPF (com máscara XXX.XXX.XXX-XX)
+  - Cargo Ocupado
+  - Telefone (com máscara (XX) XXXXX-XXXX)
+  - CEP (com máscara XXXXX-XXX)
+  - Endereço Completo
+- Seção "Dados para Assinatura Digital" no formulário
+- **Status**: COMPLETO E TESTADO
+
+#### Módulo 3: Assinatura Digital Visual em PDFs
+- Selo de assinatura na lateral direita de todas as páginas
+- Informações exibidas:
+  - Nome do assinante
+  - Cargo
+  - CPF mascarado (conformidade LGPD)
+  - Data e hora da assinatura
+  - Código de validação
+  - QR Code para validação rápida
+- **Status**: COMPLETO E TESTADO
+
+#### Módulo 4: Painel de Validação de Documentos
+- URL pública: `/validar`
+- API: `POST /api/validar/verificar`
+- Funcionalidades:
+  - Inserção de código de validação
+  - Verificação de autenticidade
+  - Exibição de dados do documento
+  - Dados dos assinantes com CPF mascarado
+- **Status**: COMPLETO E TESTADO
+
+#### Módulo DOEM (Anterior)
+- Gestão de edições do Diário Oficial
+- Importação de RTF
+- Publicação com assinatura digital
+- Portal público de consulta
+- Sistema de Newsletter com 9 segmentos
+- Notificações por email via SMTP
+- **Status**: COMPLETO
+
+#### Máscaras de Input (Anterior)
+- TelefoneInput, CPFInput, CNPJInput
+- CEPInput, CurrencyInput, EmailInput
+- Aplicadas em: PACEditor, PACGeralEditor, GestaoProcessual, Users
+- **Status**: COMPLETO
+
+---
+
+## Arquitetura Técnica
+
+### Frontend (React)
+```
+/app/frontend/src/
+├── components/
+│   ├── Layout.jsx
+│   ├── Pagination.jsx          # NOVO
+│   └── ui/                     # Shadcn components
+├── pages/
+│   ├── ValidarDocumento.jsx    # NOVO
+│   ├── DOEM.jsx
+│   ├── DOEMPublico.jsx
+│   ├── Users.jsx               # ATUALIZADO
+│   ├── GestaoProcessual.jsx    # ATUALIZADO
+│   └── ...
+└── utils/
+    ├── api.js
+    └── masks.jsx
+```
+
+### Backend (FastAPI)
+```
+/app/backend/
+├── server.py                   # ~5300+ linhas (PRECISA REFATORAÇÃO)
+├── brasao_doem_small.png
+├── rodape_doem_small.jpg
+└── requirements.txt
+```
+
+### Banco de Dados (MongoDB)
+Collections principais:
+- `users` - Usuários com signature_data
+- `pacs` - PACs individuais
+- `pacs_geral` - PACs consolidados
+- `processos` - Processos licitatórios
+- `doem_edicoes` - Edições do DOEM
+- `document_signatures` - Assinaturas para validação
+- `newsletter_subscribers` - Assinantes da newsletter
+
+---
+
+## Próximos Passos (Backlog)
+
+### P1 - Alta Prioridade
+1. **Refatoração do server.py**
+   - Dividir em múltiplos APIRouters
+   - Arquitetura sugerida:
+     ```
+     /app/backend/
+     ├── routes/
+     │   ├── auth.py
+     │   ├── pacs.py
+     │   ├── processos.py
+     │   ├── doem.py
+     │   └── validation.py
+     ├── models/
+     ├── services/
+     └── server.py (apenas bootstrap)
+     ```
+
+### P2 - Média Prioridade
+2. **Aplicar assinatura digital em todos os relatórios**
+   - PDFs de PAC
+   - PDFs de PAC Geral
+   - Relatórios de Processos
+
+3. **Paginação em outras listagens**
+   - PACList
+   - PACGeralList
+
+### P3 - Baixa Prioridade
+4. **Versão cPanel (PHP/MySQL)**
+   - Pasta: `/app/cpanel-version`
+   - Status: Em espera
+
+---
 
 ## Credenciais de Teste
-- **Admin**: cristiano.abdo@acaiaca.mg.gov.br / Cris@820906
-- **SMTP**: naoresponda@acaiaca.mg.gov.br / Pma@3120
+
+| Tipo | Email | Senha |
+|------|-------|-------|
+| Admin | cristiano.abdo@acaiaca.mg.gov.br | Cris@820906 |
 
 ---
 
-## Módulos Implementados
+## URLs Importantes
 
-### 1. Autenticação e Gestão de Usuários
-- [x] Login com email/senha (JWT)
-- [x] Login com Google OAuth
-- [x] Gestão de usuários (admin only)
-- [x] Permissões granulares por módulo
-
-### 2. PAC Individual
-- [x] CRUD completo de PACs
-- [x] Itens do PAC com cálculos automáticos
-- [x] **Filtro por ano** (2025, 2026, etc.)
-- [x] Exportação PDF/XLSX com margens padronizadas
-
-### 3. PAC Geral (Compartilhado)
-- [x] CRUD completo
-- [x] Itens compartilhados entre secretarias
-- [x] **Filtro por ano**
-- [x] Exportação PDF/XLSX
-
-### 4. Gestão Processual
-- [x] CRUD completo de processos
-- [x] Status workflow (Iniciado → Publicado → Homologado → Concluído)
-- [x] **Filtro por ano**
-- [x] Dashboard analítico
-- [x] Importação em massa (Excel)
-- [x] Exportação PDF/XLSX
-
-### 5. DOEM - Diário Oficial Eletrônico Municipal ✨
-- [x] **9 Segmentos de Publicação**:
-  - Portarias
-  - Leis
-  - Decretos
-  - Resoluções
-  - Editais
-  - Prestações de Contas
-  - Processos Administrativos
-  - Publicações do Legislativo
-  - Publicações do Terceiro Setor
-- [x] **Tipos dinâmicos por segmento** (ex: Decreto → "Decreto", "Decreto Regulamentar")
-- [x] **Página Administrativa** (`/doem`)
-  - Criar/editar edições
-  - Importar arquivo RTF
-  - Publicar com assinatura digital (SIMULADA)
-  - Download PDF em formato de jornal oficial
-- [x] **Portal Público** (`/doem-publico`)
-  - Interface inspirada no jornalminasgerais.mg.gov.br
-  - Busca de publicações
-  - Download de PDFs
-
-### 6. Sistema de Newsletter ✨ NOVO
-- [x] **Gestão de Inscritos** (admin)
-  - Adicionar manualmente
-  - Ativar/desativar
-  - Excluir
-  - Estatísticas (total, ativos, pendentes, por tipo)
-- [x] **Inscrição Pública**
-  - Formulário público com confirmação por email
-  - Seleção de segmentos de interesse
-- [x] **Notificações Automáticas**
-  - Envio via SMTP próprio ao publicar edição
-  - Email HTML com lista de publicações
-  - PDF anexo da edição
-
-### 7. Portal de Transparência
-- [x] Acesso público sem login
-- [x] Dashboard com estatísticas
-- [x] Visualização de PACs e Processos
-- [x] Exportação pública PDF/XLSX
-- [x] Link para DOEM público
-
-### 8. Backup e Restauração
-- [x] Exportação completa de dados (JSON)
-- [x] Importação/restauração de backup
-- [x] Proteção contra perda de dados
+| Recurso | URL |
+|---------|-----|
+| Portal Público | `/` |
+| DOEM Público | `/doem-publico` |
+| Validar Documento | `/validar` |
+| Dashboard Admin | `/dashboard` |
+| Gestão Processual | `/gestao-processual` |
+| DOEM Admin | `/doem` |
 
 ---
 
-## Endpoints de API Principais
+## Última Atualização
+**Data**: 06/01/2026
+**Versão**: 2.4.0
 
-### DOEM
-- `GET /api/doem/segmentos` - Lista 9 segmentos e tipos
-- `GET /api/doem/edicoes` - Listar edições
-- `POST /api/doem/edicoes` - Criar edição
-- `POST /api/doem/edicoes/{id}/publicar` - Publicar (envia notificações)
-
-### Newsletter
-- `GET /api/newsletter/inscritos` - Listar inscritos (admin)
-- `POST /api/newsletter/inscritos` - Adicionar inscrito (admin)
-- `PUT /api/newsletter/inscritos/{id}/toggle` - Ativar/desativar
-- `DELETE /api/newsletter/inscritos/{id}` - Remover
-- `GET /api/newsletter/estatisticas` - Estatísticas
-- `POST /api/public/newsletter/inscrever` - Inscrição pública
-
----
-
-## Configuração SMTP
-
-As credenciais estão em `/app/backend/.env`:
-```
-SMTP_SERVER=mail.acaiaca.mg.gov.br
-SMTP_PORT=465
-SMTP_EMAIL=naoresponda@acaiaca.mg.gov.br
-SMTP_PASSWORD=Pma@3120
-SMTP_USE_SSL=true
-```
-
----
-
-## Notas Técnicas
-
-### Assinatura Digital
-A assinatura digital do DOEM está **SIMULADA**:
-- Gera hash SHA-256 do documento
-- Não usa certificado ICP-Brasil real
-
-### Margens de Relatórios
-- Esquerda/Direita: 5cm (50mm)
-- Superior/Inferior: 3cm (30mm)
-
-### Débito Técnico
-- O arquivo `server.py` possui +4500 linhas e precisa de refatoração
-
----
-
-## Próximas Tarefas (Backlog)
-
-### P0 - Alta Prioridade
-- [ ] Integrar assinatura digital real com certificado ICP-Brasil
-
-### P1 - Média Prioridade
-- [ ] Refatorar backend em módulos separados
-- [ ] Melhorar layout do PDF do DOEM
-
-### P2 - Baixa Prioridade
-- [ ] Finalizar versão cPanel (PHP/MySQL)
-- [ ] Histórico de alterações
-
----
-
-## Histórico de Versões
-
-### v1.4.0 - 02/01/2026
-- ✅ Expandido DOEM com 9 segmentos de publicação
-- ✅ Tipos de publicação dinâmicos por segmento
-- ✅ Sistema completo de Newsletter
-- ✅ Gestão de inscritos (admin)
-- ✅ Inscrição pública com confirmação por email
-- ✅ Notificações automáticas via SMTP próprio
-- ✅ **BUGFIX**: Filtro de processos por ano corrigido (extrai ano do numero_processo)
-- ✅ **MELHORIA**: PDF do DOEM com cabeçalho personalizado (brasão + título)
-- ✅ **MELHORIA**: PDF do DOEM com rodapé customizado
-- ✅ **MELHORIA**: Margens do PDF otimizadas para aproveitar espaço
-
-### v1.3.0 - 02/01/2026
-- ✅ Filtro de ano para PAC, PAC Geral e Processos
-- ✅ Módulo DOEM básico
-
-### v1.2.0 - 01/01/2026
-- Sistema de Backup e Restauração
-- Portal Público de Transparência
-
-### v1.1.0
-- Gestão Processual com Dashboard
-
-### v1.0.0
-- MVP inicial com PAC Individual e PAC Geral
+### Changelog desta sessão:
+- Implementada paginação configurável (Módulo 1)
+- Adicionados campos de assinatura no cadastro de usuário (Módulo 4)
+- Implementado sistema de assinatura digital visual em PDFs (Módulo 2)
+- Criado painel público de validação de documentos (Módulo 3)
+- Corrigido bug crítico: validation codes não eram salvos no banco
+- Todos os módulos testados e funcionando
