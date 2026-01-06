@@ -4403,6 +4403,131 @@ async def delete_edicao(edicao_id: str, request: Request):
     await db.doem_edicoes.delete_one({'edicao_id': edicao_id})
     return {'message': 'Edição excluída com sucesso'}
 
+# ===== Endpoints de Assinatura em Lote =====
+
+class AssinanteRequest(BaseModel):
+    user_id: str
+
+@doem_router.get("/edicoes/{edicao_id}/assinantes")
+async def get_assinantes_edicao(edicao_id: str, request: Request):
+    """Lista os assinantes de uma edição"""
+    await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    assinatura = edicao.get('assinatura_digital', {})
+    assinantes = assinatura.get('assinantes', [])
+    
+    return {
+        'edicao_id': edicao_id,
+        'assinantes': assinantes,
+        'assinatura_em_lote': assinatura.get('assinatura_em_lote', False)
+    }
+
+@doem_router.post("/edicoes/{edicao_id}/assinantes")
+async def add_assinante_edicao(edicao_id: str, assinante_req: AssinanteRequest, request: Request):
+    """Adiciona um assinante a uma edição (antes de publicar)"""
+    user = await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') == 'publicado':
+        raise HTTPException(status_code=400, detail="Não é possível adicionar assinantes a edições já publicadas")
+    
+    # Buscar dados do usuário assinante
+    assinante_user = await db.users.find_one({'user_id': assinante_req.user_id}, {'_id': 0})
+    if not assinante_user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    signature_data = assinante_user.get('signature_data', {})
+    
+    novo_assinante = {
+        'user_id': assinante_req.user_id,
+        'nome': assinante_user.get('name', ''),
+        'cpf': signature_data.get('cpf', ''),
+        'cargo': signature_data.get('cargo', ''),
+        'email': assinante_user.get('email', ''),
+        'data_assinatura': None  # Será preenchido quando assinar
+    }
+    
+    # Verificar se já está na lista
+    assinatura = edicao.get('assinatura_digital', {})
+    assinantes = assinatura.get('assinantes', [])
+    
+    if any(a.get('user_id') == assinante_req.user_id for a in assinantes):
+        raise HTTPException(status_code=400, detail="Este usuário já está na lista de assinantes")
+    
+    assinantes.append(novo_assinante)
+    
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {'$set': {
+            'assinatura_digital.assinantes': assinantes,
+            'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
+        }}
+    )
+    
+    return {
+        'message': f'Assinante {assinante_user.get("name")} adicionado com sucesso',
+        'assinantes': assinantes
+    }
+
+@doem_router.delete("/edicoes/{edicao_id}/assinantes/{user_id}")
+async def remove_assinante_edicao(edicao_id: str, user_id: str, request: Request):
+    """Remove um assinante de uma edição"""
+    await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') == 'publicado':
+        raise HTTPException(status_code=400, detail="Não é possível remover assinantes de edições já publicadas")
+    
+    assinatura = edicao.get('assinatura_digital', {})
+    assinantes = assinatura.get('assinantes', [])
+    
+    assinantes = [a for a in assinantes if a.get('user_id') != user_id]
+    
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {'$set': {
+            'assinatura_digital.assinantes': assinantes,
+            'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
+        }}
+    )
+    
+    return {'message': 'Assinante removido com sucesso', 'assinantes': assinantes}
+
+@doem_router.get("/usuarios-disponiveis")
+async def get_usuarios_disponiveis(request: Request):
+    """Lista usuários disponíveis para assinar documentos (que possuem dados de assinatura)"""
+    await get_current_user(request)
+    
+    # Buscar todos os usuários ativos
+    users = await db.users.find(
+        {'is_active': {'$ne': False}},
+        {'_id': 0, 'password_hash': 0}
+    ).to_list(1000)
+    
+    # Filtrar e formatar para exibição
+    usuarios_disponiveis = []
+    for user in users:
+        sig_data = user.get('signature_data', {})
+        usuarios_disponiveis.append({
+            'user_id': user.get('user_id'),
+            'nome': user.get('name', ''),
+            'email': user.get('email', ''),
+            'cargo': sig_data.get('cargo', ''),
+            'tem_dados_assinatura': bool(sig_data.get('cpf') or sig_data.get('cargo'))
+        })
+    
+    return usuarios_disponiveis
+
 @doem_router.post("/import-rtf")
 async def import_rtf(file: UploadFile = File(...), request: Request = None):
     """Importa um arquivo RTF e extrai as publicações"""
