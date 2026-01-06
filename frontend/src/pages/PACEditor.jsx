@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Plus, Edit, Trash2, FileSpreadsheet, FileText, Upload, Download, X, ArrowLeft } from 'lucide-react';
 import Layout from '../components/Layout';
 import ClassificacaoSelector from '../components/ClassificacaoSelector';
+import Pagination, { usePagination } from '../components/Pagination';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { TelefoneInput, EmailInput, CurrencyInput, maskCurrency, unmaskCurrency } from '../utils/masks';
@@ -17,6 +18,9 @@ const PACEditor = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [pacOwner, setPacOwner] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  
+  // Paginação de itens
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(15);
   
   // PAC Header Data
   const [headerData, setHeaderData] = useState({
