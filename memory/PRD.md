@@ -20,7 +20,7 @@ Sistema completo de gestão municipal que inclui:
 - Componente `Pagination.jsx` reutilizável
 - Hook `usePagination()` com persistência em localStorage
 - Opções: 20, 30, 50 ou 100 itens por página
-- Implementado em: Gestão Processual
+- Implementado em: Gestão Processual, Usuários
 - **Status**: COMPLETO E TESTADO
 
 #### Módulo 2: Campos de Assinatura Digital do Usuário
@@ -54,6 +54,18 @@ Sistema completo de gestão municipal que inclui:
   - Dados dos assinantes com CPF mascarado
 - **Status**: COMPLETO E TESTADO
 
+#### 🆕 Módulo 5: Assinatura em Lote
+- Permite múltiplos assinantes em um único documento
+- Interface no DOEM para gerenciar assinantes antes de publicar
+- Endpoints:
+  - `GET /api/doem/usuarios-disponiveis` - Lista usuários disponíveis
+  - `GET /api/doem/edicoes/{id}/assinantes` - Lista assinantes de uma edição
+  - `POST /api/doem/edicoes/{id}/assinantes` - Adiciona assinante
+  - `DELETE /api/doem/edicoes/{id}/assinantes/{user_id}` - Remove assinante
+- O selo no PDF exibe TODOS os assinantes
+- O QR Code único valida todas as assinaturas
+- **Status**: COMPLETO E TESTADO
+
 #### Módulo DOEM (Anterior)
 - Gestão de edições do Diário Oficial
 - Importação de RTF
@@ -61,12 +73,6 @@ Sistema completo de gestão municipal que inclui:
 - Portal público de consulta
 - Sistema de Newsletter com 9 segmentos
 - Notificações por email via SMTP
-- **Status**: COMPLETO
-
-#### Máscaras de Input (Anterior)
-- TelefoneInput, CPFInput, CNPJInput
-- CEPInput, CurrencyInput, EmailInput
-- Aplicadas em: PACEditor, PACGeralEditor, GestaoProcessual, Users
 - **Status**: COMPLETO
 
 ---
@@ -78,14 +84,14 @@ Sistema completo de gestão municipal que inclui:
 /app/frontend/src/
 ├── components/
 │   ├── Layout.jsx
-│   ├── Pagination.jsx          # NOVO
+│   ├── Pagination.jsx
 │   └── ui/                     # Shadcn components
 ├── pages/
-│   ├── ValidarDocumento.jsx    # NOVO
-│   ├── DOEM.jsx
+│   ├── ValidarDocumento.jsx
+│   ├── DOEM.jsx               # Inclui modal de assinantes em lote
 │   ├── DOEMPublico.jsx
-│   ├── Users.jsx               # ATUALIZADO
-│   ├── GestaoProcessual.jsx    # ATUALIZADO
+│   ├── Users.jsx
+│   ├── GestaoProcessual.jsx
 │   └── ...
 └── utils/
     ├── api.js
@@ -95,7 +101,7 @@ Sistema completo de gestão municipal que inclui:
 ### Backend (FastAPI)
 ```
 /app/backend/
-├── server.py                   # ~5300+ linhas (PRECISA REFATORAÇÃO)
+├── server.py                   # ~5500+ linhas (PRECISA REFATORAÇÃO)
 ├── brasao_doem_small.png
 ├── rodape_doem_small.jpg
 └── requirements.txt
@@ -107,7 +113,7 @@ Collections principais:
 - `pacs` - PACs individuais
 - `pacs_geral` - PACs consolidados
 - `processos` - Processos licitatórios
-- `doem_edicoes` - Edições do DOEM
+- `doem_edicoes` - Edições do DOEM com assinantes em lote
 - `document_signatures` - Assinaturas para validação
 - `newsletter_subscribers` - Assinantes da newsletter
 
@@ -138,12 +144,8 @@ Collections principais:
    - PDFs de PAC Geral
    - Relatórios de Processos
 
-3. **Paginação em outras listagens**
-   - PACList
-   - PACGeralList
-
 ### P3 - Baixa Prioridade
-4. **Versão cPanel (PHP/MySQL)**
+3. **Versão cPanel (PHP/MySQL)**
    - Pasta: `/app/cpanel-version`
    - Status: Em espera
 
@@ -172,12 +174,16 @@ Collections principais:
 
 ## Última Atualização
 **Data**: 06/01/2026
-**Versão**: 2.4.0
+**Versão**: 2.5.0
 
 ### Changelog desta sessão:
-- Implementada paginação configurável (Módulo 1)
-- Adicionados campos de assinatura no cadastro de usuário (Módulo 4)
-- Implementado sistema de assinatura digital visual em PDFs (Módulo 2)
-- Criado painel público de validação de documentos (Módulo 3)
-- Corrigido bug crítico: validation codes não eram salvos no banco
+- Implementada paginação configurável em Gestão Processual e Usuários (Módulo 1)
+- Adicionados campos de assinatura no cadastro de usuário (Módulo 2)
+- Implementado sistema de assinatura digital visual em PDFs (Módulo 3)
+- Criado painel público de validação de documentos (Módulo 4)
+- **NOVO**: Implementado sistema de assinatura em lote (Módulo 5)
+  - Interface no DOEM para gerenciar múltiplos assinantes
+  - PDFs exibem todos os assinantes no selo
+  - Validação mostra lista completa de assinantes
+- Corrigidos bugs críticos de null pointer em assinatura_digital
 - Todos os módulos testados e funcionando
