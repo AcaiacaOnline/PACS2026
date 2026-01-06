@@ -192,7 +192,8 @@ const Users = () => {
         email: formData.email,
         is_admin: formData.permissions.is_full_admin || formData.is_admin,
         is_active: formData.is_active,
-        permissions: formData.permissions
+        permissions: formData.permissions,
+        signature_data: formData.signature_data
       };
 
       if (formData.password) {
