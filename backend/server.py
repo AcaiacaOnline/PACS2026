@@ -4659,9 +4659,14 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
             logging.error(f"Erro ao enviar notificações: {e}")
             notificacao_msg = " Falha ao enviar notificações."
     
+    # Atualizar assinatura com hash
+    assinatura_data['hash_documento'] = hash_doc
+    
     return {
         'message': f'Edição publicada com sucesso!{notificacao_msg}',
-        'assinatura': assinatura.model_dump()
+        'assinatura': assinatura_data,
+        'assinantes': len(assinantes_lote),
+        'validation_code': validation_code
     }
 
 @doem_router.get("/edicoes/{edicao_id}/pdf")
