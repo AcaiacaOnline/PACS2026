@@ -470,20 +470,46 @@ const PortalPublico = () => {
     </div>
   );
 
-  const renderProcessos = () => (
+  const renderProcessos = () => {
+    // Filtrar processos
+    const filteredProcessos = processos.filter(p => 
+      p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.secretaria?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Paginação
+    const totalProcessos = filteredProcessos.length;
+    const totalPages = Math.ceil(totalProcessos / processosPageSize);
+    const startIndex = (processosPage - 1) * processosPageSize;
+    const paginatedProcessos = filteredProcessos.slice(startIndex, startIndex + processosPageSize);
+    
+    return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             placeholder="Buscar por número, objeto ou secretaria..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setProcessosPage(1); }}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white/90"
           />
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={processosPageSize}
+            onChange={(e) => { setProcessosPageSize(Number(e.target.value)); setProcessosPage(1); }}
+            className="border border-gray-300 rounded-lg px-3 py-2 bg-white/90 text-sm"
+            data-testid="processos-page-size"
+          >
+            <option value={20}>20 por página</option>
+            <option value={40}>40 por página</option>
+            <option value={60}>60 por página</option>
+            <option value={80}>80 por página</option>
+            <option value={100}>100 por página</option>
+          </select>
           <button
             onClick={() => handleExportPDF('processos', null, 'landscape')}
             className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
@@ -509,13 +535,14 @@ const PortalPublico = () => {
               </tr>
             </thead>
             <tbody>
-              {processos
-                .filter(p => 
-                  p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  p.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  p.secretaria?.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((processo) => (
+              {paginatedProcessos.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-3 py-8 text-center text-gray-500">
+                    Nenhum processo encontrado.
+                  </td>
+                </tr>
+              ) : (
+                paginatedProcessos.map((processo) => (
                 <tr key={processo.processo_id} className="border-t hover:bg-gray-50">
                   <td className="px-3 py-3 font-medium">{processo.numero_processo}</td>
                   <td className="px-3 py-3">
@@ -535,13 +562,56 @@ const PortalPublico = () => {
                   <td className="px-3 py-3">{processo.secretaria}</td>
                   <td className="px-3 py-3">{processo.responsavel}</td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
+        
+        {/* Paginação */}
+        {totalProcessos > 0 && (
+          <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Exibindo {startIndex + 1} a {Math.min(startIndex + processosPageSize, totalProcessos)} de {totalProcessos} processos
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setProcessosPage(1)}
+                disabled={processosPage === 1}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Primeira
+              </button>
+              <button
+                onClick={() => setProcessosPage(p => Math.max(1, p - 1))}
+                disabled={processosPage === 1}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 flex items-center gap-1"
+              >
+                <ChevronLeft size={16} /> Anterior
+              </button>
+              <span className="px-3 py-1 text-sm">
+                Página {processosPage} de {totalPages || 1}
+              </span>
+              <button
+                onClick={() => setProcessosPage(p => Math.min(totalPages, p + 1))}
+                disabled={processosPage >= totalPages}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 flex items-center gap-1"
+              >
+                Próxima <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setProcessosPage(totalPages)}
+                disabled={processosPage >= totalPages}
+                className="px-3 py-1 rounded border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+              >
+                Última
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
+  };
 
   return (
     <div 
