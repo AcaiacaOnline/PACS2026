@@ -1,20 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, CheckCircle, XCircle, FileText, Calendar, User, Shield, QrCode } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
 const ValidarDocumento = () => {
+  const [searchParams] = useSearchParams();
   const [validationCode, setValidationCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleValidate = async (e) => {
-    e.preventDefault();
-    if (!validationCode.trim()) {
-      toast.error('Digite o código de validação');
-      return;
+  // Ler código da URL automaticamente
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code');
+    if (codeFromUrl) {
+      setValidationCode(codeFromUrl.toUpperCase());
+      // Validar automaticamente se veio código na URL
+      handleValidateWithCode(codeFromUrl.toUpperCase());
     }
+  }, [searchParams]);
+
+  const handleValidateWithCode = async (code) => {
+    if (!code.trim()) return;
 
     setLoading(true);
     setResult(null);
@@ -22,7 +30,7 @@ const ValidarDocumento = () => {
 
     try {
       const response = await api.post('/validar/verificar', { 
-        validation_code: validationCode.trim().toUpperCase() 
+        validation_code: code.trim().toUpperCase() 
       });
       setResult(response.data);
       if (response.data.is_valid) {
@@ -36,6 +44,15 @@ const ValidarDocumento = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleValidate = async (e) => {
+    e.preventDefault();
+    if (!validationCode.trim()) {
+      toast.error('Digite o código de validação');
+      return;
+    }
+    await handleValidateWithCode(validationCode);
   };
 
   const formatDate = (dateStr) => {
