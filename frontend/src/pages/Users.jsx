@@ -301,22 +301,36 @@ const Users = () => {
   return (
     <Layout>
       <div className="space-y-6" data-testid="users-page">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl font-heading font-bold text-foreground flex items-center gap-2">
               <UsersIcon size={32} />
               Gerenciamento de Usuários
             </h2>
-            <p className="text-muted-foreground mt-1">{users.length} usuário(s) cadastrado(s)</p>
+            <p className="text-muted-foreground mt-1">{filteredUsers.length} usuário(s) encontrado(s)</p>
           </div>
-          <button
-            onClick={() => openModal()}
-            data-testid="create-user-btn"
-            className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
-          >
-            <Plus size={18} />
-            Novo Usuário
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Campo de Busca */}
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar por nome ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none w-64"
+                data-testid="search-users-input"
+              />
+            </div>
+            <button
+              onClick={() => openModal()}
+              data-testid="create-user-btn"
+              className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors shadow-sm"
+            >
+              <Plus size={18} />
+              Novo Usuário
+            </button>
+          </div>
         </div>
 
         {/* Users Table */}
@@ -335,7 +349,7 @@ const Users = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.user_id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 font-medium">
                       <div className="flex items-center gap-2">
