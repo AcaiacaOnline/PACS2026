@@ -4254,6 +4254,14 @@ async def get_doem_config() -> dict:
             'config_id': 'doem_config_main',
             'nome_municipio': 'Acaiaca',
             'uf': 'MG',
+            'cnpj': '18.296.673/0001-10',
+            'endereco': 'Praça Antônio Carlos, 10 - Centro',
+            'telefone': '(31) 3554-1222',
+            'email': 'gabinete@acaiaca.mg.gov.br',
+            'created_at': datetime.now(timezone.utc)
+        }
+        await db.doem_config.insert_one(config)
+    return config
 
 async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str) -> tuple:
     """
