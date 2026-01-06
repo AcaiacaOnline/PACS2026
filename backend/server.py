@@ -4049,9 +4049,10 @@ def generate_validation_code() -> str:
     """Gera código único para validação de documento"""
     return f"DOC-{uuid.uuid4().hex[:8].upper()}-{datetime.now().strftime('%Y%m%d')}"
 
-async def save_document_signature(doc_id: str, doc_type: str, signers: list, hash_doc: str) -> dict:
+async def save_document_signature(doc_id: str, doc_type: str, signers: list, hash_doc: str, validation_code: str = None) -> dict:
     """Salva a assinatura do documento no banco de dados para validação posterior"""
-    validation_code = generate_validation_code()
+    if not validation_code:
+        validation_code = generate_validation_code()
     signature_record = {
         'signature_id': str(uuid.uuid4()),
         'document_id': doc_id,
