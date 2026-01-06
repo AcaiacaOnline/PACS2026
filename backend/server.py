@@ -64,6 +64,14 @@ class UserPermissions(BaseModel):
     can_manage_users: bool = False # Cadastrar/gerenciar usuários
     is_full_admin: bool = False    # Todos os privilégios de administrador
 
+# Dados adicionais do usuário para assinatura digital
+class UserSignatureData(BaseModel):
+    cpf: Optional[str] = None           # CPF (será mascarado na exibição)
+    cargo: Optional[str] = None         # Cargo ocupado
+    endereco: Optional[str] = None      # Endereço completo
+    cep: Optional[str] = None           # CEP
+    telefone: Optional[str] = None      # Telefone para contato
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
@@ -73,6 +81,7 @@ class User(BaseModel):
     is_active: bool = True
     picture: Optional[str] = None
     permissions: Optional[UserPermissions] = None
+    signature_data: Optional[UserSignatureData] = None
     created_at: datetime
 
 class UserCreate(BaseModel):
@@ -81,6 +90,7 @@ class UserCreate(BaseModel):
     name: str
     is_admin: bool = False
     permissions: Optional[UserPermissions] = None
+    signature_data: Optional[UserSignatureData] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -89,6 +99,7 @@ class UserUpdate(BaseModel):
     is_admin: Optional[bool] = None
     is_active: bool = True
     permissions: Optional[UserPermissions] = None
+    signature_data: Optional[UserSignatureData] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -102,6 +113,7 @@ class UserListItem(BaseModel):
     is_admin: bool
     is_active: bool = True
     permissions: Optional[UserPermissions] = None
+    signature_data: Optional[UserSignatureData] = None
     created_at: datetime
 
 class PAC(BaseModel):
