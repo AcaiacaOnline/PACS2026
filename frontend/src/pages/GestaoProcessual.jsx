@@ -39,6 +39,9 @@ const GestaoProcessual = () => {
   const [anos, setAnos] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
   
+  // Paginação
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(20);
+  
   const [showModal, setShowModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
