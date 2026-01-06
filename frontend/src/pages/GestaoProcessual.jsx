@@ -108,11 +108,27 @@ const GestaoProcessual = () => {
   const fetchProcessos = async () => {
     setLoading(true);
     try {
-      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
-      const response = await api.get(`/processos${params}`);
-      setProcessos(response.data);
+      const params = new URLSearchParams();
+      if (anoSelecionado) params.append('ano', anoSelecionado);
+      params.append('page', currentPage);
+      params.append('page_size', pageSize);
+      if (searchTerm) params.append('search', searchTerm);
+      if (filterStatus) params.append('status', filterStatus);
+      if (filterModalidade) params.append('modalidade', filterModalidade);
+      
+      const response = await api.get(`/processos/paginado?${params.toString()}`);
+      setProcessos(response.data.items);
+      // O total é gerenciado pelo backend agora
     } catch (error) {
       toast.error('Erro ao carregar processos');
+      // Fallback para endpoint antigo se o novo falhar
+      try {
+        const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+        const response = await api.get(`/processos${params}`);
+        setProcessos(response.data);
+      } catch (e) {
+        console.error('Erro no fallback:', e);
+      }
     } finally {
       setLoading(false);
     }
