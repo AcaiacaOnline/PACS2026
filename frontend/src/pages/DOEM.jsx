@@ -620,6 +620,15 @@ const DOEM = () => {
                         </button>
                         
                         <button
+                          onClick={() => openAssinantesModal(edicao)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          title="Gerenciar assinantes em lote"
+                        >
+                          <UserPlus size={14} />
+                          Assinantes
+                        </button>
+                        
+                        <button
                           onClick={() => handlePublish(edicao)}
                           className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
