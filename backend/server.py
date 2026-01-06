@@ -4463,13 +4463,26 @@ async def add_assinante_edicao(edicao_id: str, assinante_req: AssinanteRequest, 
     
     assinantes.append(novo_assinante)
     
-    await db.doem_edicoes.update_one(
-        {'edicao_id': edicao_id},
-        {'$set': {
-            'assinatura_digital.assinantes': assinantes,
-            'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
-        }}
-    )
+    # Se assinatura_digital não existe, criar objeto completo
+    if not edicao.get('assinatura_digital'):
+        await db.doem_edicoes.update_one(
+            {'edicao_id': edicao_id},
+            {'$set': {
+                'assinatura_digital': {
+                    'assinado': False,
+                    'assinantes': assinantes,
+                    'assinatura_em_lote': len(assinantes) > 1
+                }
+            }}
+        )
+    else:
+        await db.doem_edicoes.update_one(
+            {'edicao_id': edicao_id},
+            {'$set': {
+                'assinatura_digital.assinantes': assinantes,
+                'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
+            }}
+        )
     
     return {
         'message': f'Assinante {assinante_user.get("name")} adicionado com sucesso',
