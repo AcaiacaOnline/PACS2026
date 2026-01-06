@@ -1,0 +1,93 @@
+{
+  "summary": "Completed testing of 'Histórico de Assinaturas' feature. All backend endpoints and frontend functionality are working correctly. The feature allows users to view their digitally signed documents with pagination, statistics, and validation links.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "test_report_links": [
+    "/app/tests/test_historico_assinaturas.py",
+    "/app/test_reports/pytest/pytest_historico_assinaturas.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [],
+  
+  "updated_files": [
+    "/app/tests/test_historico_assinaturas.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  
+  "features_tested": {
+    "backend_endpoints": {
+      "GET /api/assinaturas/historico": {
+        "status": "WORKING",
+        "returns": "Paginated list of user's signatures",
+        "fields": ["signature_id", "document_id", "document_type", "validation_code", "created_at", "is_valid", "total_signers", "my_signature"],
+        "pagination": "Working with page and page_size parameters",
+        "authentication": "Required - returns 401 without token"
+      },
+      "GET /api/assinaturas/estatisticas": {
+        "status": "WORKING",
+        "returns": "Statistics about user's signatures",
+        "fields": ["total_assinaturas", "assinaturas_validas", "assinaturas_invalidas", "ultimos_30_dias", "por_tipo", "ultima_assinatura"],
+        "authentication": "Required - returns 401 without token"
+      }
+    },
+    "frontend_page": {
+      "route": "/historico-assinaturas",
+      "component": "/app/frontend/src/pages/HistoricoAssinaturas.jsx",
+      "status": "WORKING",
+      "elements_verified": {
+        "page_title": "Histórico de Assinaturas - PRESENT",
+        "statistics_cards": "4 cards showing Total, Válidos, Últimos 30 dias, Tipos - WORKING",
+        "last_signature_banner": "Shows last signature info - WORKING",
+        "search_input": "[data-testid='search-assinaturas'] - WORKING",
+        "signatures_table": "Shows document, validation code, date, signers, status, actions - WORKING",
+        "pagination": "Working with page size selector - WORKING",
+        "refresh_button": "Atualizar button - WORKING",
+        "validate_button": "Opens /validar?code=XXX in new tab - WORKING",
+        "signatures_by_type_section": "Shows breakdown by document type - WORKING"
+      }
+    },
+    "navigation": {
+      "menu_link": "[data-testid='nav-historico-assinaturas-btn']",
+      "label": "Assinaturas",
+      "icon": "FileSignature",
+      "status": "VISIBLE and WORKING"
+    },
+    "route_protection": {
+      "status": "WORKING",
+      "behavior": "Unauthenticated users redirected to /login"
+    }
+  },
+  
+  "test_credentials": {
+    "admin_email": "cristiano.abdo@acaiaca.mg.gov.br",
+    "admin_password": "Cris@820906"
+  },
+  
+  "seed_data_creation": "None - used existing signature data (2 DOEM signatures)",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  
+  "context_for_next_testing_agent": "Histórico de Assinaturas feature is fully functional. Backend endpoints /api/assinaturas/historico and /api/assinaturas/estatisticas return correct data. Frontend page at /historico-assinaturas displays statistics cards, search functionality, paginated table with signature records, and validation links. Navigation link 'Assinaturas' is visible in the header menu. Route is protected and requires authentication. Test user has 2 DOEM signatures in the database.",
+  
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
