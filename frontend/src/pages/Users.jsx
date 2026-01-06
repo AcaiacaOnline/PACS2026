@@ -20,6 +20,11 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Paginação
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(20);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
