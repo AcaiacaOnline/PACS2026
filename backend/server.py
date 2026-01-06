@@ -784,6 +784,7 @@ async def create_user_admin(user_data: UserCreate, request: Request):
         'is_active': True,
         'picture': None,
         'permissions': permissions_data,
+        'signature_data': user_data.signature_data.model_dump() if user_data.signature_data else None,
         'created_at': datetime.now(timezone.utc)
     }
     await db.users.insert_one(user_doc)
@@ -804,6 +805,8 @@ async def update_user_admin(user_id: str, user_update: UserUpdate, request: Requ
         if v is not None:
             if k == 'permissions' and isinstance(v, dict):
                 update_data['permissions'] = v
+            elif k == 'signature_data' and isinstance(v, dict):
+                update_data['signature_data'] = v
             else:
                 update_data[k] = v
     
