@@ -289,9 +289,6 @@ const GestaoProcessual = () => {
   // Os dados já vêm paginados e filtrados do backend
   const paginatedProcessos = processos;
   
-  // Total de itens para a paginação (obtido do backend)
-  const [totalProcessos, setTotalProcessos] = useState(0);
-  
   // Reset página quando filtros mudam
   useEffect(() => {
     resetPage();
