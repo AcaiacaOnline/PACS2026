@@ -460,7 +460,7 @@ const GestaoProcessual = () => {
             </select>
             
             <div className="text-sm text-muted-foreground flex items-center">
-              {filteredProcessos.length} resultado(s)
+              {totalProcessos} resultado(s)
             </div>
           </div>
         </div>
