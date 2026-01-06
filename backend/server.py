@@ -1116,7 +1116,7 @@ def create_items_table_paginated(items: list, styles: dict, orientation: str = '
         ('VALIGN', (0, 1), (-1, -1), 'TOP'),
         
         # Linhas alternadas
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#E8F4FD')]),
         
         # Bordas
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
@@ -2501,7 +2501,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
                 ('ALIGN', (6, 1), (7, -1), 'RIGHT'),
                 ('ALIGN', (8, 1), (8, -1), 'CENTER'),
                 ('VALIGN', (0, 1), (-1, -1), 'TOP'),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#E8F4FD')]),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
                 ('BOX', (0, 0), (-1, -1), 1, cor_primaria),
                 ('LEFTPADDING', (0, 0), (-1, -1), 3),
