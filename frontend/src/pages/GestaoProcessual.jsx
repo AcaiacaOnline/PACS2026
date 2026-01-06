@@ -72,7 +72,7 @@ const GestaoProcessual = () => {
     if (anoSelecionado !== null) {
       fetchProcessos();
     }
-  }, [anoSelecionado, currentPage, pageSize]);
+  }, [anoSelecionado, currentPage, pageSize, searchTerm, filterStatus, filterModalidade]);
 
   const fetchUser = async () => {
     try {
