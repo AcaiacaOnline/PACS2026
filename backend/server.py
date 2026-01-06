@@ -397,8 +397,17 @@ class DOEMPublicacaoCreate(BaseModel):
     tipo: str = "Decreto"
     ordem: int = 1
 
+class DOEMAssinante(BaseModel):
+    """Dados de um assinante individual"""
+    user_id: str
+    nome: str
+    cpf: Optional[str] = None
+    cargo: Optional[str] = None
+    email: Optional[str] = None
+    data_assinatura: Optional[datetime] = None
+
 class DOEMAssinatura(BaseModel):
-    """Metadados de assinatura digital (simulada)"""
+    """Metadados de assinatura digital (simulada) - Suporta múltiplos assinantes"""
     assinado: bool = False
     data_assinatura: Optional[datetime] = None
     hash_documento: Optional[str] = None
@@ -408,6 +417,9 @@ class DOEMAssinatura(BaseModel):
     cpf: Optional[str] = None
     cargo: Optional[str] = None
     email: Optional[str] = None
+    # Suporte para múltiplos assinantes
+    assinantes: Optional[List[DOEMAssinante]] = None
+    assinatura_em_lote: bool = False
 
 class DOEMEdicao(BaseModel):
     """Edição do Diário Oficial"""
