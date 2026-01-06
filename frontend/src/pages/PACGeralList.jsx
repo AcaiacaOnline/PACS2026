@@ -203,6 +203,19 @@ const PACGeralList = () => {
             ))}
           </div>
         )}
+        
+        {/* Paginação */}
+        {totalPacs > 0 && (
+          <div className="mt-6 bg-card rounded-lg border border-border p-4">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={totalPacs}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        )}
       </div>
     </Layout>
   );
