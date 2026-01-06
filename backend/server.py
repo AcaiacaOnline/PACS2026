@@ -4561,50 +4561,92 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
     if not edicao.get('publicacoes'):
         raise HTTPException(status_code=400, detail="A edição não possui publicações")
     
-    # Buscar dados de assinatura do usuário
-    user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
-    user_signature = user_doc.get('signature_data', {}) if user_doc else {}
-    user_info = {
-        'nome': user.name,
-        'email': user.email,
-        'cpf': user_signature.get('cpf', ''),
-        'cargo': user_signature.get('cargo', '')
+    # Verificar se há assinantes em lote pré-configurados
+    assinatura_existente = edicao.get('assinatura_digital', {})
+    assinantes_lote = assinatura_existente.get('assinantes', [])
+    
+    # Se não há assinantes pré-configurados, usar o usuário atual
+    if not assinantes_lote:
+        user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+        user_signature = user_doc.get('signature_data', {}) if user_doc else {}
+        assinantes_lote = [{
+            'user_id': user.user_id,
+            'nome': user.name,
+            'email': user.email,
+            'cpf': user_signature.get('cpf', ''),
+            'cargo': user_signature.get('cargo', ''),
+            'data_assinatura': datetime.now(timezone.utc).isoformat()
+        }]
+    else:
+        # Atualizar data de assinatura de todos os assinantes
+        for assinante in assinantes_lote:
+            assinante['data_assinatura'] = datetime.now(timezone.utc).isoformat()
+    
+    # Preparar lista de signers para validação e PDF
+    signers = []
+    for assinante in assinantes_lote:
+        signers.append({
+            'nome': assinante.get('nome', ''),
+            'cpf': assinante.get('cpf', ''),
+            'cargo': assinante.get('cargo', ''),
+            'email': assinante.get('email', '')
+        })
+    
+    # Gerar código de validação único para o documento
+    validation_code = generate_validation_code()
+    
+    # Criar objeto de assinatura
+    assinatura_data = {
+        'assinado': True,
+        'data_assinatura': datetime.now(timezone.utc),
+        'tipo_certificado': 'ICP-Brasil (Simulado)',
+        'titular': assinantes_lote[0].get('nome', 'Prefeitura Municipal de Acaiaca'),
+        'validation_code': validation_code,
+        'cpf': assinantes_lote[0].get('cpf', ''),
+        'cargo': assinantes_lote[0].get('cargo', ''),
+        'email': assinantes_lote[0].get('email', ''),
+        'assinantes': assinantes_lote,
+        'assinatura_em_lote': len(assinantes_lote) > 1
     }
     
-    # Gerar PDF e assinatura
-    pdf_buffer = await gerar_pdf_doem(edicao)
-    assinatura = gerar_assinatura_simulada(pdf_buffer.getvalue(), user_info)
-    
-    # Salvar registro de assinatura para validação
-    signers = [{
-        'nome': user_info['nome'],
-        'cpf': user_info['cpf'],
-        'cargo': user_info['cargo'],
-        'email': user_info['email']
-    }]
-    await save_document_signature(
-        doc_id=edicao_id,
-        doc_type=f"DOEM - Edição {edicao.get('numero_edicao', '')} / {edicao.get('ano', '')}",
-        signers=signers,
-        hash_doc=assinatura.hash_documento,
-        validation_code=assinatura.validation_code
-    )
-    
-    # Atualizar status
+    # Atualizar edição com a assinatura ANTES de gerar o PDF
     await db.doem_edicoes.update_one(
         {'edicao_id': edicao_id},
         {'$set': {
             'status': 'publicado',
-            'assinatura_digital': assinatura.model_dump(),
+            'assinatura_digital': assinatura_data,
             'notificacao_enviada': False,
             'updated_at': datetime.now(timezone.utc)
         }}
     )
     
+    # Buscar edição atualizada para gerar PDF
+    edicao_atualizada = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    
+    # Gerar PDF com a assinatura
+    pdf_buffer = await gerar_pdf_doem(edicao_atualizada)
+    
+    # Calcular hash do PDF
+    hash_doc = hashlib.sha256(pdf_buffer.getvalue()).hexdigest()
+    
+    # Atualizar hash na assinatura
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {'$set': {'assinatura_digital.hash_documento': hash_doc}}
+    )
+    
+    # Salvar registro de assinatura para validação
+    await save_document_signature(
+        doc_id=edicao_id,
+        doc_type=f"DOEM - Edição {edicao.get('numero_edicao', '')} / {edicao.get('ano', '')}",
+        signers=signers,
+        hash_doc=hash_doc,
+        validation_code=validation_code
+    )
+    
     # Enviar notificações em background
     notificacao_msg = ""
     if enviar_notificacao:
-        edicao_atualizada = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
         pdf_buffer.seek(0)  # Reset buffer position
         try:
             enviados = await enviar_notificacao_doem(edicao_atualizada, pdf_buffer)
