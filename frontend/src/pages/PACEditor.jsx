@@ -563,6 +563,23 @@ const PACEditor = () => {
                 )}
               </table>
             </div>
+            
+            {/* Paginação de Itens */}
+            {items.length > 0 && (
+              <div className="mt-4 bg-card rounded-lg border border-border p-4 no-print">
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={items.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setCurrentPage(1);
+                  }}
+                  pageSizeOptions={[15, 30, 50, 100]}
+                />
+              </div>
+            )}
           </div>
         )}
 
