@@ -451,7 +451,7 @@ const GestaoProcessual = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredProcessos.map((processo) => (
+                {paginatedProcessos.map((processo) => (
                   <tr key={processo.processo_id} className="border-b border-border hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3 font-medium">
                       <div className="font-semibold text-foreground">{processo.numero_processo}</div>
@@ -501,6 +501,17 @@ const GestaoProcessual = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Paginação */}
+          <div className="p-4 border-t border-border">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredProcessos.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
           </div>
 
           {filteredProcessos.length === 0 && (
