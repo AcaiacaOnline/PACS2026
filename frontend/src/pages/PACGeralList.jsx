@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { Plus, Edit, Trash2, Building2, Calendar } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import Pagination, { usePagination } from '../components/Pagination';
 
 const PACGeralList = () => {
   const navigate = useNavigate();
@@ -12,6 +13,10 @@ const PACGeralList = () => {
   const [user, setUser] = useState(null);
   const [anos, setAnos] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
+  const [totalPacs, setTotalPacs] = useState(0);
+  
+  // Paginação
+  const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(20);
 
   useEffect(() => {
     fetchAnos();
@@ -22,7 +27,7 @@ const PACGeralList = () => {
     if (anoSelecionado !== null) {
       fetchPACs();
     }
-  }, [anoSelecionado]);
+  }, [anoSelecionado, currentPage, pageSize]);
 
   const loadUser = () => {
     const userData = localStorage.getItem('user');
@@ -45,11 +50,25 @@ const PACGeralList = () => {
   const fetchPACs = async () => {
     setLoading(true);
     try {
-      const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
-      const response = await api.get(`/pacs-geral${params}`);
-      setPacs(response.data);
+      const params = new URLSearchParams();
+      if (anoSelecionado) params.append('ano', anoSelecionado);
+      params.append('page', currentPage);
+      params.append('page_size', pageSize);
+      
+      const response = await api.get(`/pacs-geral/paginado?${params.toString()}`);
+      setPacs(response.data.items);
+      setTotalPacs(response.data.total);
     } catch (error) {
       toast.error('Erro ao carregar PACs Gerais');
+      // Fallback para endpoint antigo
+      try {
+        const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
+        const response = await api.get(`/pacs-geral${params}`);
+        setPacs(response.data);
+        setTotalPacs(response.data.length);
+      } catch (e) {
+        console.error('Erro no fallback:', e);
+      }
     } finally {
       setLoading(false);
     }
