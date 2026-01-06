@@ -4826,12 +4826,28 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         assinatura = edicao.get('assinatura_digital')
         if assinatura and assinatura.get('assinado'):
             validation_code = assinatura.get('validation_code', generate_validation_code())
-            signers = [{
-                'nome': assinatura.get('titular', 'Prefeitura Municipal de Acaiaca'),
-                'cargo': assinatura.get('cargo', 'Órgão Publicador'),
-                'cpf': assinatura.get('cpf', ''),
-                'email': assinatura.get('email', 'contato@acaiaca.mg.gov.br')
-            }]
+            
+            # Verificar se há múltiplos assinantes (assinatura em lote)
+            assinantes_lote = assinatura.get('assinantes', [])
+            if assinantes_lote and len(assinantes_lote) > 0:
+                # Usar lista de assinantes do lote
+                signers = []
+                for assinante in assinantes_lote:
+                    signers.append({
+                        'nome': assinante.get('nome', ''),
+                        'cargo': assinante.get('cargo', ''),
+                        'cpf': assinante.get('cpf', ''),
+                        'email': assinante.get('email', '')
+                    })
+            else:
+                # Assinante único (compatibilidade com versão anterior)
+                signers = [{
+                    'nome': assinatura.get('titular', 'Prefeitura Municipal de Acaiaca'),
+                    'cargo': assinatura.get('cargo', 'Órgão Publicador'),
+                    'cpf': assinatura.get('cpf', ''),
+                    'email': assinatura.get('email', 'contato@acaiaca.mg.gov.br')
+                }]
+            
             # URL para validação
             qr_url = f"https://muni-docs.preview.emergentagent.com/validar?code={validation_code}"
             draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url)
