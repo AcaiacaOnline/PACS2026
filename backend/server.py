@@ -4443,20 +4443,20 @@ async def add_assinante_edicao(edicao_id: str, assinante_req: AssinanteRequest, 
     if not assinante_user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
-    signature_data = assinante_user.get('signature_data', {})
+    signature_data = assinante_user.get('signature_data') or {}
     
     novo_assinante = {
         'user_id': assinante_req.user_id,
         'nome': assinante_user.get('name', ''),
-        'cpf': signature_data.get('cpf', ''),
-        'cargo': signature_data.get('cargo', ''),
+        'cpf': signature_data.get('cpf', '') if signature_data else '',
+        'cargo': signature_data.get('cargo', '') if signature_data else '',
         'email': assinante_user.get('email', ''),
         'data_assinatura': None  # Será preenchido quando assinar
     }
     
     # Verificar se já está na lista
-    assinatura = edicao.get('assinatura_digital', {})
-    assinantes = assinatura.get('assinantes', [])
+    assinatura = edicao.get('assinatura_digital') or {}
+    assinantes = assinatura.get('assinantes') or []
     
     if any(a.get('user_id') == assinante_req.user_id for a in assinantes):
         raise HTTPException(status_code=400, detail="Este usuário já está na lista de assinantes")
