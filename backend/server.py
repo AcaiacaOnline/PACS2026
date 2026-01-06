@@ -4912,6 +4912,17 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
     
     # Enviar notificações em background
     notificacao_msg = ""
+    assinantes_notificados = 0
+    
+    # 1. Enviar notificações para assinantes do documento
+    try:
+        assinantes_notificados = await enviar_notificacao_assinantes(edicao_atualizada, assinantes_lote, validation_code)
+        if assinantes_notificados > 0:
+            notificacao_msg = f" Notificação enviada para {assinantes_notificados} assinante(s)."
+    except Exception as e:
+        logging.error(f"Erro ao enviar notificações para assinantes: {e}")
+    
+    # 2. Enviar notificações para inscritos na newsletter (se solicitado)
     if enviar_notificacao:
         pdf_buffer.seek(0)  # Reset buffer position
         try:
@@ -4920,10 +4931,10 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
                 {'edicao_id': edicao_id},
                 {'$set': {'notificacao_enviada': True}}
             )
-            notificacao_msg = f" Notificações enviadas para {enviados} destinatário(s)."
+            notificacao_msg += f" Newsletter enviada para {enviados} destinatário(s)."
         except Exception as e:
             logging.error(f"Erro ao enviar notificações: {e}")
-            notificacao_msg = " Falha ao enviar notificações."
+            notificacao_msg += " Falha ao enviar newsletter."
     
     # Atualizar assinatura com hash
     assinatura_data['hash_documento'] = hash_doc
