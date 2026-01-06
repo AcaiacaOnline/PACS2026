@@ -21,7 +21,7 @@ const ValidarDocumento = () => {
     setError(null);
 
     try {
-      const response = await api.post('/api/validar/verificar', { 
+      const response = await api.post('/validar/verificar', { 
         validation_code: validationCode.trim().toUpperCase() 
       });
       setResult(response.data);
