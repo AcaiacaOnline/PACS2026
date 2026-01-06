@@ -2431,6 +2431,72 @@ async def get_processos(request: Request, ano: int = None):
     
     return [Processo(**p) for p in processos]
 
+@api_router.get("/processos/paginado")
+async def get_processos_paginado(
+    request: Request, 
+    ano: int = None,
+    page: int = 1,
+    page_size: int = 20,
+    search: str = None,
+    status: str = None,
+    modalidade: str = None
+):
+    """Lista processos com paginação e filtros no backend"""
+    user = await get_current_user(request)
+    
+    # Buscar todos os processos
+    processos = await db.processos.find({}, {'_id': 0}).to_list(5000)
+    
+    # Fix null values e extrair ano
+    for p in processos:
+        for field in ['data_inicio', 'data_autuacao', 'data_contrato']:
+            if p.get(field) == 'null' or p.get(field) == '':
+                p[field] = None
+        
+        if not p.get('ano'):
+            numero = p.get('numero_processo', '')
+            match = re.search(r'/(\d{4})$', numero)
+            if match:
+                p['ano'] = int(match.group(1))
+            else:
+                p['ano'] = 2025
+    
+    # Aplicar filtros
+    if ano:
+        processos = [p for p in processos if p.get('ano') == ano]
+    
+    if status:
+        processos = [p for p in processos if p.get('status') == status]
+    
+    if modalidade:
+        processos = [p for p in processos if p.get('modalidade') == modalidade]
+    
+    if search:
+        search_lower = search.lower()
+        processos = [p for p in processos if 
+            search_lower in (p.get('numero_processo', '') or '').lower() or
+            search_lower in (p.get('objeto', '') or '').lower() or
+            search_lower in (p.get('secretaria', '') or '').lower() or
+            search_lower in (p.get('responsavel', '') or '').lower()
+        ]
+    
+    # Calcular paginação
+    total = len(processos)
+    total_pages = (total + page_size - 1) // page_size
+    
+    # Aplicar paginação
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_items = processos[start:end]
+    
+    return {
+        'items': [Processo(**p).model_dump() for p in paginated_items],
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages
+    }
+
 @api_router.get("/processos/stats")
 async def get_processos_stats(request: Request, data_inicio: str = None, data_fim: str = None):
     """Estatísticas avançadas dos processos para dashboard"""
