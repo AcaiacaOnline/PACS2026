@@ -4423,9 +4423,33 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
     if not edicao.get('publicacoes'):
         raise HTTPException(status_code=400, detail="A edição não possui publicações")
     
+    # Buscar dados de assinatura do usuário
+    user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+    user_signature = user_doc.get('signature_data', {}) if user_doc else {}
+    user_info = {
+        'nome': user.name,
+        'email': user.email,
+        'cpf': user_signature.get('cpf', ''),
+        'cargo': user_signature.get('cargo', '')
+    }
+    
     # Gerar PDF e assinatura
     pdf_buffer = await gerar_pdf_doem(edicao)
-    assinatura = gerar_assinatura_simulada(pdf_buffer.getvalue())
+    assinatura = gerar_assinatura_simulada(pdf_buffer.getvalue(), user_info)
+    
+    # Salvar registro de assinatura para validação
+    signers = [{
+        'nome': user_info['nome'],
+        'cpf': user_info['cpf'],
+        'cargo': user_info['cargo'],
+        'email': user_info['email']
+    }]
+    await save_document_signature(
+        doc_id=edicao_id,
+        doc_type=f"DOEM - Edição {edicao.get('numero_edicao', '')} / {edicao.get('ano', '')}",
+        signers=signers,
+        hash_doc=assinatura.hash_documento
+    )
     
     # Atualizar status
     await db.doem_edicoes.update_one(
