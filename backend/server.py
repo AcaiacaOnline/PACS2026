@@ -351,6 +351,15 @@ class ProcessoUpdate(BaseModel):
     ano: Optional[int] = None
     observacoes: Optional[str] = None
 
+# ============ MODELO DE RESPOSTA PAGINADA ============
+class PaginatedResponse(BaseModel):
+    """Resposta paginada genérica para listagens"""
+    items: List[Any]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
 # ============ MODELOS DOEM (Diário Oficial Eletrônico Municipal) ============
 
 # Segmentos/Categorias do DOEM
