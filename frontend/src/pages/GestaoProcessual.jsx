@@ -537,7 +537,7 @@ const GestaoProcessual = () => {
           <div className="p-4 border-t border-border">
             <Pagination
               currentPage={currentPage}
-              totalItems={filteredProcessos.length}
+              totalItems={totalProcessos}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
