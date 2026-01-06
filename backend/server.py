@@ -4506,13 +4506,26 @@ async def remove_assinante_edicao(edicao_id: str, user_id: str, request: Request
     
     assinantes = [a for a in assinantes if a.get('user_id') != user_id]
     
-    await db.doem_edicoes.update_one(
-        {'edicao_id': edicao_id},
-        {'$set': {
-            'assinatura_digital.assinantes': assinantes,
-            'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
-        }}
-    )
+    # Se assinatura_digital não existe, criar objeto completo
+    if not edicao.get('assinatura_digital'):
+        await db.doem_edicoes.update_one(
+            {'edicao_id': edicao_id},
+            {'$set': {
+                'assinatura_digital': {
+                    'assinado': False,
+                    'assinantes': assinantes,
+                    'assinatura_em_lote': len(assinantes) > 1
+                }
+            }}
+        )
+    else:
+        await db.doem_edicoes.update_one(
+            {'edicao_id': edicao_id},
+            {'$set': {
+                'assinatura_digital.assinantes': assinantes,
+                'assinatura_digital.assinatura_em_lote': len(assinantes) > 1
+            }}
+        )
     
     return {'message': 'Assinante removido com sucesso', 'assinantes': assinantes}
 
