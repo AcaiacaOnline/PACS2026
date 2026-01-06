@@ -4279,7 +4279,7 @@ async def save_document_signature(doc_id: str, doc_type: str, signers: list, has
 
 def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None):
     """
-    Desenha o selo de assinatura digital na lateral ESQUERDA da página.
+    Desenha o selo de assinatura digital na lateral DIREITA da página.
     Selo vertical compacto que não sobrepõe o conteúdo.
     
     Args:
@@ -4293,9 +4293,9 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     from reportlab.lib.utils import ImageReader
     import qrcode
     
-    # Posição do selo - lateral ESQUERDA
+    # Posição do selo - lateral DIREITA
     seal_width = 18 * mm  # Largura estreita para lateral
-    seal_x = 3 * mm  # Margem da borda esquerda
+    seal_x = page_width - seal_width - 3 * mm  # Margem da borda direita
     
     # Calcular altura baseada no número de assinantes
     base_height = 45 * mm
