@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Users as UsersIcon, Plus, Edit, Trash2, UserCheck, UserX, Shield, User as UserIcon, X, Save, Eye, FileText, Settings, Lock, PenTool, MapPin } from 'lucide-react';
+import { Users as UsersIcon, Plus, Edit, Trash2, UserCheck, UserX, Shield, User as UserIcon, X, Save, Eye, FileText, Settings, Lock, PenTool, MapPin, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { TelefoneInput, EmailInput, CEPInput, CPFInput } from '../utils/masks';
+import Pagination, { usePagination, paginateData } from '../components/Pagination';
 
 const PERMISSIONS_CONFIG = [
   { key: 'can_view', label: 'Visualizar PACs', icon: Eye, description: 'Pode visualizar todos os PACs e PACs Gerais' },
