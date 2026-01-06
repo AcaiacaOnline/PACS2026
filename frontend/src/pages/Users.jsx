@@ -527,6 +527,100 @@ const Users = () => {
                   </div>
                 </div>
 
+                {/* Dados para Assinatura Digital */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <PenTool className="w-5 h-5 text-primary" />
+                    <h4 className="text-lg font-semibold text-foreground">Dados para Assinatura Digital</h4>
+                    <span className="text-xs text-muted-foreground">(Necessários para assinar documentos)</span>
+                  </div>
+                  
+                  <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                          CPF
+                        </label>
+                        <CPFInput
+                          value={formData.signature_data?.cpf || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            signature_data: { ...formData.signature_data, cpf: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          data-testid="user-cpf-input"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Será exibido mascarado nos documentos</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                          Cargo Ocupado
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.signature_data?.cargo || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            signature_data: { ...formData.signature_data, cargo: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Ex: Assessor de Planejamento"
+                          data-testid="user-cargo-input"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                          Telefone
+                        </label>
+                        <TelefoneInput
+                          value={formData.signature_data?.telefone || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            signature_data: { ...formData.signature_data, telefone: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          data-testid="user-telefone-input"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                          CEP
+                        </label>
+                        <CEPInput
+                          value={formData.signature_data?.cep || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            signature_data: { ...formData.signature_data, cep: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          data-testid="user-cep-input"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-foreground mb-1">
+                          <MapPin size={14} className="inline mr-1" />
+                          Endereço Completo
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.signature_data?.endereco || ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            signature_data: { ...formData.signature_data, endereco: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          placeholder="Rua, Número, Bairro, Cidade - UF"
+                          data-testid="user-endereco-input"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Status */}
                 <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
                   <label className="flex items-center gap-2 cursor-pointer">
