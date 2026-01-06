@@ -491,7 +491,9 @@ const PACEditor = () => {
                       </td>
                     </tr>
                   ) : (
-                    items.map((item) => (
+                    items
+                      .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                      .map((item, index) => (
                       <tr key={item.item_id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         <td className="px-4 py-3 font-medium">{item.tipo}</td>
                         <td className="px-4 py-3 font-mono text-xs">{item.catmat}</td>
