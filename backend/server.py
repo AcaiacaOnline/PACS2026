@@ -5409,6 +5409,108 @@ async def public_get_doem_anos():
     anos.sort(reverse=True)
     return {'anos': anos}
 
+# ===== Histórico de Assinaturas por Usuário =====
+
+@api_router.get("/assinaturas/historico")
+async def get_historico_assinaturas(request: Request, page: int = 1, page_size: int = 20):
+    """Lista o histórico de assinaturas do usuário logado"""
+    user = await get_current_user(request)
+    
+    # Buscar todas as assinaturas onde o usuário é um dos assinantes
+    pipeline = [
+        {
+            '$match': {
+                'signers.email': user.email
+            }
+        },
+        {'$sort': {'created_at': -1}},
+        {'$skip': (page - 1) * page_size},
+        {'$limit': page_size}
+    ]
+    
+    assinaturas = await db.document_signatures.aggregate(pipeline).to_list(page_size)
+    
+    # Contar total
+    total = await db.document_signatures.count_documents({'signers.email': user.email})
+    
+    # Formatar resposta
+    resultado = []
+    for sig in assinaturas:
+        # Encontrar dados do usuário na lista de assinantes
+        user_signer = next((s for s in sig.get('signers', []) if s.get('email') == user.email), None)
+        
+        resultado.append({
+            'signature_id': sig.get('signature_id'),
+            'document_id': sig.get('document_id'),
+            'document_type': sig.get('document_type'),
+            'validation_code': sig.get('validation_code'),
+            'created_at': sig.get('created_at').isoformat() if sig.get('created_at') else None,
+            'is_valid': sig.get('is_valid', True),
+            'total_signers': len(sig.get('signers', [])),
+            'my_signature': {
+                'nome': user_signer.get('nome') if user_signer else user.name,
+                'cargo': user_signer.get('cargo') if user_signer else '',
+                'cpf_masked': mask_cpf(user_signer.get('cpf', '')) if user_signer else ''
+            }
+        })
+    
+    return {
+        'items': resultado,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size
+    }
+
+@api_router.get("/assinaturas/estatisticas")
+async def get_estatisticas_assinaturas(request: Request):
+    """Retorna estatísticas de assinaturas do usuário"""
+    user = await get_current_user(request)
+    
+    # Total de documentos assinados
+    total_assinaturas = await db.document_signatures.count_documents({'signers.email': user.email})
+    
+    # Assinaturas válidas
+    assinaturas_validas = await db.document_signatures.count_documents({
+        'signers.email': user.email,
+        'is_valid': True
+    })
+    
+    # Assinaturas por tipo de documento
+    pipeline = [
+        {'$match': {'signers.email': user.email}},
+        {'$group': {'_id': '$document_type', 'count': {'$sum': 1}}},
+        {'$sort': {'count': -1}}
+    ]
+    por_tipo = await db.document_signatures.aggregate(pipeline).to_list(20)
+    
+    # Assinaturas dos últimos 30 dias
+    data_30_dias = datetime.now(timezone.utc) - timedelta(days=30)
+    ultimos_30_dias = await db.document_signatures.count_documents({
+        'signers.email': user.email,
+        'created_at': {'$gte': data_30_dias}
+    })
+    
+    # Última assinatura
+    ultima = await db.document_signatures.find_one(
+        {'signers.email': user.email},
+        {'_id': 0},
+        sort=[('created_at', -1)]
+    )
+    
+    return {
+        'total_assinaturas': total_assinaturas,
+        'assinaturas_validas': assinaturas_validas,
+        'assinaturas_invalidas': total_assinaturas - assinaturas_validas,
+        'ultimos_30_dias': ultimos_30_dias,
+        'por_tipo': [{'tipo': p['_id'], 'quantidade': p['count']} for p in por_tipo],
+        'ultima_assinatura': {
+            'document_type': ultima.get('document_type') if ultima else None,
+            'validation_code': ultima.get('validation_code') if ultima else None,
+            'created_at': ultima.get('created_at').isoformat() if ultima and ultima.get('created_at') else None
+        } if ultima else None
+    }
+
 @public_router.get("/doem/busca")
 async def public_buscar_doem(q: str, ano: int = None):
     """Busca publicações no DOEM (público)"""
