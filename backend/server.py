@@ -4054,7 +4054,7 @@ async def enviar_notificacao_assinantes(edicao: dict, assinantes: list, validati
                         <p>Para verificar a autenticidade do documento a qualquer momento, acesse:</p>
                         
                         <p style="text-align: center;">
-                            <a href="https://muni-docs.preview.emergentagent.com/validar?code={validation_code}" class="button">
+                            <a href="https://signlogs-app.preview.emergentagent.com/validar?code={validation_code}" class="button">
                                 Validar Documento
                             </a>
                         </p>
@@ -4144,7 +4144,7 @@ async def enviar_notificacao_assinantes(edicao: dict, assinantes: list, validati
             {lista_pubs}
             
             <div style="text-align: center; margin: 20px 0;">
-                <a href="https://muni-docs.preview.emergentagent.com/doem-publico" 
+                <a href="https://signlogs-app.preview.emergentagent.com/doem-publico" 
                    style="background: #1F4E78; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                     📥 Acessar o DOEM
                 </a>
@@ -4155,7 +4155,7 @@ async def enviar_notificacao_assinantes(edicao: dict, assinantes: list, validati
             <p style="margin: 0;">Prefeitura Municipal de Acaiaca - MG</p>
             <p style="margin: 5px 0 0 0; opacity: 0.8;">Este é um email automático. Não responda.</p>
             <p style="margin: 5px 0 0 0; opacity: 0.7;">
-                <a href="https://muni-docs.preview.emergentagent.com/newsletter/cancelar" style="color: #90caf9;">Cancelar inscrição</a>
+                <a href="https://signlogs-app.preview.emergentagent.com/newsletter/cancelar" style="color: #90caf9;">Cancelar inscrição</a>
             </p>
         </div>
     </body>
@@ -4496,7 +4496,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
         
         # Desenhar selo de assinatura
-        qr_url = f"https://muni-docs.preview.emergentagent.com/validar?code={validation_code}"
+        qr_url = f"https://signlogs-app.preview.emergentagent.com/validar?code={validation_code}"
         draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
         
         overlay_canvas.save()
@@ -5199,7 +5199,7 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                 }]
             
             # URL para validação
-            qr_url = f"https://muni-docs.preview.emergentagent.com/validar?code={validation_code}"
+            qr_url = f"https://signlogs-app.preview.emergentagent.com/validar?code={validation_code}"
             draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url)
         
         # === RODAPÉ ===
@@ -5710,7 +5710,7 @@ async def inscricao_publica_newsletter(inscricao: NewsletterInscricaoPublica):
                 <p>Você solicitou inscrição na newsletter do Diário Oficial Eletrônico de Acaiaca.</p>
                 <p>Clique no botão abaixo para confirmar:</p>
                 <div style="text-align: center; margin: 20px 0;">
-                    <a href="https://muni-docs.preview.emergentagent.com/api/public/newsletter/confirmar/{token}" 
+                    <a href="https://signlogs-app.preview.emergentagent.com/api/public/newsletter/confirmar/{token}" 
                        style="background: #2E7D32; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                         ✅ Confirmar Inscrição
                     </a>
@@ -5754,7 +5754,7 @@ async def confirmar_inscricao(token: str):
         <body style="font-family: Arial; text-align: center; padding: 50px;">
             <h1 style="color: #2E7D32;">✅ Inscrição Confirmada!</h1>
             <p>Você receberá notificações quando novas edições do DOEM forem publicadas.</p>
-            <a href="https://muni-docs.preview.emergentagent.com/doem-publico" style="color: #1F4E78;">Acessar o DOEM</a>
+            <a href="https://signlogs-app.preview.emergentagent.com/doem-publico" style="color: #1F4E78;">Acessar o DOEM</a>
         </body>
         </html>
         """,

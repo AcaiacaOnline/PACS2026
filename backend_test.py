@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 class PACBackendTester:
-    def __init__(self, base_url="https://muni-docs.preview.emergentagent.com"):
+    def __init__(self, base_url="https://signlogs-app.preview.emergentagent.com"):
         self.base_url = base_url
         self.admin_token = None
         self.user_token = None
