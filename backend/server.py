@@ -2963,11 +2963,28 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape")
     buffer.seek(0)
     
     orientation_name = 'Paisagem' if orientation.lower() == 'landscape' else 'Retrato'
-    return StreamingResponse(
-        buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=Gestao_Processual_{orientation_name}.pdf"}
-    )
+    
+    # Adicionar assinatura digital ao PDF
+    try:
+        signed_buffer, validation_code = await add_signature_to_pdf(
+            buffer, user, "Relatório de Gestão Processual", f"processos_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        )
+        return StreamingResponse(
+            signed_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=Gestao_Processual_{orientation_name}.pdf",
+                "X-Validation-Code": validation_code
+            }
+        )
+    except Exception as e:
+        logging.error(f"Erro ao adicionar assinatura ao PDF de processos: {e}")
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=Gestao_Processual_{orientation_name}.pdf"}
+        )
 
 @api_router.get("/processos/export/xlsx")
 async def export_processos_xlsx(request: Request):
