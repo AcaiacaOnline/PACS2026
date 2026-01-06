@@ -1680,39 +1680,15 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS DO PLANO ANUAL DE CONTRATAÇÕES</b>', custom_styles['section_header']))
     elements.append(Spacer(1, 3*mm))
     
-    # Paginação: máximo 15 itens por página
-    total_items = len(items)
-    total_pages = (total_items + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE if total_items > 0 else 1
-    
-    for page_num in range(total_pages):
-        start_idx = page_num * ITEMS_PER_PAGE
-        end_idx = min(start_idx + ITEMS_PER_PAGE, total_items)
-        page_items = items[start_idx:end_idx]
-        
-        if page_num > 0:
-            # Nova página com cabeçalho resumido
-            elements.append(PageBreak())
-            elements.append(Paragraph(f'<b>PAC {pac["secretaria"]} - {pac.get("ano", "2026")}</b>', custom_styles['subtitle']))
-            elements.append(Paragraph(f'<i>Continuação - Página {page_num + 1} de {total_pages}</i>', custom_styles['legal']))
-            elements.append(Spacer(1, 4*mm))
-        
-        # Tabela de itens desta página
-        if page_items:
-            items_table = create_items_table_paginated(
-                page_items, 
-                custom_styles, 
-                orientation, 
-                start_index=start_idx + 1
-            )
-            elements.append(items_table)
-        
-        # Indicador de página na parte inferior
-        if total_pages > 1:
-            elements.append(Spacer(1, 2*mm))
-            elements.append(Paragraph(
-                f'<font size=7 color="grey">Itens {start_idx + 1} a {end_idx} de {total_items} | Página {page_num + 1} de {total_pages}</font>',
-                ParagraphStyle('PageInfo', alignment=TA_RIGHT, fontSize=7, textColor=colors.grey)
-            ))
+    # Tabela de TODOS os itens (sem paginação forçada para economizar papel)
+    if items:
+        items_table = create_items_table_paginated(
+            items, 
+            custom_styles, 
+            orientation, 
+            start_index=1
+        )
+        elements.append(items_table)
     
     # Linha de total após todos os itens
     elements.append(Spacer(1, 4*mm))
