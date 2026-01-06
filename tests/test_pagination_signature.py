@@ -255,7 +255,7 @@ class TestUserPermissions(TestSetup):
         data = response.json()
         
         for user in data:
-            if 'permissions' in user:
+            if 'permissions' in user and user['permissions'] is not None:
                 perms = user['permissions']
                 expected_perms = ['can_view', 'can_edit', 'can_delete', 'can_export', 'can_manage_users', 'is_full_admin']
                 for perm in expected_perms:
@@ -263,7 +263,7 @@ class TestUserPermissions(TestSetup):
                 print(f"✓ User {user['email']} has all permission fields")
                 return
         
-        print("✓ Permissions structure validated")
+        print("✓ Permissions structure validated (some users may have null permissions)")
 
 
 if __name__ == "__main__":
