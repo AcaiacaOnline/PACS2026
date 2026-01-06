@@ -118,7 +118,7 @@ const PACList = () => {
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-3xl font-heading font-bold text-foreground">Meus PACs Salvos</h2>
-            <p className="text-muted-foreground mt-1">{pacs.length} PAC(s) cadastrado(s)</p>
+            <p className="text-muted-foreground mt-1">{totalPacs} PAC(s) cadastrado(s)</p>
           </div>
           <div className="flex items-center gap-4">
             {/* Seletor de Ano */}
