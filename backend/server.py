@@ -1642,7 +1642,7 @@ async def export_xlsx(pac_id: str, request: Request):
 @api_router.get("/pacs/{pac_id}/export/pdf")
 async def export_pdf(pac_id: str, request: Request, orientation: str = "landscape"):
     """
-    Exporta PAC Individual para PDF com margens otimizadas para assinatura digital.
+    Exporta PAC Individual para PDF com design profissional e paginação de 15 itens por página.
     Args:
         orientation: 'landscape' (paisagem) ou 'portrait' (retrato)
     """
@@ -1653,218 +1653,78 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     items = await db.pac_items.find({'pac_id': pac_id}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
-    
-    # Margens padronizadas conforme Lei 14.133/2021
-    # 5cm (esquerda/direita), 3cm (superior/inferior)
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
+    # Margens ajustadas para acomodar selo de assinatura na direita
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=REPORT_MARGIN_LEFT, 
-        rightMargin=REPORT_MARGIN_RIGHT, 
-        topMargin=REPORT_MARGIN_TOP, 
-        bottomMargin=REPORT_MARGIN_BOTTOM,
-        title=f'PAC {pac["secretaria"]} 2026'
+        leftMargin=15*mm,
+        rightMargin=25*mm,  # Espaço para selo de assinatura digital
+        topMargin=15*mm, 
+        bottomMargin=15*mm,
+        title=f'PAC {pac["secretaria"]} {pac.get("ano", "2026")}'
     )
     
     elements = []
-    styles = getSampleStyleSheet()
+    custom_styles, cor_primaria, cor_secundaria, cor_destaque = get_professional_styles()
     
-    # Estilos personalizados
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=16,
-        textColor=colors.HexColor('#1F4E78'),
-        alignment=TA_CENTER,
-        spaceAfter=4,
-        fontName='Helvetica-Bold'
-    )
+    # Cabeçalho profissional
+    elements.extend(create_professional_header(pac, custom_styles, is_pac_geral=False))
     
-    subtitle_style = ParagraphStyle(
-        'CustomSubtitle',
-        parent=styles['Normal'],
-        fontSize=12,
-        textColor=colors.HexColor('#1F4E78'),
-        alignment=TA_CENTER,
-        spaceAfter=4,
-        fontName='Helvetica-Bold'
-    )
+    # Caixa de informações
+    elements.append(create_info_box(pac, custom_styles, is_pac_geral=False))
+    elements.append(Spacer(1, 6*mm))
     
-    info_style = ParagraphStyle(
-        'InfoStyle',
-        parent=styles['Normal'],
-        fontSize=9,
-        spaceAfter=2
-    )
+    # Título da seção de itens
+    elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS DO PLANO ANUAL DE CONTRATAÇÕES</b>', custom_styles['section_header']))
+    elements.append(Spacer(1, 3*mm))
     
-    # Cabeçalho com logotipo
-    logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
-    header_elements = []
-    if logo_path.exists():
-        try:
-            logo = Image(str(logo_path), width=1.8*cm, height=1.8*cm)
-            header_elements.append(logo)
-        except:
-            pass
+    # Paginação: máximo 15 itens por página
+    total_items = len(items)
+    total_pages = (total_items + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE if total_items > 0 else 1
     
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('PAC ACAIACA 2026 - PLANO ANUAL DE CONTRATAÇÕES', subtitle_style))
-    elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=6)))
-    
-    # Informações da Secretaria em formato compacto horizontal
-    info_data = [
-        [
-            Paragraph(f'<b>Secretaria:</b> {pac["secretaria"]}', info_style),
-            Paragraph(f'<b>Secretário(a):</b> {pac["secretario"]}', info_style),
-            Paragraph(f'<b>Fiscal:</b> {pac["fiscal"]}', info_style),
-        ],
-        [
-            Paragraph(f'<b>Telefone:</b> {pac["telefone"]}', info_style),
-            Paragraph(f'<b>E-mail:</b> {pac["email"]}', info_style),
-            Paragraph(f'<b>Ano:</b> {pac["ano"]}', info_style),
-        ],
-        [
-            Paragraph(f'<b>Endereço:</b> {pac["endereco"]}', info_style),
-            '', ''
-        ]
-    ]
-    
-    info_table = Table(info_data, colWidths=[9.3*cm, 9.3*cm, 9.3*cm])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E7E6E6')),
-        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1F4E78')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-        ('SPAN', (0, 2), (2, 2)),
-    ]))
-    
-    elements.append(info_table)
-    elements.append(Spacer(1, 5*mm))
-    
-    # Tabela de itens - formato paisagem com todas as informações COMPLETAS
-    # IMPORTANTE: Sem truncamento de textos - campos exibidos integralmente
-    elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', ParagraphStyle('Header', fontSize=10, fontName='Helvetica-Bold', spaceAfter=3)))
-    
-    # Cabeçalhos completos conforme especificação
-    table_data = [['#', 'Código\nCATMAT', 'Descrição do Objeto', 'Unidade', 'Qtd', 'Valor\nUnitário', 'Valor\nTotal', 'Prioridade', 'Justificativa da Contratação', 'Classificação Orçamentária\n(Código - Subitem)']]
-    
-    for idx, item in enumerate(items, start=1):
-        # Classificação Orçamentária COMPLETA
-        classificacao_text = ''
-        if item.get('codigo_classificacao'):
-            classificacao_text = f"{item['codigo_classificacao']}"
-            if item.get('subitem_classificacao'):
-                # Subitem COMPLETO sem truncamento
-                classificacao_text += f"\n{item['subitem_classificacao']}"
+    for page_num in range(total_pages):
+        start_idx = page_num * ITEMS_PER_PAGE
+        end_idx = min(start_idx + ITEMS_PER_PAGE, total_items)
+        page_items = items[start_idx:end_idx]
         
-        # Descrição COMPLETA - sem truncamento
-        descricao_completa = item.get('descricao', '')
+        if page_num > 0:
+            # Nova página com cabeçalho resumido
+            elements.append(PageBreak())
+            elements.append(Paragraph(f'<b>PAC {pac["secretaria"]} - {pac.get("ano", "2026")}</b>', custom_styles['subtitle']))
+            elements.append(Paragraph(f'<i>Continuação - Página {page_num + 1} de {total_pages}</i>', custom_styles['legal']))
+            elements.append(Spacer(1, 4*mm))
         
-        # Justificativa COMPLETA - sem truncamento
-        justificativa_completa = item.get('justificativa', '') or 'Não informada'
+        # Tabela de itens desta página
+        if page_items:
+            items_table = create_items_table_paginated(
+                page_items, 
+                custom_styles, 
+                orientation, 
+                start_index=start_idx + 1
+            )
+            elements.append(items_table)
         
-        table_data.append([
-            str(idx),
-            item.get('catmat', ''),  # Código COMPLETO
-            Paragraph(f"<font size=7>{descricao_completa}</font>", styles['Normal']),  # Descrição COMPLETA
-            item['unidade'],  # Unidade
-            str(int(item['quantidade'])),  # Quantidade
-            f"R$ {item['valorUnitario']:,.2f}",  # Valor Unitário
-            f"R$ {item['valorTotal']:,.2f}",  # Valor Total
-            item['prioridade'],  # Prioridade COMPLETA
-            Paragraph(f"<font size=6>{justificativa_completa}</font>", styles['Normal']),  # Justificativa COMPLETA
-            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])  # Classificação COMPLETA
-        ])
+        # Indicador de página na parte inferior
+        if total_pages > 1:
+            elements.append(Spacer(1, 2*mm))
+            elements.append(Paragraph(
+                f'<font size=7 color="grey">Itens {start_idx + 1} a {end_idx} de {total_items} | Página {page_num + 1} de {total_pages}</font>',
+                ParagraphStyle('PageInfo', alignment=TA_RIGHT, fontSize=7, textColor=colors.grey)
+            ))
     
-    # Linha de total
+    # Linha de total após todos os itens
+    elements.append(Spacer(1, 4*mm))
     total = sum(item['valorTotal'] for item in items)
-    table_data.append(['', '', Paragraph('<b>TOTAL GERAL ESTIMADO:</b>', styles['Normal']), '', '', '', f"R$ {total:,.2f}", '', '', ''])
+    elements.append(create_total_row(total, custom_styles, orientation))
     
-    # Larguras otimizadas para campos COMPLETOS em A4 Paisagem
-    # Total disponível em paisagem: ~252mm (297 - 8 - 25 - margens internas)
-    if orientation.lower() == 'portrait':
-        col_widths = [0.6*cm, 1.5*cm, 4*cm, 1*cm, 0.8*cm, 1.8*cm, 1.8*cm, 1.2*cm, 3*cm, 3*cm]
-    else:
-        col_widths = [0.6*cm, 1.5*cm, 5*cm, 1*cm, 1*cm, 1.8*cm, 2*cm, 1.3*cm, 5*cm, 5*cm]
-    
-    table = Table(table_data, colWidths=col_widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        # Cabeçalho
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 7),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
-        ('WORDWRAP', (0, 0), (-1, 0), True),
-        
-        # Corpo - fonte 7pt para legibilidade
-        ('FONTSIZE', (0, 1), (-1, -2), 7),
-        ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # #
-        ('ALIGN', (3, 1), (4, -1), 'CENTER'),  # Unidade, Qtd
-        ('ALIGN', (5, 1), (6, -1), 'RIGHT'),   # Valores
-        ('ALIGN', (7, 1), (7, -1), 'CENTER'),  # Prioridade
-        ('VALIGN', (0, 1), (-1, -1), 'TOP'),
-        ('WORDWRAP', (2, 1), (2, -1), True),   # Descrição
-        ('WORDWRAP', (8, 1), (8, -1), True),   # Justificativa
-        ('WORDWRAP', (9, 1), (9, -1), True),   # Classificação
-        
-        # Linhas alternadas para legibilidade
-        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F2F2F2')]),
-        
-        # Linha de Total - destaque
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFC000')),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, -1), (-1, -1), 9),
-        
-        # Bordas
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1, colors.black),
-        
-        # Padding adequado
-        ('LEFTPADDING', (0, 0), (-1, -1), 3),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-    ]))
-    
-    elements.append(table)
-    elements.append(Spacer(1, 10*mm))
-    
-    # Área de Assinaturas - otimizada para assinatura digital
-    # As assinaturas são posicionadas à esquerda, deixando espaço na margem direita
-    elements.append(Paragraph('<b>ASSINATURAS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=8)))
-    
-    sig_data = [
-        ['_' * 50, '_' * 50],
-        [pac['secretario'], pac['fiscal']],
-        ['Secretário(a) Responsável', 'Fiscal do Contrato'],
-        ['', ''],
-        ['Data: ___/___/______', 'Data: ___/___/______']
-    ]
-    
-    # Largura reduzida para deixar espaço para assinatura digital na margem direita
-    sig_table = Table(sig_data, colWidths=[10*cm, 10*cm])
-    sig_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 2), (-1, 2), 8),
-        ('TOPPADDING', (0, 0), (-1, 0), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 2),
-        ('TOPPADDING', (0, 4), (-1, 4), 8),
-    ]))
-    
-    elements.append(sig_table)
-    elements.append(Spacer(1, 5*mm))
+    # Seção de assinaturas
+    elements.extend(create_signature_section(pac, custom_styles, is_pac_geral=False))
     
     # Rodapé
-    footer_text = f'<font size=7><i>Documento gerado eletronicamente pelo Sistema PAC Acaiaca 2026 em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística</i></font>'
-    elements.append(Paragraph(footer_text, ParagraphStyle('Footer', parent=styles['Normal'], alignment=TA_CENTER, textColor=colors.grey)))
+    elements.append(Spacer(1, 6*mm))
+    elements.append(Paragraph(create_footer_text(), custom_styles['footer']))
     
     doc.build(elements)
     buffer.seek(0)
@@ -1878,14 +1738,14 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
             signed_buffer, 
             media_type='application/pdf', 
             headers={
-                'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf',
+                'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_{pac.get("ano", "2026")}.pdf',
                 'X-Validation-Code': validation_code
             }
         )
     except Exception as e:
         logging.error(f"Erro ao adicionar assinatura ao PDF: {e}")
         buffer.seek(0)
-        return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf'})
+        return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_{pac.get("ano", "2026")}.pdf'})
 
 @api_router.get("/template/download")
 async def download_template():
