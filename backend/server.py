@@ -4170,35 +4170,6 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     canvas.setFillColor(colors.HexColor("#666666"))
     current_date = datetime.now().strftime("%d/%m/%Y %H:%M")
     canvas.drawRightString(seal_x + seal_width - 3 * mm, seal_y + 2 * mm, f"Emitido em: {current_date}")
-        qr_img = qr.make_image(fill_color="#003366", back_color="white")
-        
-        # Salvar QR temporariamente
-        qr_buffer = BytesIO()
-        qr_img.save(qr_buffer, format='PNG')
-        qr_buffer.seek(0)
-        
-        # Desenhar QR Code
-        qr_size = 20 * mm
-        qr_x = seal_x + (seal_width - qr_size) / 2
-        canvas.drawImage(ImageReader(qr_buffer), qr_x, current_y - qr_size, width=qr_size, height=qr_size)
-        current_y -= qr_size + 3 * mm
-        
-        # Texto de validação
-        canvas.setFont("Helvetica", 4)
-        canvas.setFillColor(colors.HexColor("#666666"))
-        canvas.drawCentredString(seal_x + seal_width/2, current_y, "Escaneie para validar")
-        current_y -= 3 * mm
-    
-    # Código de validação
-    canvas.setFont("Helvetica-Bold", 5)
-    canvas.setFillColor(colors.HexColor("#003366"))
-    canvas.drawCentredString(seal_x + seal_width/2, current_y, f"Cód: {validation_code}")
-    
-    # Linha final com URL de validação
-    current_y -= 4 * mm
-    canvas.setFont("Helvetica", 4)
-    canvas.setFillColor(colors.HexColor("#666666"))
-    canvas.drawCentredString(seal_x + seal_width/2, current_y, "acaiaca.mg.gov.br/validar")
 
 async def get_doem_config() -> dict:
     """Obtém ou cria configuração padrão do DOEM"""
