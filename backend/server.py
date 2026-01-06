@@ -4655,7 +4655,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
         
         # Desenhar selo de assinatura
-        qr_url = f"https://signlogs-app.preview.emergentagent.com/validar?code={validation_code}"
+        qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
         draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
         
         overlay_canvas.save()
@@ -5358,7 +5358,7 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                 }]
             
             # URL para validação
-            qr_url = f"https://signlogs-app.preview.emergentagent.com/validar?code={validation_code}"
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
             draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url)
         
         # === RODAPÉ ===
