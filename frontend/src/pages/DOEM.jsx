@@ -60,10 +60,14 @@ const DOEM = () => {
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
+  const [showAssinantesModal, setShowAssinantesModal] = useState(false);
   const [editingEdicao, setEditingEdicao] = useState(null);
   const [importedPubs, setImportedPubs] = useState([]);
   const [inscritos, setInscritos] = useState([]);
   const [newsletterStats, setNewsletterStats] = useState(null);
+  const [usuariosDisponiveis, setUsuariosDisponiveis] = useState([]);
+  const [assinantesEdicao, setAssinantesEdicao] = useState([]);
+  const [edicaoParaAssinar, setEdicaoParaAssinar] = useState(null);
   
   const [formData, setFormData] = useState({
     data_publicacao: '',
