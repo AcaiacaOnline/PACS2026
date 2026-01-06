@@ -278,6 +278,14 @@ const GestaoProcessual = () => {
     return matchSearch && matchStatus && matchModalidade;
   });
 
+  // Dados paginados
+  const paginatedProcessos = paginateData(filteredProcessos, currentPage, pageSize);
+
+  // Reset página quando filtros mudam
+  useEffect(() => {
+    resetPage();
+  }, [searchTerm, filterStatus, filterModalidade, anoSelecionado]);
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     try {
