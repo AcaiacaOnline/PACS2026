@@ -4599,6 +4599,20 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         canvas.setLineWidth(1)
         canvas.line(left_margin, page_height - 32*mm, page_width - right_margin, page_height - 32*mm)
         
+        # === SELO DE ASSINATURA DIGITAL ===
+        assinatura = edicao.get('assinatura_digital')
+        if assinatura and assinatura.get('assinado'):
+            validation_code = assinatura.get('validation_code', generate_validation_code())
+            signers = [{
+                'nome': assinatura.get('titular', 'Prefeitura Municipal de Acaiaca'),
+                'cargo': assinatura.get('cargo', 'Órgão Publicador'),
+                'cpf': assinatura.get('cpf', ''),
+                'email': assinatura.get('email', 'contato@acaiaca.mg.gov.br')
+            }]
+            # URL para validação
+            qr_url = f"https://muni-docs.preview.emergentagent.com/validar?code={validation_code}"
+            draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url)
+        
         # === RODAPÉ ===
         if rodape_path.exists():
             try:
