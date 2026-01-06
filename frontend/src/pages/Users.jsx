@@ -452,9 +452,20 @@ const Users = () => {
             </table>
           </div>
 
-          {users.length === 0 && (
+          {/* Paginação */}
+          <div className="p-4 border-t border-border">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredUsers.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+
+          {filteredUsers.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              Nenhum usuário cadastrado
+              {searchTerm ? 'Nenhum usuário encontrado com os filtros aplicados' : 'Nenhum usuário cadastrado'}
             </div>
           )}
         </div>
