@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-const PAGE_SIZE_OPTIONS = [20, 30, 50, 100];
+const DEFAULT_PAGE_SIZE_OPTIONS = [20, 30, 50, 100];
 
 /**
  * Componente de Paginação Configurável
@@ -10,6 +10,7 @@ const PAGE_SIZE_OPTIONS = [20, 30, 50, 100];
  * @param {number} pageSize - Itens por página
  * @param {function} onPageChange - Callback quando muda a página
  * @param {function} onPageSizeChange - Callback quando muda o tamanho da página
+ * @param {array} pageSizeOptions - Opções de tamanho de página (default: [20, 30, 50, 100])
  */
 const Pagination = ({ 
   currentPage, 
@@ -18,6 +19,7 @@ const Pagination = ({
   onPageChange, 
   onPageSizeChange,
   showPageSizeSelector = true,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   className = ''
 }) => {
   const totalPages = Math.ceil(totalItems / pageSize);
