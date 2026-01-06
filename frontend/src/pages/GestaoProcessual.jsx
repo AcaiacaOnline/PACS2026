@@ -118,7 +118,7 @@ const GestaoProcessual = () => {
       
       const response = await api.get(`/processos/paginado?${params.toString()}`);
       setProcessos(response.data.items);
-      // O total é gerenciado pelo backend agora
+      setTotalProcessos(response.data.total || 0);
     } catch (error) {
       toast.error('Erro ao carregar processos');
       // Fallback para endpoint antigo se o novo falhar
@@ -126,6 +126,7 @@ const GestaoProcessual = () => {
         const params = anoSelecionado ? `?ano=${anoSelecionado}` : '';
         const response = await api.get(`/processos${params}`);
         setProcessos(response.data);
+        setTotalProcessos(response.data.length || 0);
       } catch (e) {
         console.error('Erro no fallback:', e);
       }
