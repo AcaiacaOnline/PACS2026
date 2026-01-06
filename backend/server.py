@@ -3998,6 +3998,97 @@ async def enviar_notificacao_doem(edicao: dict, pdf_buffer: BytesIO):
     
     # 2. Usuários do sistema (se configurado)
     usuarios = await db.users.find({'is_active': True}, {'_id': 0, 'email': 1}).to_list(500)
+
+async def enviar_notificacao_assinantes(edicao: dict, assinantes: list, validation_code: str):
+    """Envia notificação por email para cada assinante de um documento publicado"""
+    try:
+        numero_edicao = edicao.get('numero_edicao', '')
+        ano = edicao.get('ano', datetime.now().year)
+        data_publicacao = edicao.get('data_publicacao', datetime.now().strftime('%d/%m/%Y'))
+        
+        enviados = 0
+        for assinante in assinantes:
+            email = assinante.get('email')
+            nome = assinante.get('nome', 'Assinante')
+            
+            if not email:
+                continue
+            
+            assunto = f"[DOEM Acaiaca] Confirmação de Assinatura - Edição nº {numero_edicao}/{ano}"
+            
+            corpo_html = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #003366, #006699); color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 25px; border: 1px solid #ddd; border-top: none; }}
+                    .validation-box {{ background: white; border: 2px solid #003366; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center; }}
+                    .validation-code {{ font-family: monospace; font-size: 18px; font-weight: bold; color: #003366; letter-spacing: 2px; }}
+                    .button {{ display: inline-block; background: #003366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
+                    .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+                    .success-icon {{ font-size: 48px; color: #28a745; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Assinatura Confirmada</h1>
+                        <p>DOEM - Diário Oficial Eletrônico Municipal de Acaiaca</p>
+                    </div>
+                    
+                    <div class="content">
+                        <p>Prezado(a) <strong>{nome}</strong>,</p>
+                        
+                        <p>Sua assinatura digital foi registrada com sucesso no seguinte documento:</p>
+                        
+                        <div class="validation-box">
+                            <p><strong>DOEM - Edição nº {numero_edicao}/{ano}</strong></p>
+                            <p>Data de Publicação: {data_publicacao}</p>
+                            <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
+                            <p style="margin: 5px 0; font-size: 12px; color: #666;">Código de Validação:</p>
+                            <p class="validation-code">{validation_code}</p>
+                        </div>
+                        
+                        <p>Para verificar a autenticidade do documento a qualquer momento, acesse:</p>
+                        
+                        <p style="text-align: center;">
+                            <a href="https://muni-docs.preview.emergentagent.com/validar?code={validation_code}" class="button">
+                                Validar Documento
+                            </a>
+                        </p>
+                        
+                        <p style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 5px; font-size: 13px;">
+                            <strong>📋 Informações da Assinatura:</strong><br>
+                            • Assinante: {nome}<br>
+                            • Cargo: {assinante.get('cargo', 'Não informado')}<br>
+                            • Data/Hora: {datetime.now().strftime('%d/%m/%Y às %H:%M')}<br>
+                            • CPF: {mask_cpf(assinante.get('cpf', ''))}
+                        </p>
+                        
+                        <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                            Este é um email automático. Por favor, não responda a esta mensagem.
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Prefeitura Municipal de Acaiaca - MG</p>
+                        <p>Sistema de Gestão Municipal - DOEM</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            if enviar_email_smtp(email, assunto, corpo_html):
+                enviados += 1
+        
+        logging.info(f"Notificações de assinatura enviadas: {enviados}/{len(assinantes)}")
+        return enviados
+    except Exception as e:
+        logging.error(f"Erro ao enviar notificações de assinatura: {e}")
+        return 0
     for user in usuarios:
         if user['email'] not in destinatarios:
             destinatarios.append(user['email'])
