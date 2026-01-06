@@ -527,7 +527,9 @@ const PACGeralEditor = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
+                  {items
+                    .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                    .map((item) => (
                     <tr key={item.item_id} className="border-b border-border hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3 font-mono text-xs">{item.catmat}</td>
                       <td className="px-4 py-3">
@@ -593,6 +595,23 @@ const PACGeralEditor = () => {
                 </tfoot>
               </table>
             </div>
+            
+            {/* Paginação de Itens */}
+            {items.length > 0 && (
+              <div className="mt-4 bg-card rounded-lg border border-border p-4 no-print">
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={items.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(newSize) => {
+                    setPageSize(newSize);
+                    setCurrentPage(1);
+                  }}
+                  pageSizeOptions={[15, 30, 50, 100]}
+                />
+              </div>
+            )}
           </div>
         )}
 
