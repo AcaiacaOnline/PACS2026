@@ -1497,7 +1497,23 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     doc.build(elements)
     buffer.seek(0)
     
-    return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf'})
+    # Adicionar assinatura digital ao PDF
+    try:
+        signed_buffer, validation_code = await add_signature_to_pdf(
+            buffer, user, f"PAC - {pac['secretaria']}", pac_id
+        )
+        return StreamingResponse(
+            signed_buffer, 
+            media_type='application/pdf', 
+            headers={
+                'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf',
+                'X-Validation-Code': validation_code
+            }
+        )
+    except Exception as e:
+        logging.error(f"Erro ao adicionar assinatura ao PDF: {e}")
+        buffer.seek(0)
+        return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.pdf'})
 
 @api_router.get("/template/download")
 async def download_template():
