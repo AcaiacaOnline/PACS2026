@@ -2414,86 +2414,62 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS DO PLANO ANUAL DE CONTRATAÇÕES</b>', custom_styles['section_header']))
     elements.append(Spacer(1, 3*mm))
     
-    # Paginação: máximo 15 itens por página
-    total_items = len(items)
-    total_pages = (total_items + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE if total_items > 0 else 1
-    
-    for page_num in range(total_pages):
-        start_idx = page_num * ITEMS_PER_PAGE
-        end_idx = min(start_idx + ITEMS_PER_PAGE, total_items)
-        page_items = items[start_idx:end_idx]
+    # Tabela de TODOS os itens (sem paginação forçada para economizar papel)
+    if items:
+        # Criar tabela para todos os itens
+        table_data = [['#', 'Código\nCATMAT', 'Descrição do Objeto', 'Justificativa', 'Und', 'Qtd', 'Valor\nUnitário', 'Valor\nTotal', 'Prior.', 'Classificação\nOrçamentária']]
         
-        if page_num > 0:
-            # Nova página com cabeçalho resumido
-            elements.append(PageBreak())
-            elements.append(Paragraph(f'<b>PAC Geral - {pac.get("nome_secretaria", "")} - {pac.get("ano", "2026")}</b>', custom_styles['subtitle']))
-            elements.append(Paragraph(f'<i>Continuação - Página {page_num + 1} de {total_pages}</i>', custom_styles['legal']))
-            elements.append(Spacer(1, 4*mm))
+        for idx, item in enumerate(items, start=1):
+            classificacao_text = ''
+            if item.get('codigo_classificacao'):
+                classificacao_text = f"{item['codigo_classificacao']}"
+                if item.get('subitem_classificacao'):
+                    classificacao_text += f"\n{item['subitem_classificacao']}"
+            
+            justificativa = item.get('justificativa', '') or 'N/I'
+            descricao = item.get('descricao', '')
+            
+            table_data.append([
+                str(idx),
+                item.get('catmat', ''),
+                Paragraph(f"<font size=7>{descricao}</font>", custom_styles['table_cell']),
+                Paragraph(f"<font size=6>{justificativa}</font>", custom_styles['table_cell']),
+                item.get('unidade', ''),
+                str(int(item.get('quantidade_total', 0))),
+                f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                item.get('prioridade', ''),
+                Paragraph(f"<font size=6>{classificacao_text}</font>", custom_styles['table_cell'])
+            ])
         
-        # Tabela de itens desta página
-        if page_items:
-            # Criar tabela personalizada para PAC Geral
-            table_data = [['#', 'Código\nCATMAT', 'Descrição do Objeto', 'Justificativa', 'Und', 'Qtd', 'Valor\nUnitário', 'Valor\nTotal', 'Prior.', 'Classificação\nOrçamentária']]
-            
-            for idx, item in enumerate(page_items, start=start_idx + 1):
-                classificacao_text = ''
-                if item.get('codigo_classificacao'):
-                    classificacao_text = f"{item['codigo_classificacao']}"
-                    if item.get('subitem_classificacao'):
-                        classificacao_text += f"\n{item['subitem_classificacao']}"
-                
-                justificativa = item.get('justificativa', '') or 'N/I'
-                descricao = item.get('descricao', '')
-                
-                table_data.append([
-                    str(idx),
-                    item.get('catmat', ''),
-                    Paragraph(f"<font size=7>{descricao}</font>", custom_styles['table_cell']),
-                    Paragraph(f"<font size=6>{justificativa}</font>", custom_styles['table_cell']),
-                    item.get('unidade', ''),
-                    str(int(item.get('quantidade_total', 0))),
-                    f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-                    f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-                    item.get('prioridade', ''),
-                    Paragraph(f"<font size=6>{classificacao_text}</font>", custom_styles['table_cell'])
-                ])
-            
-            if orientation.lower() == 'portrait':
-                col_widths = [0.5*cm, 1.2*cm, 3*cm, 2.5*cm, 0.8*cm, 0.8*cm, 1.4*cm, 1.5*cm, 0.8*cm, 2.2*cm]
-            else:
-                col_widths = [0.5*cm, 1.4*cm, 5*cm, 4.5*cm, 1*cm, 0.9*cm, 1.6*cm, 1.8*cm, 1*cm, 4.5*cm]
-            
-            table = Table(table_data, colWidths=col_widths, repeatRows=1)
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), cor_primaria),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 7),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
-                ('FONTSIZE', (0, 1), (-1, -1), 7),
-                ('ALIGN', (0, 1), (0, -1), 'CENTER'),
-                ('ALIGN', (4, 1), (5, -1), 'CENTER'),
-                ('ALIGN', (6, 1), (7, -1), 'RIGHT'),
-                ('ALIGN', (8, 1), (8, -1), 'CENTER'),
-                ('VALIGN', (0, 1), (-1, -1), 'TOP'),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#D6EAF8')]),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
-                ('BOX', (0, 0), (-1, -1), 1, cor_primaria),
-                ('LEFTPADDING', (0, 0), (-1, -1), 3),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-                ('TOPPADDING', (0, 0), (-1, -1), 4),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ]))
-            elements.append(table)
+        if orientation.lower() == 'portrait':
+            col_widths = [0.5*cm, 1.2*cm, 3*cm, 2.5*cm, 0.8*cm, 0.8*cm, 1.4*cm, 1.5*cm, 0.8*cm, 2.2*cm]
+        else:
+            col_widths = [0.5*cm, 1.4*cm, 5*cm, 4.5*cm, 1*cm, 0.9*cm, 1.6*cm, 1.8*cm, 1*cm, 4.5*cm]
         
-        # Indicador de página
-        if total_pages > 1:
-            elements.append(Spacer(1, 2*mm))
-            elements.append(Paragraph(
-                f'<font size=7 color="grey">Itens {start_idx + 1} a {end_idx} de {total_items} | Página {page_num + 1} de {total_pages}</font>',
-                ParagraphStyle('PageInfo', alignment=TA_RIGHT, fontSize=7, textColor=colors.grey)
-            ))
+        table = Table(table_data, colWidths=col_widths, repeatRows=1)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), cor_primaria),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 7),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+            ('ALIGN', (4, 1), (5, -1), 'CENTER'),
+            ('ALIGN', (6, 1), (7, -1), 'RIGHT'),
+            ('ALIGN', (8, 1), (8, -1), 'CENTER'),
+            ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#D6EAF8')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
+            ('BOX', (0, 0), (-1, -1), 1, cor_primaria),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(table)
     
     # Linha de total após todos os itens
     elements.append(Spacer(1, 4*mm))
