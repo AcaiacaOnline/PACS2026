@@ -257,7 +257,7 @@ class PACGeralItem(BaseModel):
     valorUnitario: float
     valorTotal: float
     prioridade: str
-    justificativa: str
+    justificativa: Optional[str] = None
     codigo_classificacao: Optional[str] = None
     subitem_classificacao: Optional[str] = None
     created_at: datetime
