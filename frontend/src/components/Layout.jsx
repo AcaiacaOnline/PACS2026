@@ -115,6 +115,17 @@ const Layout = ({ children }) => {
                 <Newspaper size={16} />
                 <span className="hidden lg:inline">DOEM</span>
               </Link>
+              <Link
+                to="/historico-assinaturas"
+                data-testid="nav-historico-assinaturas-btn"
+                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-teal-500/50 ${
+                  isActive('/historico-assinaturas') ? 'bg-teal-600' : 'hover:bg-teal-600/80'
+                }`}
+                title="Histórico de Assinaturas"
+              >
+                <FileSignature size={16} />
+                <span className="hidden xl:inline">Assinaturas</span>
+              </Link>
               {user?.is_admin && (
                 <>
                   <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
