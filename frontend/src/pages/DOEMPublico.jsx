@@ -134,13 +134,22 @@ const DOEMPublico = () => {
                 </div>
               </div>
               
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors border border-white/20"
-              >
-                <ArrowLeft size={18} />
-                Acesso Administrativo
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/transparencia')}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+                >
+                  <Home size={18} />
+                  Portal Principal
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors border border-white/20"
+                >
+                  <ArrowLeft size={18} />
+                  Acesso Administrativo
+                </button>
+              </div>
             </div>
           </div>
         </header>
