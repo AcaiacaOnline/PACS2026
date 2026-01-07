@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Newspaper, Search, Calendar, Download, ChevronDown, ChevronRight, 
-  FileText, CheckCircle, ArrowLeft
+  FileText, CheckCircle, ArrowLeft, Home
 } from 'lucide-react';
-import api from '../utils/api';
+import axios from 'axios';
 import { toast } from 'sonner';
+
+// API pública (sem autenticação)
+const publicApi = axios.create({
+  baseURL: `${process.env.REACT_APP_BACKEND_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
 const DOEMPublico = () => {
   const navigate = useNavigate();
@@ -16,6 +24,7 @@ const DOEMPublico = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [selectedEdicao, setSelectedEdicao] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnos();
@@ -24,7 +33,7 @@ const DOEMPublico = () => {
 
   const fetchAnos = async () => {
     try {
-      const response = await api.get('/public/doem/anos');
+      const response = await publicApi.get('/public/doem/anos');
       const anosDisponiveis = response.data.anos || [new Date().getFullYear()];
       setAnos(anosDisponiveis);
       if (anosDisponiveis.length > 0) {
@@ -38,11 +47,13 @@ const DOEMPublico = () => {
 
   const fetchEdicoes = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await api.get('/public/doem/edicoes?limit=100');
+      const response = await publicApi.get('/public/doem/edicoes?limit=100');
       setEdicoes(response.data);
     } catch (error) {
       console.error('Erro ao carregar edições:', error);
+      setError('Não foi possível carregar as edições do DOEM. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +66,7 @@ const DOEMPublico = () => {
     }
 
     try {
-      const response = await api.get(`/public/doem/busca?q=${encodeURIComponent(searchTerm)}`);
+      const response = await publicApi.get(`/public/doem/busca?q=${encodeURIComponent(searchTerm)}`);
       setSearchResults(response.data);
     } catch (error) {
       toast.error('Erro ao buscar');
@@ -64,7 +75,7 @@ const DOEMPublico = () => {
 
   const handleDownloadPDF = async (edicao) => {
     try {
-      const response = await api.get(`/public/doem/edicoes/${edicao.edicao_id}/pdf`, {
+      const response = await publicApi.get(`/public/doem/edicoes/${edicao.edicao_id}/pdf`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
