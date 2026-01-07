@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardList, Plus, Search, Edit, Trash2, FileText, 
-  FileSpreadsheet, Upload, X, Save, Calendar, Building2, User, BarChart3
+  FileSpreadsheet, Upload, X, Save, Calendar, Building2, User, BarChart3,
+  TrendingUp, Clock, CheckCircle, AlertCircle, PieChart as PieChartIcon
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { maskProcesso } from '../utils/masks';
 import Pagination, { usePagination, paginateData } from '../components/Pagination';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip
+} from 'recharts';
 
 const STATUS_OPTIONS = [
   'Iniciado', 'Publicado', 'Aguardando Jurídico', 'Homologado', 'Concluído', 'Cancelado'
