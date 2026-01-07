@@ -77,6 +77,7 @@ const GestaoProcessual = () => {
   useEffect(() => {
     fetchUser();
     fetchAnos();
+    fetchDashboardStats();
   }, []);
 
   useEffect(() => {
@@ -84,6 +85,15 @@ const GestaoProcessual = () => {
       fetchProcessos();
     }
   }, [anoSelecionado, currentPage, pageSize, searchTerm, filterStatus, filterModalidade]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await api.get('/processos/stats');
+      setDashboardStats(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+    }
+  };
 
   const fetchUser = async () => {
     try {
