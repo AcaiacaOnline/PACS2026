@@ -32,6 +32,8 @@ const STATUS_COLORS = {
   'Cancelado': 'bg-red-100 text-red-800',
 };
 
+const DASHBOARD_COLORS = ['#1F4E78', '#2E7D32', '#F57C00', '#7B1FA2', '#C62828', '#00838F'];
+
 const GestaoProcessual = () => {
   const navigate = useNavigate();
   const [processos, setProcessos] = useState([]);
@@ -42,6 +44,10 @@ const GestaoProcessual = () => {
   const [filterModalidade, setFilterModalidade] = useState('');
   const [anos, setAnos] = useState([]);
   const [anoSelecionado, setAnoSelecionado] = useState(null);
+  
+  // Dashboard stats
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [showDashboard, setShowDashboard] = useState(true);
   
   // Paginação
   const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(20);
