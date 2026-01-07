@@ -365,11 +365,24 @@ const GestaoProcessual = () => {
             </div>
             
             <button
-              onClick={() => navigate('/gestao-processual/dashboard')}
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setShowDashboard(!showDashboard)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                showDashboard 
+                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                  : 'bg-card border border-border text-foreground hover:bg-muted'
+              }`}
+              data-testid="toggle-dashboard-btn"
             >
               <BarChart3 size={18} />
-              Dashboard
+              {showDashboard ? 'Ocultar Dashboard' : 'Mostrar Dashboard'}
+            </button>
+            
+            <button
+              onClick={() => navigate('/gestao-processual/dashboard')}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <PieChartIcon size={18} />
+              Dashboard Completo
             </button>
             
             <button
@@ -409,6 +422,169 @@ const GestaoProcessual = () => {
             )}
           </div>
         </div>
+
+        {/* Dashboard Resumido */}
+        {showDashboard && dashboardStats && (
+          <div className="space-y-4">
+            {/* Cards de KPIs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total de Processos */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">Total de Processos</p>
+                    <p className="text-3xl font-bold mt-1">{dashboardStats.total_processos}</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <ClipboardList size={24} />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/20 text-sm">
+                  <span className="text-blue-100">Todos os anos</span>
+                </div>
+              </div>
+
+              {/* Concluídos */}
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm">Concluídos</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {dashboardStats.stats_by_status?.find(s => s.status === 'Concluído')?.quantidade || 0}
+                    </p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <CheckCircle size={24} />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/20 text-sm">
+                  <span className="text-green-100">
+                    {dashboardStats.total_processos > 0 
+                      ? `${Math.round(((dashboardStats.stats_by_status?.find(s => s.status === 'Concluído')?.quantidade || 0) / dashboardStats.total_processos) * 100)}% do total`
+                      : '0% do total'
+                    }
+                  </span>
+                </div>
+              </div>
+
+              {/* Em Andamento */}
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-amber-100 text-sm">Em Andamento</p>
+                    <p className="text-3xl font-bold mt-1">
+                      {dashboardStats.total_processos - (dashboardStats.stats_by_status?.find(s => s.status === 'Concluído')?.quantidade || 0) - (dashboardStats.stats_by_status?.find(s => s.status === 'Cancelado')?.quantidade || 0)}
+                    </p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <Clock size={24} />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/20 text-sm">
+                  <span className="text-amber-100">Ativos</span>
+                </div>
+              </div>
+
+              {/* Tempo Médio */}
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm">Tempo Médio</p>
+                    <p className="text-3xl font-bold mt-1">{dashboardStats.tempo_medio_finalizacao || 0}</p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <TrendingUp size={24} />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/20 text-sm">
+                  <span className="text-purple-100">Dias para concluir</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Gráficos Resumidos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Por Status */}
+              <div className="bg-card border border-border rounded-xl p-4">
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <PieChartIcon size={18} className="text-primary" />
+                  Processos por Status
+                </h3>
+                <div className="h-48">
+                  {dashboardStats.stats_by_status && dashboardStats.stats_by_status.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={dashboardStats.stats_by_status}
+                          dataKey="quantidade"
+                          nameKey="status"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={70}
+                          paddingAngle={2}
+                        >
+                          {dashboardStats.stats_by_status.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={DASHBOARD_COLORS[index % DASHBOARD_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value, name) => [`${value} processos`, name]}
+                          contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      Sem dados disponíveis
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {dashboardStats.stats_by_status?.slice(0, 4).map((item, index) => (
+                    <span 
+                      key={item.status} 
+                      className="text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                      style={{ backgroundColor: `${DASHBOARD_COLORS[index % DASHBOARD_COLORS.length]}20`, color: DASHBOARD_COLORS[index % DASHBOARD_COLORS.length] }}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: DASHBOARD_COLORS[index % DASHBOARD_COLORS.length] }}></span>
+                      {item.status}: {item.quantidade}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Por Modalidade */}
+              <div className="bg-card border border-border rounded-xl p-4">
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <BarChart3 size={18} className="text-primary" />
+                  Top Modalidades
+                </h3>
+                <div className="space-y-3">
+                  {dashboardStats.stats_by_modalidade?.slice(0, 5).map((item, index) => (
+                    <div key={item.modalidade} className="flex items-center gap-3">
+                      <div className="w-24 text-xs text-muted-foreground truncate" title={item.modalidade}>
+                        {item.modalidade}
+                      </div>
+                      <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${(item.quantidade / (dashboardStats.stats_by_modalidade[0]?.quantidade || 1)) * 100}%`,
+                            backgroundColor: DASHBOARD_COLORS[index % DASHBOARD_COLORS.length]
+                          }}
+                        />
+                      </div>
+                      <div className="w-8 text-right font-semibold text-sm">
+                        {item.quantidade}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filtros */}
         <div className="bg-card border border-border rounded-xl p-4">
