@@ -217,7 +217,17 @@ const DOEMPublico = () => {
                     <div className="flex justify-center py-12">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     </div>
-                  ) : edicoesporAno.length === 0 ? (
+                  ) : error ? (
+                    <div className="text-center py-8">
+                      <p className="text-red-500 mb-4">{error}</p>
+                      <button 
+                        onClick={fetchEdicoes}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                      >
+                        Tentar Novamente
+                      </button>
+                    </div>
+                  ) : edicoesporAno.length === 0 || edicoesporAno.every(a => a.edicoes.length === 0) ? (
                     <p className="text-center text-gray-500 py-8">
                       Nenhuma edição publicada ainda
                     </p>
