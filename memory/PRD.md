@@ -10,6 +10,8 @@ Sistema completo de gestão municipal que inclui:
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
 - **Portal de Transparência** - Acesso público às informações
 - **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
+- **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅ NOVO
+- **Sistema de Alertas** - Monitoramento de prazos e pendências ✅ NOVO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
