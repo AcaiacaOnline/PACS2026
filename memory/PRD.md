@@ -158,19 +158,20 @@ Salário Bruto:           R$ X.XXX,XX
 
 ## Próximos Passos (Backlog)
 
-### 🟢 Concluído
+### 🟢 Concluído (Sessão 10/01/2026)
 - [x] Ajustes em Processos
 - [x] Reorganização de Menus
 - [x] PAC Geral Obras e Serviços
 - [x] Sistema Prestação de Contas MROSC
-- [x] Upload de documentos PDF no MROSC ✅ (10/01/2026)
+- [x] Upload de documentos PDF no MROSC ✅
+- [x] Exportação PDF do PAC Geral Obras ✅
+- [x] Relatório PDF de Prestação de Contas MROSC ✅
+- [x] Refatoração de modelos (parcial) ✅
 
-### 🟡 P2 - Média Prioridade
-- [ ] Exportação PDF do PAC Geral Obras
-- [ ] Relatórios de Prestação de Contas em PDF
+### 🟡 P1 - Alta Prioridade
+- [ ] Continuar refatoração do `server.py` (migrar rotas para módulos)
 
 ### 🟢 P3 - Baixa Prioridade
-- [ ] Refatoração do backend (modularização do server.py)
 - [ ] Versão cPanel (PHP/MySQL)
 
 ---
