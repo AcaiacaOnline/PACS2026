@@ -117,7 +117,8 @@ const AppRoutes = () => {
       <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
       <Route path="/processos/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
       <Route path="/doem" element={<ProtectedRoute><DOEM /></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/usuarios" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/users" element={<Navigate to="/usuarios" replace />} />
       <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
       <Route path="/historico-assinaturas" element={<ProtectedRoute><HistoricoAssinaturas /></ProtectedRoute>} />
     </Routes>
