@@ -114,9 +114,9 @@ Salário Bruto:           R$ X.XXX,XX
 - [x] Reorganização de Menus
 - [x] PAC Geral Obras e Serviços
 - [x] Sistema Prestação de Contas MROSC
+- [x] Upload de documentos PDF no MROSC ✅ (10/01/2026)
 
 ### 🟡 P2 - Média Prioridade
-- [ ] Upload de documentos PDF no MROSC
 - [ ] Exportação PDF do PAC Geral Obras
 - [ ] Relatórios de Prestação de Contas em PDF
 
