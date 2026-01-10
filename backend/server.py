@@ -7149,6 +7149,17 @@ async def submeter_prestacao_contas(projeto_id: str, request: Request, data: Sub
         }}
     )
     
+    # Notificar admins sobre nova submissão
+    admins = await db.users.find({'is_admin': True}, {'_id': 0, 'email': 1}).to_list(50)
+    for admin in admins:
+        enviar_notificacao_mrosc(
+            admin['email'],
+            f"Nova Prestação de Contas Submetida",
+            projeto.get('nome_projeto', ''),
+            f"O usuário {user_name} submeteu a prestação de contas do projeto para análise.",
+            "Acesse o sistema para receber e analisar a documentação."
+        )
+    
     return {'message': 'Prestação de contas submetida com sucesso! Aguarde análise do gestor.'}
 
 
