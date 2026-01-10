@@ -10,6 +10,8 @@ import PACGeralObrasList from './pages/PACGeralObrasList';
 import PACGeralObrasEditor from './pages/PACGeralObrasEditor';
 import GestaoProcessual from './pages/GestaoProcessual';
 import DashboardProcessual from './pages/DashboardProcessual';
+import PrestacaoContasList from './pages/PrestacaoContasList';
+import PrestacaoContasEditor from './pages/PrestacaoContasEditor';
 import Users from './pages/Users';
 import Backup from './pages/Backup';
 import PortalPublico from './pages/PortalPublico';
