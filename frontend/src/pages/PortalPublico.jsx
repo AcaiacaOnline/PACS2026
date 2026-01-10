@@ -637,6 +637,125 @@ const PortalPublico = () => {
     </div>
   );
 
+  const renderMrosc = () => (
+    <div className="space-y-6">
+      {/* Cards de Estatísticas */}
+      {mroscStats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-xl shadow-lg text-white">
+            <DollarSign className="w-8 h-8 opacity-80 mb-2" />
+            <div className="text-sm opacity-90">Total Projetos</div>
+            <div className="text-3xl font-bold">{mroscStats.total_projetos || 0}</div>
+          </div>
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-xl shadow-lg text-white">
+            <FileSignature className="w-8 h-8 opacity-80 mb-2" />
+            <div className="text-sm opacity-90">Aprovados</div>
+            <div className="text-3xl font-bold">{mroscStats.total_aprovados || 0}</div>
+          </div>
+          <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-xl shadow-lg text-white">
+            <ClipboardList className="w-8 h-8 opacity-80 mb-2" />
+            <div className="text-sm opacity-90">Em Análise</div>
+            <div className="text-3xl font-bold">{mroscStats.total_em_analise || 0}</div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-xl shadow-lg text-white">
+            <BarChart3 className="w-8 h-8 opacity-80 mb-2" />
+            <div className="text-sm opacity-90">Valor Total</div>
+            <div className="text-xl font-bold">{formatCurrency(mroscStats.valor_total)}</div>
+            <div className="text-xs opacity-75 mt-1">Repasse: {formatCurrency(mroscStats.valor_repasse_publico)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Busca */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por nome da OSC, projeto ou objeto..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white/90"
+          />
+        </div>
+      </div>
+
+      {/* Tabela de Projetos */}
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow overflow-hidden">
+        <div className="bg-green-50 px-4 py-3 border-b">
+          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+            <DollarSign size={18} className="text-green-600" />
+            Prestação de Contas - MROSC (Lei 13.019/2014)
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">Parcerias com Organizações da Sociedade Civil</p>
+        </div>
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">OSC / Entidade</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Projeto</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Vigência</th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Status</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Valor Total</th>
+              <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Repasse Público</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mroscProjetos
+              .filter(p => 
+                p.nome_osc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.nome_projeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.objeto?.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((projeto) => (
+              <tr key={projeto.projeto_id} className="border-t hover:bg-green-50/50">
+                <td className="px-4 py-3">
+                  <div className="font-medium text-sm">{projeto.nome_osc}</div>
+                  <div className="text-xs text-gray-500">CNPJ: {projeto.cnpj_osc}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-medium">{projeto.nome_projeto}</div>
+                  <div className="text-xs text-gray-500 truncate max-w-xs" title={projeto.objeto}>
+                    {projeto.objeto}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {projeto.data_inicio && new Date(projeto.data_inicio).toLocaleDateString('pt-BR')} - 
+                  {projeto.data_fim && new Date(projeto.data_fim).toLocaleDateString('pt-BR')}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    projeto.status === 'APROVADO' ? 'bg-green-100 text-green-800' :
+                    projeto.status === 'ANALISE' ? 'bg-blue-100 text-blue-800' :
+                    projeto.status === 'CORRECAO' ? 'bg-amber-100 text-amber-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {projeto.status || 'ELABORAÇÃO'}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-right font-medium">
+                  {formatCurrency(projeto.valor_total)}
+                </td>
+                <td className="px-4 py-3 text-sm text-right">
+                  <span className="text-green-600 font-medium">
+                    {formatCurrency(projeto.valor_repasse_publico)}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {mroscProjetos.length === 0 && (
+              <tr>
+                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                  Nenhum projeto de prestação de contas encontrado.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   const renderProcessos = () => {
     // Filtrar processos
     const filteredProcessos = processos.filter(p => 
