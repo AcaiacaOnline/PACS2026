@@ -2907,6 +2907,57 @@ async def delete_processo(processo_id: str, request: Request):
     await db.processos.delete_one({'processo_id': processo_id})
     return {'message': 'Processo excluído com sucesso'}
 
+@api_router.post("/processos/migrate-fields")
+async def migrate_processos_fields(request: Request):
+    """
+    Migra campos antigos para nova nomenclatura:
+    - modalidade -> modalidade_contratacao
+    - situacao -> status (se status vazio)
+    ADMIN ONLY
+    """
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem executar migrações")
+    
+    processos = await db.processos.find({}).to_list(None)
+    migrated_count = 0
+    
+    for proc in processos:
+        update_data = {}
+        
+        # Migrar modalidade para modalidade_contratacao
+        if proc.get('modalidade') and not proc.get('modalidade_contratacao'):
+            update_data['modalidade_contratacao'] = proc['modalidade']
+        
+        # Se não tem status mas tem situação antiga, usar como status
+        # Nota: O campo status já existe mas com valores diferentes
+        # Precisamos mapear os valores antigos para os novos
+        old_status = proc.get('status', '')
+        status_mapping = {
+            'Iniciado': 'Em Elaboração',
+            'Publicado': 'Em Licitação',
+            'Aguardando Jurídico': 'Em Licitação',
+            'Homologado': 'Homologado',
+            'Concluído': 'Concluído',
+            'Cancelado': 'Cancelado'
+        }
+        
+        if old_status in status_mapping:
+            update_data['status'] = status_mapping[old_status]
+        
+        if update_data:
+            await db.processos.update_one(
+                {'processo_id': proc['processo_id']},
+                {'$set': update_data}
+            )
+            migrated_count += 1
+    
+    return {
+        'message': f'Migração concluída: {migrated_count} processos atualizados',
+        'total_processos': len(processos),
+        'migrated': migrated_count
+    }
+
 @api_router.post("/processos/import")
 async def import_processos(file: UploadFile = File(...), request: Request = None):
     """Importa processos de um arquivo Excel/CSV"""
