@@ -934,6 +934,147 @@ const PrestacaoContasEditor = () => {
             </div>
           </div>
         )}
+
+        {/* Modal Upload Documento */}
+        {showDocumentoModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Upload className="text-purple-600" />
+                  Enviar Documento
+                </h3>
+                <p className="text-sm text-muted-foreground">Anexe comprovantes de despesas (PDF)</p>
+              </div>
+
+              <form onSubmit={handleUploadDocumento} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Arquivo PDF *</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setDocForm({...docForm, file: e.target.files[0]})}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-purple-100 file:text-purple-700 file:text-sm hover:file:bg-purple-200"
+                    required
+                    data-testid="documento-file-input"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Máximo 10MB. Apenas arquivos PDF.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Tipo de Documento *</label>
+                    <select
+                      value={docForm.tipo_documento}
+                      onChange={(e) => setDocForm({...docForm, tipo_documento: e.target.value})}
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    >
+                      {Object.entries(TIPOS_DOCUMENTO).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Número do Documento</label>
+                    <input
+                      type="text"
+                      value={docForm.numero_documento}
+                      onChange={(e) => setDocForm({...docForm, numero_documento: e.target.value})}
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                      placeholder="Ex: NF 12345"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Data do Documento *</label>
+                    <input
+                      type="date"
+                      value={docForm.data_documento}
+                      onChange={(e) => setDocForm({...docForm, data_documento: e.target.value})}
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Valor (R$) *</label>
+                    <input
+                      type="number"
+                      value={docForm.valor}
+                      onChange={(e) => setDocForm({...docForm, valor: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {despesas.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Vincular a Despesa (opcional)</label>
+                    <select
+                      value={docForm.despesa_id}
+                      onChange={(e) => setDocForm({...docForm, despesa_id: e.target.value})}
+                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    >
+                      <option value="">-- Sem vínculo --</option>
+                      {despesas.map(d => (
+                        <option key={d.despesa_id} value={d.despesa_id}>
+                          {d.natureza_despesa} - {d.descricao} ({formatCurrency(d.valor_total)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Observações</label>
+                  <textarea
+                    value={docForm.observacoes}
+                    onChange={(e) => setDocForm({...docForm, observacoes: e.target.value})}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    rows={2}
+                    placeholder="Observações sobre o documento..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowDocumentoModal(false);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }} 
+                    className="px-4 py-2 border border-input rounded-lg hover:bg-muted"
+                    disabled={uploading}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2 disabled:opacity-50"
+                    disabled={uploading}
+                    data-testid="submit-documento-btn"
+                  >
+                    {uploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} /> Enviar Documento
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
