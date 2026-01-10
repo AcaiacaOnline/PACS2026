@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, DollarSign, Users, FileText, Plus, Trash2, Save,
-  Calculator, Building2, PieChart, Upload, Download, Eye, CheckCircle, XCircle, File
+  Calculator, Building2, PieChart, Upload, Download, Eye, CheckCircle, XCircle, File,
+  Lock, AlertTriangle, Send
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
@@ -34,6 +35,7 @@ const PrestacaoContasEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [projeto, setProjeto] = useState(null);
+  const [user, setUser] = useState(null);
   const [rhs, setRhs] = useState([]);
   const [despesas, setDespesas] = useState([]);
   const [documentos, setDocumentos] = useState([]);
