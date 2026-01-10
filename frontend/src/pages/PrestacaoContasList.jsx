@@ -318,6 +318,9 @@ const PrestacaoContasList = () => {
       case 'historico':
         openHistoricoModal(projeto);
         break;
+      case 'download':
+        handleDownloadPdf(projeto);
+        break;
       case 'submeter':
         handleSubmeterPrestacao(projeto);
         break;
