@@ -1718,6 +1718,9 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
                 'X-Validation-Code': validation_code
             }
         )
+    except HTTPException:
+        # Re-raise HTTPException para validação de CPF/Cargo
+        raise
     except Exception as e:
         logging.error(f"Erro ao adicionar assinatura ao PDF: {e}")
         buffer.seek(0)
