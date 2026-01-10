@@ -118,6 +118,8 @@ const AppRoutes = () => {
       <Route path="/pacs-geral-obras/:id" element={<ProtectedRoute><PACGeralObrasEditor /></ProtectedRoute>} />
       <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
       <Route path="/processos/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
+      <Route path="/prestacao-contas" element={<ProtectedRoute><PrestacaoContasList /></ProtectedRoute>} />
+      <Route path="/prestacao-contas/:id" element={<ProtectedRoute><PrestacaoContasEditor /></ProtectedRoute>} />
       <Route path="/doem" element={<ProtectedRoute><DOEM /></ProtectedRoute>} />
       <Route path="/usuarios" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/users" element={<Navigate to="/usuarios" replace />} />
