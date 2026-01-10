@@ -7276,6 +7276,18 @@ async def aprovar_prestacao_contas(projeto_id: str, request: Request, data: Apro
         }}
     )
     
+    # Notificar criador do projeto sobre aprovação
+    criador = await db.users.find_one({'user_id': projeto.get('user_id')}, {'_id': 0, 'email': 1, 'name': 1})
+    if criador:
+        obs_msg = f"<br><br><strong>Observações:</strong> {data.observacoes}" if data and data.observacoes else ""
+        enviar_notificacao_mrosc(
+            criador['email'],
+            f"🎉 Prestação de Contas APROVADA!",
+            projeto.get('nome_projeto', ''),
+            f"Parabéns! Sua prestação de contas foi aprovada pelo gestor {user_name}.{obs_msg}",
+            "A prestação de contas foi concluída com sucesso."
+        )
+    
     return {'message': 'Prestação de contas aprovada com sucesso!'}
 
 
