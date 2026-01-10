@@ -91,16 +91,18 @@ const PrestacaoContasEditor = () => {
 
   const fetchData = async () => {
     try {
-      const [projetoRes, rhRes, despesasRes, resumoRes] = await Promise.all([
+      const [projetoRes, rhRes, despesasRes, resumoRes, docsRes] = await Promise.all([
         api.get(`/mrosc/projetos/${id}`),
         api.get(`/mrosc/projetos/${id}/rh`),
         api.get(`/mrosc/projetos/${id}/despesas`),
-        api.get(`/mrosc/projetos/${id}/resumo`)
+        api.get(`/mrosc/projetos/${id}/resumo`),
+        api.get(`/mrosc/projetos/${id}/documentos`)
       ]);
       setProjeto(projetoRes.data);
       setRhs(rhRes.data);
       setDespesas(despesasRes.data);
       setResumo(resumoRes.data);
+      setDocumentos(docsRes.data);
     } catch (error) {
       toast.error('Projeto não encontrado');
       navigate('/prestacao-contas');
