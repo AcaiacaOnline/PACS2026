@@ -13,33 +13,45 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Arquitetura Modular (REFATORADA)
+## Arquitetura Modular
 
-### Estrutura de Diretórios
+### Estrutura de Diretórios (Atualizada)
 ```
 /app/backend/
 ├── server.py           # Arquivo principal (~6000 linhas)
-├── models/             # Modelos Pydantic
-│   ├── base.py         # User, PAC, Processo
-│   ├── doem.py         # DOEM
-│   └── newsletter.py   # Newsletter
-├── routes/             # Routers da API
-│   └── auth.py         # Autenticação
-├── services/           # Serviços compartilhados
-│   ├── email.py        # Envio de emails
+├── models/             # Modelos Pydantic ✅
+│   ├── __init__.py     # Exporta todos os modelos
+│   ├── user.py         # User, UserCreate, UserUpdate, UserPermissions
+│   ├── pac.py          # PAC, PACItem, PACGeral, PACGeralItem
+│   ├── processo.py     # Processo, ProcessoCreate, ProcessoUpdate
+│   ├── doem.py         # DOEMPublicacao, DOEMEdicao, DOEMConfig
+│   └── newsletter.py   # NewsletterInscrito
+├── routes/             # Routers da API ✅
+│   ├── __init__.py     # Exporta todos os routers
+│   ├── auth.py         # Autenticação (login, register, logout)
+│   ├── users.py        # CRUD de usuários (admin)
+│   ├── classificacao.py# Códigos de classificação orçamentária
+│   ├── backup.py       # Backup e restauração
+│   └── validacao.py    # Validação de documentos
+├── services/           # Serviços compartilhados ✅
+│   ├── email.py        # Envio de emails SMTP
 │   └── pdf.py          # Geração de PDFs
-├── utils/              # Utilitários
+├── utils/              # Utilitários ✅
 │   ├── database.py     # Conexão MongoDB
 │   └── auth.py         # JWT, hash passwords
-└── README.md           # Documentação
+└── README.md           # Documentação completa
 ```
 
 ### Status da Refatoração
-- ✅ Modelos extraídos para `/models/`
-- ✅ Serviços de email e PDF para `/services/`
-- ✅ Utilitários de database e auth para `/utils/`
-- ✅ Estrutura de rotas preparada em `/routes/`
-- 🔄 Rotas ainda no `server.py` (funcional, migração gradual)
+- ✅ Modelos Pydantic extraídos e organizados em `/models/`
+- ✅ Rotas de autenticação preparadas em `/routes/auth.py`
+- ✅ Rotas de usuários em `/routes/users.py`
+- ✅ Rotas de classificação orçamentária em `/routes/classificacao.py`
+- ✅ Rotas de backup/restore em `/routes/backup.py`
+- ✅ Rotas de validação de documentos em `/routes/validacao.py`
+- ✅ Serviços de email e PDF em `/services/`
+- ✅ Utilitários de database e auth em `/utils/`
+- 🔄 Rotas ainda no `server.py` (funcional, migração gradual pendente)
 
 ---
 
@@ -78,7 +90,23 @@ Sistema completo de gestão municipal que inclui:
 #### Módulo 6: Assinatura Digital
 - Selo na lateral direita com QR Code
 - Código de validação único
-- **Status**: COMPLETO E TESTADO
+- **CPF e Cargo obrigatórios para assinatura** ✅ NOVO
+- **Status**: COMPLETO E TESTADO (15/15 testes)
+
+---
+
+## Regras de Negócio
+
+### Assinatura Digital (ATUALIZADO)
+- **CPF é OBRIGATÓRIO** para assinar documentos
+- **Cargo é OBRIGATÓRIO** para assinar documentos
+- Usuários sem CPF/Cargo recebem erro 400 ao tentar exportar PDF assinado
+- Mensagens de erro claras direcionam o usuário a atualizar seu perfil
+- Validação aplicada em:
+  - Exportação de PDF do PAC Individual
+  - Exportação de PDF do PAC Geral
+  - Exportação de PDF de Processos
+  - Publicação de Edições do DOEM
 
 ---
 
@@ -110,30 +138,50 @@ POST /api/validar/verificar { validation_code: "DOC-XXX" }
 
 ### P1 - Alta Prioridade (Refatoração)
 1. ✅ Criar estrutura modular (models, routes, services, utils)
-2. 🔄 Migrar rotas gradualmente para arquivos separados
-3. 🔄 Reduzir server.py para < 1000 linhas
+2. ✅ CPF e Cargo obrigatórios para assinatura
+3. 🔄 Integrar routers modulares no `server.py` principal
+4. 🔄 Migrar rotas gradualmente para arquivos separados (auth → pac → processos → doem)
+5. 🔄 Reduzir server.py para < 1000 linhas
 
 ### P2 - Média Prioridade
-- Tornar CPF e Cargo obrigatórios para assinatura
+- Nenhuma tarefa pendente
 
 ### P3 - Baixa Prioridade
-- Versão cPanel (PHP/MySQL)
+- Versão cPanel (PHP/MySQL) - se solicitado pelo usuário
 
 ---
 
 ## Última Atualização
 **Data**: 10/01/2026
-**Versão**: 3.1.0
+**Versão**: 3.2.0
 
-### Changelog desta sessão:
-- Estrutura modular criada:
-  - `/models/` - Modelos Pydantic
-  - `/routes/` - Routers da API
-  - `/services/` - Email, PDF
-  - `/utils/` - Database, Auth
-- README.md de documentação criado
-- Todos os testes passando
+### Changelog desta sessão (10/01/2026):
+- ✅ **CPF e Cargo obrigatórios para assinatura** - Implementado e testado
+  - Backend: Validação em `add_signature_to_pdf` (linha ~4617)
+  - Backend: Validação em `publicar_edicao` (linha ~5077)
+  - Frontend: Campos CPF e Cargo marcados com asterisco vermelho
+  - Frontend: Bordas destacadas em campos vazios (cor âmbar)
+  - Frontend: Mensagens explicativas abaixo dos campos
+- ✅ **Estrutura modular expandida**
+  - Novos arquivos em `/routes/`: users.py, classificacao.py, backup.py, validacao.py
+  - Modelos Pydantic completos em `/models/`: user.py, pac.py, processo.py
+  - README.md atualizado com documentação completa
+- ✅ **15 testes automatizados passando**
+  - Login e autenticação
+  - Validação de CPF/Cargo para exportação de PDF
+  - Atualização de dados de assinatura
+  - Endpoints públicos
+  - Dashboard
 
 ### Testes Automatizados
-- `/app/test_reports/iteration_11.json` - 9 testes passando
-- Autenticação, PACs, Processos funcionando
+- `/app/test_reports/iteration_12.json` - 15/15 testes passando
+- `/app/tests/test_cpf_cargo_validation.py` - Testes de validação CPF/Cargo
+
+---
+
+## Credenciais de Teste
+- **Admin**:
+  - Email: `cristiano.abdo@acaiaca.mg.gov.br`
+  - Senha: `Cris@820906`
+  - CPF: `123.456.789-00`
+  - Cargo: `Assessor de Planejamento`
