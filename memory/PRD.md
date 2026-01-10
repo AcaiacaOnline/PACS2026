@@ -8,7 +8,7 @@ Sistema completo de gestão municipal que inclui:
 - **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
-- **Portal de Transparência** - Acesso público às informações ✅ ATUALIZADO
+- **Portal de Transparência** - Acesso público com menus dropdown ✅ ATUALIZADO
 - **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
@@ -16,6 +16,7 @@ Sistema completo de gestão municipal que inclui:
 - **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅
 - **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅
 - **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅
+- **Backup Completo** - Inclui TODOS os módulos do sistema ✅ ATUALIZADO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
@@ -25,25 +26,37 @@ Sistema completo de gestão municipal que inclui:
 
 ### Changelog - Sessão 5 (10/01/2026)
 
-#### ✅ 1. Portal da Transparência - Menus Alinhados com Backend
-- Adicionada aba **PAC Obras** no Portal Público
-- Navegação agora inclui: Dashboard, PAC Individual, PAC Geral, **PAC Obras**, Processos, DOEM
-- Alinhamento completo com os menus do sistema administrativo
+#### ✅ 1. Portal da Transparência - Menus Dropdown
+- Menu igual ao backend: **PACs ˅**, **Processos ˅**, **DOEM ˅**, **$ MROSC**
+- Dropdown PACs: PAC Individual, PAC Geral, PAC Obras
+- Dropdown Processos: Gestão Processual
+- Dropdown DOEM: Diário Oficial
 
-#### ✅ 2. API Pública para PAC Geral Obras
-- `GET /api/public/pacs-geral-obras` - Lista todos os PACs de Obras
-- `GET /api/public/pacs-geral-obras/{id}` - Detalhes de um PAC
-- `GET /api/public/pacs-geral-obras/{id}/items` - Itens do PAC
-- `GET /api/public/pacs-geral-obras/{id}/export/pdf` - Exportação PDF
+#### ✅ 2. Seção MROSC no Portal da Transparência
+- Cards de estatísticas (Total Projetos, Aprovados, Em Análise, Valor Total)
+- Tabela de projetos com OSC, Projeto, Vigência, Status, Valores
+- Busca por nome da OSC, projeto ou objeto
+- APIs públicas criadas:
+  - `GET /api/public/mrosc/projetos`
+  - `GET /api/public/mrosc/projetos/{id}`
+  - `GET /api/public/mrosc/projetos/{id}/resumo`
+  - `GET /api/public/mrosc/estatisticas`
+
+#### ✅ 3. Backup Completo do Sistema
+- Versão 2.0 do backup
+- Inclui TODOS os módulos:
+  - PAC Individual e Items
+  - PAC Geral e Items
+  - **PAC Geral Obras e Items** (NOVO)
+  - Processos
+  - **MROSC Projetos, RH, Despesas, Documentos** (NOVO)
+  - **DOEM Edições, Config, Newsletter** (NOVO)
+  - **Assinaturas de Documentos** (NOVO)
+- Total de 176 registros no sistema atual
 
 #### 📋 Tarefas Pendentes (P0)
-1. **Refatoração do `server.py` em módulos** - Backend monolítico (8100+ linhas)
-   - Estrutura de rotas já existe em `/app/backend/routes/`
-   - Modelos já modularizados em `/app/backend/models/`
-   - Requer migração gradual das rotas
-
+1. **Refatoração do `server.py` em módulos** - Backend monolítico (8200+ linhas)
 2. **Versão cPanel** - Pacote para hospedagem compartilhada
-   - Não iniciado
 
 ---
 
