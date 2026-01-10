@@ -15,12 +15,15 @@ import {
 } from 'recharts';
 
 const STATUS_OPTIONS = [
-  'Iniciado', 'Publicado', 'Aguardando Jurídico', 'Homologado', 'Concluído', 'Cancelado'
+  'Em Elaboração', 'Aguardando Aprovação', 'Aprovado', 'Em Licitação', 
+  'Homologado', 'Contratado', 'Em Execução', 'Concluído', 'Cancelado', 'Suspenso'
 ];
 
 const MODALIDADE_OPTIONS = [
-  'Dispensa por Limite', 'Dispensa por Justificativa', 'Chamamento Público', 
-  'Inexigibilidade', 'Pregão', 'Pregão SRP', 'Concorrência', 'Adesão'
+  'Pregão Eletrônico', 'Pregão Presencial', 'Concorrência', 'Tomada de Preços',
+  'Convite', 'Concurso', 'Leilão', 'Dispensa de Licitação', 'Dispensa por Limite',
+  'Dispensa por Justificativa', 'Inexigibilidade', 'Chamamento Público', 
+  'Adesão a Ata de Registro de Preços', 'Contratação Direta'
 ];
 
 const STATUS_COLORS = {
