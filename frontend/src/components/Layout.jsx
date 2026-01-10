@@ -107,7 +107,7 @@ const Layout = ({ children }) => {
                 <Building2 className="text-primary w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-heading font-bold">PAC Acaiaca 2026</h1>
+                <h1 className="text-xl font-heading font-bold">Planejamento Acaiaca</h1>
                 <div className="text-xs opacity-90">Planejamento e Contratações</div>
               </div>
             </div>
@@ -233,7 +233,7 @@ const Layout = ({ children }) => {
         </main>
         <footer className="bg-muted py-4 text-center text-sm text-muted-foreground no-print">
           <p>Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística</p>
-          <p className="text-xs mt-1">PAC Acaiaca 2026 &copy; {new Date().getFullYear()}</p>
+          <p className="text-xs mt-1">Planejamento Acaiaca &copy; {new Date().getFullYear()}</p>
         </footer>
       </div>
     </div>
