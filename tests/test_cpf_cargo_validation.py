@@ -274,8 +274,14 @@ class TestPublicEndpoints:
         response = requests.get(f"{BASE_URL}/api/public/pacs")
         assert response.status_code == 200, f"Public PACs failed: {response.text}"
         data = response.json()
-        assert isinstance(data, list)
-        print(f"✓ Public PACs endpoint returned {len(data)} items")
+        # API returns object with 'data' key containing the list
+        if isinstance(data, dict) and "data" in data:
+            pacs_list = data["data"]
+            assert isinstance(pacs_list, list)
+            print(f"✓ Public PACs endpoint returned {len(pacs_list)} items")
+        else:
+            assert isinstance(data, list)
+            print(f"✓ Public PACs endpoint returned {len(data)} items")
     
     def test_public_doem_anos(self):
         """Test public DOEM anos endpoint"""
