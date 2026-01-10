@@ -71,10 +71,9 @@ const GestaoProcessual = () => {
   
   const [formData, setFormData] = useState({
     numero_processo: '',
-    status: 'Iniciado',
-    modalidade: '',
+    modalidade_contratacao: '',
+    status: 'Em Elaboração',
     objeto: '',
-    situacao: '',
     responsavel: '',
     data_inicio: '',
     data_autuacao: '',
