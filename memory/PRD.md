@@ -8,15 +8,16 @@ Sistema completo de gestão municipal que inclui:
 - **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
-- **Portal de Transparência** - Acesso público com menus dropdown ✅ ATUALIZADO
-- **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
+- **Portal de Transparência** - Acesso público com menus dropdown ✅
+- **Prestação de Contas MROSC** - Sistema completo com workflow de aprovação ✅ ATUALIZADO
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
 - **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅
 - **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅
 - **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅
 - **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅
-- **Backup Completo** - Inclui TODOS os módulos do sistema ✅ ATUALIZADO
+- **Backup Completo** - Inclui TODOS os módulos do sistema ✅
+- **Menu Configurações** - Dropdown com Assinaturas, Usuários, Backup ✅ NOVO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
@@ -26,33 +27,33 @@ Sistema completo de gestão municipal que inclui:
 
 ### Changelog - Sessão 5 (10/01/2026)
 
-#### ✅ 1. Portal da Transparência - Menus Dropdown
-- Menu igual ao backend: **PACs ˅**, **Processos ˅**, **DOEM ˅**, **$ MROSC**
-- Dropdown PACs: PAC Individual, PAC Geral, PAC Obras
-- Dropdown Processos: Gestão Processual
-- Dropdown DOEM: Diário Oficial
+#### ✅ 1. Menu Configurações
+- Novo dropdown "Configurações" no menu principal
+- Contém: Assinaturas, Usuários (admin), Backup (admin)
+- Nome do usuário visível (ex: "Cristiano") com ícone de admin
+- Botão "Sair" em destaque vermelho
 
-#### ✅ 2. Seção MROSC no Portal da Transparência
-- Cards de estatísticas (Total Projetos, Aprovados, Em Análise, Valor Total)
-- Tabela de projetos com OSC, Projeto, Vigência, Status, Valores
-- Busca por nome da OSC, projeto ou objeto
-- APIs públicas criadas:
-  - `GET /api/public/mrosc/projetos`
-  - `GET /api/public/mrosc/projetos/{id}`
-  - `GET /api/public/mrosc/projetos/{id}/resumo`
-  - `GET /api/public/mrosc/estatisticas`
+#### ✅ 2. MROSC - Ações de Workflow Corrigidas
+- **7 botões de ação** agora visíveis para projetos submetidos:
+  - Editar/Gerenciar, Histórico, Download PDF
+  - Confirmar Recebimento (admin)
+  - Pedir Correção (admin)
+  - Aprovar Prestação (admin)
+  - Excluir
+- Lógica corrigida para detectar status submetido
 
-#### ✅ 3. Backup Completo do Sistema
-- Versão 2.0 do backup
-- Inclui TODOS os módulos:
-  - PAC Individual e Items
-  - PAC Geral e Items
-  - **PAC Geral Obras e Items** (NOVO)
-  - Processos
-  - **MROSC Projetos, RH, Despesas, Documentos** (NOVO)
-  - **DOEM Edições, Config, Newsletter** (NOVO)
-  - **Assinaturas de Documentos** (NOVO)
-- Total de 176 registros no sistema atual
+#### ✅ 3. Cadastro de Usuário - Tipo de Usuário
+- Formulário de registro JÁ POSSUI seleção de tipo:
+  - Servidor Municipal (acesso completo)
+  - Pessoa Externa/OSC (acesso apenas ao MROSC)
+- Alerta informativo para Pessoa Externa
+
+#### ✅ 4. Portal da Transparência
+- Menus dropdown funcionando (PACs, Processos, DOEM)
+- Seção MROSC com estatísticas e projetos
+
+#### ✅ 5. Backup Completo v2.0
+- Inclui todos os módulos (PAC Obras, MROSC, DOEM, Assinaturas)
 
 #### 📋 Tarefas Pendentes (P0)
 1. **Refatoração do `server.py` em módulos** - Backend monolítico (8200+ linhas)
