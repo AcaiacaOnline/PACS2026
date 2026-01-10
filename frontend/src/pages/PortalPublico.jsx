@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, FileText, ClipboardList, BarChart3, Download, Printer,
   Search, Shield, Eye, Lock, FileSpreadsheet, Newspaper, ChevronLeft, ChevronRight,
-  Hammer, DollarSign, FileSignature
+  Hammer, DollarSign, FileSignature, ChevronDown
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,6 +18,59 @@ const COLORS = ['#1F4E78', '#2E7D32', '#F57C00', '#7B1FA2', '#C62828', '#00838F'
 const publicApi = axios.create({
   baseURL: process.env.REACT_APP_BACKEND_URL || '',
 });
+
+// Componente Dropdown para o menu
+const DropdownMenu = ({ title, icon: Icon, items, isActive, onSelect, color = 'default' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const colorClasses = {
+    default: 'border-gray-300 hover:bg-gray-100',
+    purple: 'border-purple-400 hover:bg-purple-50 text-purple-700',
+    green: 'border-green-400 hover:bg-green-50 text-green-700',
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+          isActive 
+            ? 'border-[#1F4E78] text-[#1F4E78] font-medium' 
+            : `border-transparent ${colorClasses[color]}`
+        }`}
+      >
+        <Icon size={18} />
+        {title}
+        <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px] z-50">
+          {items.map((item, index) => (
+            <button
+              key={index}
+              onClick={() => { onSelect(item.id); setIsOpen(false); }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+            >
+              {item.icon && <item.icon size={16} />}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PortalPublico = () => {
   const navigate = useNavigate();
