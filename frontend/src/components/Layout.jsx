@@ -248,61 +248,39 @@ const Layout = ({ children }) => {
                 <span className="hidden xl:inline">MROSC</span>
               </Link>
 
-              <Link
-                to="/historico-assinaturas"
-                data-testid="nav-historico-assinaturas-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-teal-500/50 ${
-                  isActive('/historico-assinaturas') ? 'bg-teal-600' : 'hover:bg-teal-600/80'
-                }`}
-                title="Histórico de Assinaturas"
-              >
-                <FileSignature size={16} />
-                <span className="hidden xl:inline">Assinaturas</span>
-              </Link>
-              {user?.is_admin && (
-                <>
-                  <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
-                  <Link
-                    to="/usuarios"
-                    data-testid="nav-users-btn"
-                    className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
-                      isActive('/usuarios') ? 'bg-primary/80' : 'hover:bg-primary/80'
-                    }`}
-                  >
-                    <Users size={16} />
-                    <span className="hidden lg:inline">Usuários</span>
-                  </Link>
-                  <Link
-                    to="/backup"
-                    data-testid="nav-backup-btn"
-                    className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
-                      isActive('/backup') ? 'bg-green-600' : 'hover:bg-green-600/80'
-                    }`}
-                    title="Backup e Restauração"
-                  >
-                    <Database size={16} />
-                    <span className="hidden lg:inline">Backup</span>
-                  </Link>
-                </>
-              )}
+              {/* Menu Configurações */}
+              <DropdownMenu
+                title="Configurações"
+                icon={Settings}
+                color="teal"
+                isActive={isActive('/historico-assinaturas') || isActive('/usuarios') || isActive('/backup')}
+                items={[
+                  { path: '/historico-assinaturas', label: 'Assinaturas', icon: FileSignature },
+                  ...(user?.is_admin ? [
+                    { path: '/usuarios', label: 'Usuários', icon: Users },
+                    { path: '/backup', label: 'Backup', icon: Database },
+                  ] : []),
+                ]}
+              />
+
               <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
               {user && (
-                <div className="hidden xl:block text-sm">
-                  <div className="font-medium flex items-center gap-1">
-                    {user.name?.split(' ')[0]}
-                    {user.is_admin && (
-                      <Shield size={14} className="text-amber-400" title="Administrador" />
-                    )}
-                  </div>
+                <div className="hidden xl:flex items-center gap-2 text-sm bg-primary/50 px-3 py-1.5 rounded-lg">
+                  <User size={14} />
+                  <span className="font-medium">{user.name?.split(' ')[0]}</span>
+                  {user.is_admin && (
+                    <Shield size={14} className="text-amber-400" title="Administrador" />
+                  )}
                 </div>
               )}
               <button
                 onClick={handleLogout}
                 data-testid="logout-btn"
-                className="text-destructive-foreground hover:text-destructive transition-colors p-2"
+                className="flex items-center gap-1 px-3 py-2 bg-red-500/80 hover:bg-red-600 rounded-lg transition-colors text-sm"
                 title="Sair"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
+                <span className="hidden md:inline">Sair</span>
               </button>
             </nav>
           </div>
