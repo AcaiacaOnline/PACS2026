@@ -4145,6 +4145,35 @@ async def restore_backup(request: Request, file: UploadFile = File(...)):
             )
             stats['pac_geral_items'] += 1
         
+        # Restaurar PACs Geral Obras
+        for pgo in backup_data.get('pacs_geral_obras', []):
+            for field in ['created_at', 'updated_at']:
+                if field in pgo and isinstance(pgo[field], str):
+                    try:
+                        pgo[field] = datetime.fromisoformat(pgo[field].replace('Z', '+00:00'))
+                    except:
+                        pass
+            await db.pacs_geral_obras.update_one(
+                {'pac_obras_id': pgo['pac_obras_id']},
+                {'$set': pgo},
+                upsert=True
+            )
+            stats['pacs_geral_obras'] = stats.get('pacs_geral_obras', 0) + 1
+        
+        # Restaurar PAC Geral Obras Items
+        for item in backup_data.get('pac_geral_obras_items', []):
+            if 'created_at' in item and isinstance(item['created_at'], str):
+                try:
+                    item['created_at'] = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                except:
+                    pass
+            await db.pac_geral_obras_items.update_one(
+                {'item_id': item['item_id']},
+                {'$set': item},
+                upsert=True
+            )
+            stats['pac_geral_obras_items'] = stats.get('pac_geral_obras_items', 0) + 1
+        
         # Restaurar Processos
         for proc in backup_data['processos']:
             for field in ['created_at', 'updated_at', 'data_inicio', 'data_autuacao', 'data_contrato']:
@@ -4160,6 +4189,117 @@ async def restore_backup(request: Request, file: UploadFile = File(...)):
                 upsert=True
             )
             stats['processos'] += 1
+        
+        # Restaurar MROSC Projetos
+        for proj in backup_data.get('mrosc_projetos', []):
+            for field in ['created_at', 'updated_at', 'data_inicio', 'data_fim']:
+                if field in proj and isinstance(proj[field], str):
+                    try:
+                        proj[field] = datetime.fromisoformat(proj[field].replace('Z', '+00:00'))
+                    except:
+                        pass
+            await db.mrosc_projetos.update_one(
+                {'projeto_id': proj['projeto_id']},
+                {'$set': proj},
+                upsert=True
+            )
+            stats['mrosc_projetos'] = stats.get('mrosc_projetos', 0) + 1
+        
+        # Restaurar MROSC RH
+        for rh in backup_data.get('mrosc_rh', []):
+            if 'created_at' in rh and isinstance(rh['created_at'], str):
+                try:
+                    rh['created_at'] = datetime.fromisoformat(rh['created_at'].replace('Z', '+00:00'))
+                except:
+                    pass
+            await db.mrosc_rh.update_one(
+                {'rh_id': rh['rh_id']},
+                {'$set': rh},
+                upsert=True
+            )
+            stats['mrosc_rh'] = stats.get('mrosc_rh', 0) + 1
+        
+        # Restaurar MROSC Despesas
+        for desp in backup_data.get('mrosc_despesas', []):
+            if 'created_at' in desp and isinstance(desp['created_at'], str):
+                try:
+                    desp['created_at'] = datetime.fromisoformat(desp['created_at'].replace('Z', '+00:00'))
+                except:
+                    pass
+            await db.mrosc_despesas.update_one(
+                {'despesa_id': desp['despesa_id']},
+                {'$set': desp},
+                upsert=True
+            )
+            stats['mrosc_despesas'] = stats.get('mrosc_despesas', 0) + 1
+        
+        # Restaurar MROSC Documentos
+        for doc in backup_data.get('mrosc_documentos', []):
+            for field in ['created_at', 'data_documento', 'validated_at']:
+                if field in doc and isinstance(doc[field], str):
+                    try:
+                        doc[field] = datetime.fromisoformat(doc[field].replace('Z', '+00:00'))
+                    except:
+                        pass
+            await db.mrosc_documentos.update_one(
+                {'documento_id': doc['documento_id']},
+                {'$set': doc},
+                upsert=True
+            )
+            stats['mrosc_documentos'] = stats.get('mrosc_documentos', 0) + 1
+        
+        # Restaurar DOEM Edições
+        for edicao in backup_data.get('doem_edicoes', []):
+            for field in ['created_at', 'updated_at', 'data_publicacao']:
+                if field in edicao and isinstance(edicao[field], str):
+                    try:
+                        edicao[field] = datetime.fromisoformat(edicao[field].replace('Z', '+00:00'))
+                    except:
+                        pass
+            await db.doem_edicoes.update_one(
+                {'edicao_id': edicao['edicao_id']},
+                {'$set': edicao},
+                upsert=True
+            )
+            stats['doem_edicoes'] = stats.get('doem_edicoes', 0) + 1
+        
+        # Restaurar DOEM Config
+        for config in backup_data.get('doem_config', []):
+            await db.doem_config.update_one(
+                {'config_id': config.get('config_id', 'doem_config_main')},
+                {'$set': config},
+                upsert=True
+            )
+            stats['doem_config'] = stats.get('doem_config', 0) + 1
+        
+        # Restaurar DOEM Newsletter
+        for news in backup_data.get('doem_newsletter', []):
+            for field in ['created_at', 'confirmed_at']:
+                if field in news and isinstance(news[field], str):
+                    try:
+                        news[field] = datetime.fromisoformat(news[field].replace('Z', '+00:00'))
+                    except:
+                        pass
+            await db.doem_newsletter.update_one(
+                {'email': news['email']},
+                {'$set': news},
+                upsert=True
+            )
+            stats['doem_newsletter'] = stats.get('doem_newsletter', 0) + 1
+        
+        # Restaurar Assinaturas de Documentos
+        for sig in backup_data.get('document_signatures', []):
+            if 'created_at' in sig and isinstance(sig['created_at'], str):
+                try:
+                    sig['created_at'] = datetime.fromisoformat(sig['created_at'].replace('Z', '+00:00'))
+                except:
+                    pass
+            await db.document_signatures.update_one(
+                {'validation_code': sig['validation_code']},
+                {'$set': sig},
+                upsert=True
+            )
+            stats['document_signatures'] = stats.get('document_signatures', 0) + 1
         
         return {
             'success': True,
