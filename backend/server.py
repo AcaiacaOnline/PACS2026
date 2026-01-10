@@ -7228,6 +7228,17 @@ async def solicitar_correcao_prestacao(projeto_id: str, request: Request, data: 
         }}
     )
     
+    # Notificar criador do projeto sobre correção solicitada
+    criador = await db.users.find_one({'user_id': projeto.get('user_id')}, {'_id': 0, 'email': 1, 'name': 1})
+    if criador:
+        enviar_notificacao_mrosc(
+            criador['email'],
+            f"Correção Solicitada em Prestação de Contas",
+            projeto.get('nome_projeto', ''),
+            f"O gestor {user_name} solicitou correções no seu projeto.<br><br><strong>Motivo:</strong> {data.motivo}",
+            "Acesse o sistema para fazer as correções necessárias e resubmeter."
+        )
+    
     return {'message': 'Correção solicitada. O usuário externo pode editar novamente.'}
 
 
