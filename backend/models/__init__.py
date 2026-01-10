@@ -1,5 +1,6 @@
 """
 Models Package - Export all models
+Planejamento Acaiaca - Sistema de Gestão Municipal
 """
 from .user import (
     User, UserCreate, UserUpdate, UserLogin, UserListItem,
@@ -8,6 +9,11 @@ from .user import (
 from .pac import (
     PAC, PACCreate, PACUpdate, PACItem, PACItemCreate, PACItemUpdate,
     PACGeral, PACGeralCreate, PACGeralUpdate, PACGeralItem, PACGeralItemCreate, PACGeralItemUpdate
+)
+from .pac_obras import (
+    PACGeralObras, PACGeralObrasCreate, PACGeralObrasUpdate,
+    PACGeralObrasItem, PACGeralObrasItemCreate, PACGeralObrasItemUpdate,
+    CLASSIFICACAO_OBRAS_SERVICOS
 )
 from .processo import (
     Processo, ProcessoCreate, ProcessoUpdate, PaginatedResponse
@@ -20,6 +26,13 @@ from .doem import (
 from .newsletter import (
     NewsletterInscrito, NewsletterInscricaoPublica, NewsletterInscricaoManual
 )
+from .mrosc import (
+    ProjetoMROSC, ProjetoMROSCCreate, ProjetoMROSCUpdate,
+    RecursoHumanoMROSC, RecursoHumanoMROSCCreate,
+    DespesaMROSC, DespesaMROSCCreate,
+    DocumentoMROSC, DocumentoMROSCCreate,
+    NATUREZAS_DESPESA_MROSC
+)
 
 __all__ = [
     # User models
@@ -28,6 +41,10 @@ __all__ = [
     # PAC models
     'PAC', 'PACCreate', 'PACUpdate', 'PACItem', 'PACItemCreate', 'PACItemUpdate',
     'PACGeral', 'PACGeralCreate', 'PACGeralUpdate', 'PACGeralItem', 'PACGeralItemCreate', 'PACGeralItemUpdate',
+    # PAC Obras models
+    'PACGeralObras', 'PACGeralObrasCreate', 'PACGeralObrasUpdate',
+    'PACGeralObrasItem', 'PACGeralObrasItemCreate', 'PACGeralObrasItemUpdate',
+    'CLASSIFICACAO_OBRAS_SERVICOS',
     # Processo models
     'Processo', 'ProcessoCreate', 'ProcessoUpdate', 'PaginatedResponse',
     # DOEM models
@@ -36,4 +53,10 @@ __all__ = [
     'DOEM_SEGMENTOS', 'DOEM_TIPOS_PUBLICACAO',
     # Newsletter models
     'NewsletterInscrito', 'NewsletterInscricaoPublica', 'NewsletterInscricaoManual',
+    # MROSC models
+    'ProjetoMROSC', 'ProjetoMROSCCreate', 'ProjetoMROSCUpdate',
+    'RecursoHumanoMROSC', 'RecursoHumanoMROSCCreate',
+    'DespesaMROSC', 'DespesaMROSCCreate',
+    'DocumentoMROSC', 'DocumentoMROSCCreate',
+    'NATUREZAS_DESPESA_MROSC',
 ]
