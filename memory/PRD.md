@@ -5,177 +5,121 @@
 Sistema completo de gestão municipal que inclui:
 - **PAC (Plano Anual de Contratações)** - Gestão individual por secretaria
 - **PAC Geral** - Visão consolidada de todas as secretarias
-- **Gestão Processual** - Controle de processos licitatórios
+- **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅ NOVO
+- **Gestão Processual** - Controle de processos licitatórios com campos atualizados
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
-- **Portal de Transparência** - Acesso público às informações com paginação
+- **Portal de Transparência** - Acesso público às informações
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Arquitetura Modular
+## Última Atualização: 10/01/2026
 
-### Estrutura de Diretórios (Atualizada)
+### Changelog desta Sessão
+
+#### ✅ 1. Ajustes no Módulo de Processos (COMPLETO)
+- **Campo "Status" renomeado para "Modalidade de Contratação"**
+- **Campo "Situação" renomeado para "Status"**
+- **Número do Processo agora é obrigatório** (*)
+- Novas opções de modalidade: Pregão Eletrônico, Pregão Presencial, Concorrência, Tomada de Preços, Convite, Concurso, Leilão, Dispensa de Licitação, Dispensa por Limite, Dispensa por Justificativa, Inexigibilidade, Chamamento Público, Adesão a Ata de Registro de Preços, Contratação Direta
+- Novos status: Em Elaboração, Aguardando Aprovação, Aprovado, Em Licitação, Homologado, Contratado, Em Execução, Concluído, Cancelado, Suspenso
+- **73 processos migrados automaticamente** via endpoint `/api/processos/migrate-fields`
+
+#### ✅ 2. Reorganização de Menus (COMPLETO)
+- Menus agora organizados em dropdowns:
+  - **PACs**: PAC Individual, PAC Geral, PAC Geral Obras
+  - **Processos**: Gestão Processual, Dashboard
+  - **DOEM**: Edições, Publicações
+
+#### ✅ 3. Novo Módulo: PAC Geral Obras e Serviços (COMPLETO)
+- Backend: Modelos `PACGeralObras`, `PACGeralObrasItem`
+- Backend: Endpoints CRUD completos em `/api/pacs-geral-obras`
+- Frontend: `PACGeralObrasList.jsx` - Lista de PACs de Obras
+- Frontend: `PACGeralObrasEditor.jsx` - Editor de itens com classificação
+- **Classificação Orçamentária conforme Lei 14.133/2021:**
+  - 339040 - Serviços de TIC - PJ
+  - 449051 - Obras e Instalações
+  - 339039 - Serviços de Terceiros - PJ
+- **Subitens conforme Portaria 448/ME**
+
+#### ✅ 4. CPF e Cargo Obrigatórios para Assinatura (Sessão Anterior)
+- Validação implementada em `add_signature_to_pdf`
+- Frontend: Campos destacados com asterisco vermelho
+
+---
+
+## Arquitetura do Sistema
+
+### Backend (FastAPI + MongoDB)
 ```
 /app/backend/
-├── server.py           # Arquivo principal (~6000 linhas)
-├── models/             # Modelos Pydantic ✅
-│   ├── __init__.py     # Exporta todos os modelos
-│   ├── user.py         # User, UserCreate, UserUpdate, UserPermissions
-│   ├── pac.py          # PAC, PACItem, PACGeral, PACGeralItem
-│   ├── processo.py     # Processo, ProcessoCreate, ProcessoUpdate
-│   ├── doem.py         # DOEMPublicacao, DOEMEdicao, DOEMConfig
-│   └── newsletter.py   # NewsletterInscrito
-├── routes/             # Routers da API ✅
-│   ├── __init__.py     # Exporta todos os routers
-│   ├── auth.py         # Autenticação (login, register, logout)
-│   ├── users.py        # CRUD de usuários (admin)
-│   ├── classificacao.py# Códigos de classificação orçamentária
-│   ├── backup.py       # Backup e restauração
-│   └── validacao.py    # Validação de documentos
-├── services/           # Serviços compartilhados ✅
-│   ├── email.py        # Envio de emails SMTP
-│   └── pdf.py          # Geração de PDFs
-├── utils/              # Utilitários ✅
-│   ├── database.py     # Conexão MongoDB
-│   └── auth.py         # JWT, hash passwords
-└── README.md           # Documentação completa
+├── server.py           # ~6500 linhas (ainda monolítico)
+├── models/             # Modelos Pydantic
+│   ├── user.py, pac.py, processo.py, doem.py, newsletter.py
+├── routes/             # Routers preparados
+│   ├── auth.py, users.py, classificacao.py, backup.py, validacao.py
+├── services/           # Serviços
+└── utils/              # Utilitários
 ```
 
-### Status da Refatoração
-- ✅ Modelos Pydantic extraídos e organizados em `/models/`
-- ✅ Rotas de autenticação preparadas em `/routes/auth.py`
-- ✅ Rotas de usuários em `/routes/users.py`
-- ✅ Rotas de classificação orçamentária em `/routes/classificacao.py`
-- ✅ Rotas de backup/restore em `/routes/backup.py`
-- ✅ Rotas de validação de documentos em `/routes/validacao.py`
-- ✅ Serviços de email e PDF em `/services/`
-- ✅ Utilitários de database e auth em `/utils/`
-- 🔄 Rotas ainda no `server.py` (funcional, migração gradual pendente)
-
----
-
-## Status das Funcionalidades
-
-### ✅ IMPLEMENTADO E FUNCIONANDO
-
-#### Módulo 1: Geração de PDF Profissional
-- Design profissional com cabeçalho institucional
-- Tabela com cores alternadas (#FFFFFF / #D6EAF8)
-- Selo de assinatura digital na lateral direita
-- **Status**: COMPLETO E TESTADO
-
-#### Módulo 2: Paginação
-- **Backend**: `/api/processos/paginado`, `/api/pacs/paginado`, `/api/pacs-geral/paginado`
-- **Frontend Editores**: 15, 30, 50, 100 itens por página
-- **Portal Transparência**: 20, 40, 60, 80, 100 itens por página
-- **Status**: COMPLETO E TESTADO
-
-#### Módulo 3: DOEM Público
-- Acesso sem login via `publicApi`
-- Botões de navegação (Portal Principal, Acesso Admin)
-- **Status**: COMPLETO E TESTADO (9/9 testes)
-
-#### Módulo 4: Dashboard de Processos
-- 4 KPIs em cards coloridos
-- Gráficos de pizza e barras
-- Toggle para mostrar/ocultar
-- **Status**: COMPLETO E TESTADO
-
-#### Módulo 5: Validação de Documentos
-- URL: `https://pac.acaiaca.mg.gov.br/validar?code=...`
-- Preenchimento automático do código via URL
-- **Status**: COMPLETO E TESTADO
-
-#### Módulo 6: Assinatura Digital
-- Selo na lateral direita com QR Code
-- Código de validação único
-- **CPF e Cargo obrigatórios para assinatura** ✅ NOVO
-- **Status**: COMPLETO E TESTADO (15/15 testes)
-
----
-
-## Regras de Negócio
-
-### Assinatura Digital (ATUALIZADO)
-- **CPF é OBRIGATÓRIO** para assinar documentos
-- **Cargo é OBRIGATÓRIO** para assinar documentos
-- Usuários sem CPF/Cargo recebem erro 400 ao tentar exportar PDF assinado
-- Mensagens de erro claras direcionam o usuário a atualizar seu perfil
-- Validação aplicada em:
-  - Exportação de PDF do PAC Individual
-  - Exportação de PDF do PAC Geral
-  - Exportação de PDF de Processos
-  - Publicação de Edições do DOEM
+### Frontend (React + TailwindCSS)
+```
+/app/frontend/src/
+├── pages/
+│   ├── PACGeralObrasList.jsx      # NOVO
+│   ├── PACGeralObrasEditor.jsx    # NOVO
+│   ├── GestaoProcessual.jsx       # ATUALIZADO (novos campos)
+│   └── ...
+├── components/
+│   └── Layout.jsx                 # ATUALIZADO (menus dropdown)
+└── App.js                         # ATUALIZADO (novas rotas)
+```
 
 ---
 
 ## Endpoints de API
 
-### Paginação
+### PAC Geral Obras (NOVOS)
 ```
-GET /api/processos/paginado?page=1&page_size=20
-GET /api/pacs/paginado?page=1&page_size=20
-GET /api/pacs-geral/paginado?page=1&page_size=20
+GET    /api/pacs-geral-obras              # Listar
+POST   /api/pacs-geral-obras              # Criar
+GET    /api/pacs-geral-obras/{id}         # Obter
+PUT    /api/pacs-geral-obras/{id}         # Atualizar
+DELETE /api/pacs-geral-obras/{id}         # Excluir
+GET    /api/pacs-geral-obras/{id}/items   # Listar itens
+POST   /api/pacs-geral-obras/{id}/items   # Criar item
+PUT    /api/pacs-geral-obras/{id}/items/{item_id}
+DELETE /api/pacs-geral-obras/{id}/items/{item_id}
+GET    /api/classificacao/obras-servicos  # Códigos de classificação
 ```
 
-### Públicos
+### Processos (ATUALIZADOS)
 ```
-GET /api/public/doem/anos
-GET /api/public/doem/edicoes
-GET /api/public/processos
-GET /api/public/dashboard/stats
-```
-
-### Validação
-```
-POST /api/validar/verificar { validation_code: "DOC-XXX" }
+POST   /api/processos/migrate-fields      # Migrar campos antigos
+GET    /api/processos                     # Lista com novos campos
+POST   /api/processos                     # Criar com modalidade_contratacao
 ```
 
 ---
 
 ## Próximos Passos (Backlog)
 
-### P1 - Alta Prioridade (Refatoração)
-1. ✅ Criar estrutura modular (models, routes, services, utils)
-2. ✅ CPF e Cargo obrigatórios para assinatura
-3. 🔄 Integrar routers modulares no `server.py` principal
-4. 🔄 Migrar rotas gradualmente para arquivos separados (auth → pac → processos → doem)
-5. 🔄 Reduzir server.py para < 1000 linhas
+### 🔴 P1 - Alta Prioridade
+- [ ] Sistema de Prestação de Contas (MROSC - Lei 13.019/2014)
+  - Projetos de parceria com OSCs
+  - Recursos Humanos com cálculos automáticos (CLT)
+  - Despesas com 3 orçamentos
+  - Upload de documentos PDF
+  - Relatórios de prestação de contas
 
-### P2 - Média Prioridade
-- Nenhuma tarefa pendente
+### 🟡 P2 - Média Prioridade
+- [ ] Exportação PDF do PAC Geral Obras
+- [ ] Integrar routers modulares no server.py
+- [ ] Reduzir server.py para < 2000 linhas
 
-### P3 - Baixa Prioridade
-- Versão cPanel (PHP/MySQL) - se solicitado pelo usuário
-
----
-
-## Última Atualização
-**Data**: 10/01/2026
-**Versão**: 3.2.0
-
-### Changelog desta sessão (10/01/2026):
-- ✅ **CPF e Cargo obrigatórios para assinatura** - Implementado e testado
-  - Backend: Validação em `add_signature_to_pdf` (linha ~4617)
-  - Backend: Validação em `publicar_edicao` (linha ~5077)
-  - Frontend: Campos CPF e Cargo marcados com asterisco vermelho
-  - Frontend: Bordas destacadas em campos vazios (cor âmbar)
-  - Frontend: Mensagens explicativas abaixo dos campos
-- ✅ **Estrutura modular expandida**
-  - Novos arquivos em `/routes/`: users.py, classificacao.py, backup.py, validacao.py
-  - Modelos Pydantic completos em `/models/`: user.py, pac.py, processo.py
-  - README.md atualizado com documentação completa
-- ✅ **15 testes automatizados passando**
-  - Login e autenticação
-  - Validação de CPF/Cargo para exportação de PDF
-  - Atualização de dados de assinatura
-  - Endpoints públicos
-  - Dashboard
-
-### Testes Automatizados
-- `/app/test_reports/iteration_12.json` - 15/15 testes passando
-- `/app/tests/test_cpf_cargo_validation.py` - Testes de validação CPF/Cargo
+### 🟢 P3 - Baixa Prioridade
+- [ ] Versão cPanel (PHP/MySQL)
 
 ---
 
@@ -185,3 +129,9 @@ POST /api/validar/verificar { validation_code: "DOC-XXX" }
   - Senha: `Cris@820906`
   - CPF: `123.456.789-00`
   - Cargo: `Assessor de Planejamento`
+
+---
+
+## Documentos Relacionados
+- `/app/docs/ESPECIFICACAO_TECNICA_v1.md` - Especificação completa das novas funcionalidades
+- `/app/test_reports/iteration_12.json` - Testes da sessão anterior
