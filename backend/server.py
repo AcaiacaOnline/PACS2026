@@ -2970,6 +2970,158 @@ async def delete_pac_geral_obras_item(pac_obras_id: str, item_id: str, request: 
         raise HTTPException(status_code=404, detail="Item not found")
     return {'message': 'Item excluído com sucesso'}
 
+# ===== EXPORTAÇÃO PDF DO PAC GERAL OBRAS =====
+@api_router.get("/pacs-geral-obras/{pac_obras_id}/export/pdf")
+async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orientation: str = "landscape"):
+    """
+    Exporta PAC Geral Obras e Serviços para PDF
+    Classificação conforme Lei 14.133/2021 e Portaria 448/ME
+    """
+    user = await get_current_user(request)
+    
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras não encontrado")
+    
+    items = await db.pac_geral_obras_items.find({'pac_obras_id': pac_obras_id}, {'_id': 0}).to_list(1000)
+    
+    buffer = BytesIO()
+    page_size = landscape(A4) if orientation.lower() == 'landscape' else A4
+    
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=page_size,
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=15*mm,
+        bottomMargin=15*mm,
+        title=f'PAC Obras - {pac["nome_secretaria"]} {pac.get("ano", "2026")}'
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos
+    titulo_style = ParagraphStyle('TituloPACObras', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#1565C0'), alignment=TA_CENTER, spaceAfter=4*mm)
+    subtitulo_style = ParagraphStyle('SubtituloPACObras', parent=styles['Heading2'], fontSize=11, textColor=colors.HexColor('#1976D2'), spaceBefore=6*mm, spaceAfter=3*mm)
+    
+    # ===== CABEÇALHO =====
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
+    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8)))
+    elements.append(Spacer(1, 3*mm))
+    elements.append(Paragraph('<b>PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA</b>', ParagraphStyle('TitDoc', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=12, textColor=colors.HexColor('#0D47A1'))))
+    elements.append(Paragraph('Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME', ParagraphStyle('Lei', parent=styles['Normal'], alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
+    elements.append(Spacer(1, 6*mm))
+    
+    # ===== DADOS DA SECRETARIA =====
+    elements.append(Paragraph('IDENTIFICAÇÃO', subtitulo_style))
+    
+    sec_data = [
+        ['Secretaria:', pac.get('nome_secretaria', '-')],
+        ['Secretário(a):', pac.get('secretario', '-')],
+        ['Fiscal do Contrato:', pac.get('fiscal_contrato', '-') or '-'],
+        ['Telefone:', pac.get('telefone', '-')],
+        ['E-mail:', pac.get('email', '-')],
+        ['Endereço:', pac.get('endereco', '-')],
+        ['Ano:', pac.get('ano', '2026')],
+        ['Tipo:', pac.get('tipo_contratacao', 'OBRAS')]
+    ]
+    
+    sec_table = Table(sec_data, colWidths=[40*mm, 100*mm])
+    sec_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E3F2FD')),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#90CAF9')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(sec_table)
+    
+    # ===== ITENS =====
+    if items:
+        elements.append(Paragraph('DETALHAMENTO DOS ITENS', subtitulo_style))
+        
+        # Secretarias selecionadas
+        secs = pac.get('secretarias_selecionadas', [])
+        
+        # Cabeçalho dinâmico
+        header = ['#', 'CATSER', 'Descrição', 'Classif.', 'Un']
+        sec_labels = {'AD': 'Admin', 'FA': 'Faz', 'SA': 'Saúde', 'SE': 'Educ', 'AS': 'Assist', 'AG': 'Agric', 'OB': 'Obras', 'TR': 'Transp', 'CUL': 'Cult'}
+        for s in secs:
+            header.append(sec_labels.get(s, s))
+        header.extend(['Total', 'Unit.', 'TOTAL'])
+        
+        items_data = [header]
+        
+        for idx, item in enumerate(items, 1):
+            row = [
+                str(idx),
+                item.get('catmat', '-'),
+                Paragraph(item.get('descricao', '-')[:40], ParagraphStyle('DescItem', fontSize=6)),
+                item.get('codigo_classificacao', '-'),
+                item.get('unidade', '-')
+            ]
+            
+            # Quantidades por secretaria
+            for s in secs:
+                qtd = item.get(f'qtd_{s.lower()}', 0)
+                row.append(str(int(qtd)) if qtd else '-')
+            
+            row.extend([
+                str(int(item.get('quantidade_total', 0))),
+                f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            ])
+            items_data.append(row)
+        
+        # Calcular larguras das colunas
+        num_secs = len(secs)
+        col_widths = [8*mm, 18*mm, 50*mm, 18*mm, 12*mm]  # Fixas
+        col_widths.extend([12*mm] * num_secs)  # Secretarias
+        col_widths.extend([15*mm, 22*mm, 28*mm])  # Total, Unit, TOTAL
+        
+        items_table = Table(items_data, colWidths=col_widths)
+        items_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0D47A1')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 6),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('ALIGN', (5, 1), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#90CAF9')),
+            ('PADDING', (0, 0), (-1, -1), 2),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#E3F2FD')]),
+        ]))
+        elements.append(items_table)
+        
+        # Total
+        total = sum(item.get('valorTotal', 0) for item in items)
+        elements.append(Spacer(1, 4*mm))
+        elements.append(Paragraph(f"<b>VALOR TOTAL: R$ {total:,.2f}</b>".replace(',', 'X').replace('.', ',').replace('X', '.'), ParagraphStyle('TotalPAC', fontSize=11, alignment=TA_RIGHT, textColor=colors.HexColor('#1B5E20'))))
+    
+    # ===== ASSINATURA =====
+    elements.append(Spacer(1, 15*mm))
+    elements.append(Paragraph('_' * 50, ParagraphStyle('Linha', alignment=TA_CENTER)))
+    elements.append(Paragraph(f'<b>{pac.get("secretario", "Secretário(a)")}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=9)))
+    elements.append(Paragraph(f'{pac.get("nome_secretaria", "")}', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
+    
+    # ===== RODAPÉ =====
+    elements.append(Spacer(1, 8*mm))
+    data_geracao = datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M')
+    elements.append(Paragraph(f'Documento gerado em {data_geracao} | Planejamento Acaiaca © 2026', ParagraphStyle('Rodape', alignment=TA_CENTER, fontSize=6, textColor=colors.gray)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"PAC_Obras_{pac['nome_secretaria'].replace(' ', '_')}_{pac.get('ano', '2026')}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
+
 
 # ============ ROTAS DE GESTÃO PROCESSUAL ============
 
