@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, DollarSign, Users, FileText, Plus, Trash2, Save,
-  Calculator, Building2, PieChart
+  Calculator, Building2, PieChart, Upload, Download, Eye, CheckCircle, XCircle, File
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
@@ -22,17 +22,29 @@ const NATUREZAS_DESPESA = {
   "449052": "Equipamentos Permanentes"
 };
 
+const TIPOS_DOCUMENTO = {
+  'NOTA_FISCAL': 'Nota Fiscal',
+  'RECIBO': 'Recibo',
+  'CONTRATO': 'Contrato',
+  'COMPROVANTE': 'Comprovante',
+  'OUTRO': 'Outro'
+};
+
 const PrestacaoContasEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [projeto, setProjeto] = useState(null);
   const [rhs, setRhs] = useState([]);
   const [despesas, setDespesas] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
   const [resumo, setResumo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('rh');
   const [showRHModal, setShowRHModal] = useState(false);
   const [showDespesaModal, setShowDespesaModal] = useState(false);
+  const [showDocumentoModal, setShowDocumentoModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [rhForm, setRhForm] = useState({
     nome_funcao: '',
@@ -61,6 +73,16 @@ const PrestacaoContasEditor = () => {
     referencia_preco_municipal: 0,
     observacoes: '',
     justificativa: ''
+  });
+
+  const [docForm, setDocForm] = useState({
+    tipo_documento: 'COMPROVANTE',
+    numero_documento: '',
+    data_documento: new Date().toISOString().split('T')[0],
+    valor: 0,
+    despesa_id: '',
+    observacoes: '',
+    file: null
   });
 
   useEffect(() => {
