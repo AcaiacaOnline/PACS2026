@@ -53,6 +53,26 @@ Sistema completo de gestão municipal que inclui:
   - `newsletter.py` - Modelos Newsletter
 - Exportação centralizada em `__init__.py`
 
+#### ✅ 5. Dashboard Analítico (NOVO)
+- Página `/dashboard-analitico` com visão consolidada
+- KPIs: Total Planejado, Processos, Projetos MROSC, Alertas
+- Gráfico de pizza: Distribuição por Secretaria
+- Gráfico de barras: Processos por Status
+- Aba Orçamento: Execução MROSC, Top Itens
+- Aba Alertas: Lista de alertas por prioridade
+- Endpoint `GET /api/analytics/dashboard`
+
+#### ✅ 6. Sistema de Alertas (NOVO)
+- Endpoint `GET /api/alertas/` com alertas automáticos
+- Tipos de alertas:
+  - Prazos de projetos MROSC vencendo
+  - Documentos pendentes de validação
+  - Processos sem número
+  - Processos abertos há muito tempo
+  - Edições DOEM em rascunho
+- Classificação por prioridade: CRITICA, ALTA, MEDIA, BAIXA
+- Navegação direta para o item relacionado
+
 ---
 
 ### Changelog Sessão Anterior
