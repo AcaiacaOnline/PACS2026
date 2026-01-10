@@ -5075,10 +5075,9 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
 # ===== ROTAS PÚBLICAS MROSC =====
 @public_router.get("/mrosc/projetos")
 async def public_get_projetos_mrosc():
-    """Lista projetos MROSC aprovados (público - transparência)"""
-    # Mostrar apenas projetos aprovados ou em análise
-    query = {'status': {'$in': ['APROVADO', 'ANALISE']}}
-    projetos = await db.mrosc_projetos.find(query, {'_id': 0}).to_list(100)
+    """Lista projetos MROSC (público - transparência)"""
+    # Mostrar todos os projetos para transparência
+    projetos = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(100)
     return {'data': projetos, 'total': len(projetos)}
 
 @public_router.get("/mrosc/projetos/{projeto_id}")
