@@ -306,8 +306,8 @@ class Processo(BaseModel):
     processo_id: str
     user_id: str
     numero_processo: str  # Ex: PRC - 0006/2025 (OBRIGATÓRIO)
-    modalidade_contratacao: str  # Pregão Eletrônico, Dispensa, Inexigibilidade, etc.
-    status: str  # Em Elaboração, Aprovado, Em Licitação, Homologado, Contratado, Concluído
+    modalidade_contratacao: Optional[str] = None  # Pregão Eletrônico, Dispensa, Inexigibilidade, etc.
+    status: Optional[str] = None  # Em Elaboração, Aprovado, Em Licitação, Homologado, Contratado, Concluído
     objeto: str  # Descrição do processo
     responsavel: str
     data_inicio: Optional[datetime] = None
