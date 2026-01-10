@@ -7469,7 +7469,14 @@ async def get_alertas(request: Request):
         data_conclusao = proj.get('data_conclusao')
         if data_conclusao:
             if isinstance(data_conclusao, str):
-                data_conclusao = datetime.fromisoformat(data_conclusao.replace('Z', '+00:00'))
+                try:
+                    data_conclusao = datetime.fromisoformat(data_conclusao.replace('Z', '+00:00'))
+                except:
+                    continue
+            
+            # Garantir que a data tem timezone
+            if data_conclusao.tzinfo is None:
+                data_conclusao = data_conclusao.replace(tzinfo=timezone.utc)
             
             dias_restantes = (data_conclusao - hoje).days
             
