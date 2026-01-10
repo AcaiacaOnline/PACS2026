@@ -143,6 +143,40 @@ const Login = () => {
             </div>
           )}
 
+          {mode === 'register' && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Tipo de Usuário</label>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(TIPOS_USUARIO).map(([key, { label, icon: Icon, desc }]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, tipo_usuario: key })}
+                    className={`p-3 rounded-lg border-2 transition-all text-left ${
+                      formData.tipo_usuario === key
+                        ? 'border-primary bg-primary/10'
+                        : 'border-input hover:border-primary/50'
+                    }`}
+                    data-testid={`tipo-usuario-${key.toLowerCase()}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon size={18} className={formData.tipo_usuario === key ? 'text-primary' : 'text-muted-foreground'} />
+                      <span className={`font-medium text-sm ${formData.tipo_usuario === key ? 'text-primary' : 'text-foreground'}`}>
+                        {label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </button>
+                ))}
+              </div>
+              {formData.tipo_usuario === 'PESSOA_EXTERNA' && (
+                <p className="text-xs text-amber-600 mt-2 bg-amber-50 p-2 rounded">
+                  ⚠️ Como Pessoa Externa (OSC), você terá acesso apenas ao módulo de Prestação de Contas (MROSC).
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">E-mail</label>
             <input
