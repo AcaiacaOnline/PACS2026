@@ -204,11 +204,11 @@ const PrestacaoContasList = () => {
   const getAcoesDisponiveis = (projeto) => {
     const acoes = [];
     
-    // Visualizar sempre disponível
+    // Visualizar/Editar sempre disponível
     acoes.push({ 
       action: 'visualizar', 
-      label: 'Gerenciar', 
-      icon: Eye, 
+      label: 'Editar/Gerenciar', 
+      icon: Edit3, 
       color: 'text-blue-600 hover:bg-blue-50' 
     });
     
@@ -219,13 +219,21 @@ const PrestacaoContasList = () => {
       icon: History, 
       color: 'text-purple-600 hover:bg-purple-50' 
     });
+
+    // Download PDF
+    acoes.push({ 
+      action: 'download', 
+      label: 'Baixar PDF', 
+      icon: Download, 
+      color: 'text-red-600 hover:bg-red-50' 
+    });
     
     // Ações para usuário externo
     if (isExternalUser) {
       if (projeto.pode_editar && !projeto.aprovado) {
         acoes.push({ 
           action: 'submeter', 
-          label: 'Submeter', 
+          label: 'Submeter para Análise', 
           icon: Send, 
           color: 'text-green-600 hover:bg-green-50' 
         });
@@ -242,15 +250,18 @@ const PrestacaoContasList = () => {
     
     // Ações para administrador
     if (isAdmin) {
+      // Receber - só quando foi submetido mas não recebido ainda
       if (projeto.submetido && projeto.status === 'SUBMETIDO') {
         acoes.push({ 
           action: 'receber', 
-          label: 'Receber', 
+          label: 'Confirmar Recebimento', 
           icon: FileCheck, 
           color: 'text-teal-600 hover:bg-teal-50' 
         });
       }
-      if (projeto.submetido && !projeto.aprovado && projeto.status !== 'CORRECAO_SOLICITADA') {
+      
+      // Pedir Correção - quando submetido e não aprovado
+      if (projeto.submetido && !projeto.aprovado) {
         acoes.push({ 
           action: 'correcao', 
           label: 'Pedir Correção', 
@@ -258,14 +269,18 @@ const PrestacaoContasList = () => {
           color: 'text-amber-600 hover:bg-amber-50' 
         });
       }
+      
+      // Aprovar - quando submetido e não aprovado
       if (projeto.submetido && !projeto.aprovado) {
         acoes.push({ 
           action: 'aprovar', 
-          label: 'Aprovar', 
+          label: 'Aprovar Prestação', 
           icon: CheckCircle, 
           color: 'text-green-600 hover:bg-green-50' 
         });
       }
+      
+      // Excluir - admin sempre pode
       acoes.push({ 
         action: 'excluir', 
         label: 'Excluir', 
@@ -275,6 +290,24 @@ const PrestacaoContasList = () => {
     }
     
     return acoes;
+  };
+
+  const handleDownloadPdf = async (projeto) => {
+    try {
+      const response = await api.get(`/mrosc/projetos/${projeto.projeto_id}/export/pdf`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `MROSC_${projeto.nome_projeto.replace(/\s/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF baixado!');
+    } catch (error) {
+      toast.error('Erro ao baixar PDF');
+    }
   };
 
   const handleAction = (action, projeto) => {
