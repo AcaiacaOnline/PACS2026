@@ -305,11 +305,10 @@ class Processo(BaseModel):
     model_config = ConfigDict(extra="ignore")
     processo_id: str
     user_id: str
-    numero_processo: str  # Ex: PRC - 0006/2025
-    status: str  # Concluído, Iniciado, Publicado, Aguardando Jurídico, Homologado
-    modalidade: str  # Dispensa por Limite, Chamamento Público, Inexigibilidade, Pregão, etc.
+    numero_processo: str  # Ex: PRC - 0006/2025 (OBRIGATÓRIO)
+    modalidade_contratacao: str  # Pregão Eletrônico, Dispensa, Inexigibilidade, etc.
+    status: str  # Em Elaboração, Aprovado, Em Licitação, Homologado, Contratado, Concluído
     objeto: str  # Descrição do processo
-    situacao: Optional[str] = None  # OK ou outro indicador
     responsavel: str
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
@@ -320,13 +319,15 @@ class Processo(BaseModel):
     observacoes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    # Campos legados para compatibilidade (serão removidos em versão futura)
+    modalidade: Optional[str] = None  # DEPRECATED: usar modalidade_contratacao
+    situacao: Optional[str] = None  # DEPRECATED: usar status
 
 class ProcessoCreate(BaseModel):
-    numero_processo: str
+    numero_processo: str  # OBRIGATÓRIO *
+    modalidade_contratacao: str
     status: str
-    modalidade: str
     objeto: str
-    situacao: Optional[str] = None
     responsavel: str
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
@@ -338,10 +339,9 @@ class ProcessoCreate(BaseModel):
 
 class ProcessoUpdate(BaseModel):
     numero_processo: Optional[str] = None
+    modalidade_contratacao: Optional[str] = None
     status: Optional[str] = None
-    modalidade: Optional[str] = None
     objeto: Optional[str] = None
-    situacao: Optional[str] = None
     responsavel: Optional[str] = None
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
