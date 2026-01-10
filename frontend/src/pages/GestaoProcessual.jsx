@@ -753,7 +753,7 @@ const GestaoProcessual = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">
-                      Número do Processo *
+                      Número do Processo <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -763,38 +763,41 @@ const GestaoProcessual = () => {
                       placeholder="PRC - 0001/2025"
                       maxLength={16}
                       required
+                      data-testid="processo-numero-input"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">
-                      Status *
+                      Modalidade de Contratação <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      value={formData.modalidade_contratacao}
+                      onChange={(e) => setFormData({ ...formData, modalidade_contratacao: e.target.value })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
                       required
+                      data-testid="processo-modalidade-select"
                     >
-                      {STATUS_OPTIONS.map(s => (
-                        <option key={s} value={s}>{s}</option>
+                      <option value="">Selecione a modalidade...</option>
+                      {MODALIDADE_OPTIONS.map(m => (
+                        <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">
-                      Modalidade *
+                      Status <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={formData.modalidade}
-                      onChange={(e) => setFormData({ ...formData, modalidade: e.target.value })}
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
                       required
+                      data-testid="processo-status-select"
                     >
-                      <option value="">Selecione...</option>
-                      {MODALIDADE_OPTIONS.map(m => (
-                        <option key={m} value={m}>{m}</option>
+                      {STATUS_OPTIONS.map(s => (
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </div>
@@ -802,7 +805,7 @@ const GestaoProcessual = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-1">
-                    Objeto *
+                    Objeto <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     value={formData.objeto}
@@ -811,23 +814,11 @@ const GestaoProcessual = () => {
                     rows={3}
                     placeholder="Descrição do objeto da contratação"
                     required
+                    data-testid="processo-objeto-textarea"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-foreground mb-1">
-                      Situação
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.situacao}
-                      onChange={(e) => setFormData({ ...formData, situacao: e.target.value })}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
-                      placeholder="OK"
-                    />
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">
                       Responsável
@@ -838,6 +829,21 @@ const GestaoProcessual = () => {
                       onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
                       placeholder="Nome do responsável"
+                      data-testid="processo-responsavel-input"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1">
+                      Secretaria
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.secretaria}
+                      onChange={(e) => setFormData({ ...formData, secretaria: e.target.value })}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                      placeholder="Nome da secretaria"
+                      data-testid="processo-secretaria-input"
                     />
                   </div>
                 </div>
