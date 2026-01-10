@@ -895,6 +895,19 @@ async def register(user_data: UserCreate):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     user_id = f"user_{uuid.uuid4().hex[:12]}"
+    
+    # Definir permissões baseadas no tipo de usuário
+    tipo_usuario = getattr(user_data, 'tipo_usuario', 'SERVIDOR')
+    permissions = {
+        'can_view': True,
+        'can_edit': tipo_usuario == 'SERVIDOR',
+        'can_delete': False,
+        'can_export': tipo_usuario == 'SERVIDOR',
+        'can_manage_users': False,
+        'is_full_admin': False,
+        'mrosc_only': tipo_usuario == 'PESSOA_EXTERNA'  # Pessoa externa só acessa MROSC
+    }
+    
     user_doc = {
         'user_id': user_id,
         'email': user_data.email,
@@ -902,7 +915,9 @@ async def register(user_data: UserCreate):
         'password_hash': hash_password(user_data.password),
         'is_admin': False,
         'is_active': True,
+        'tipo_usuario': tipo_usuario,
         'picture': None,
+        'permissions': permissions,
         'created_at': datetime.now(timezone.utc)
     }
     await db.users.insert_one(user_doc)
