@@ -1,8 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, Plus, LogOut, Building2, Users, Shield, ClipboardList, Database, Globe, Newspaper, FileSignature } from 'lucide-react';
+import { 
+  LayoutDashboard, List, LogOut, Building2, Users, Shield, ClipboardList, 
+  Database, Globe, Newspaper, FileSignature, ChevronDown, Hammer, DollarSign,
+  FileText, Settings
+} from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+
+const DropdownMenu = ({ title, icon: Icon, items, isActive, color = 'primary' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const colorClasses = {
+    primary: 'hover:bg-primary/80',
+    amber: 'hover:bg-amber-600/80 border-amber-500/50',
+    purple: 'hover:bg-purple-600/80 border-purple-500/50',
+    green: 'hover:bg-green-600/80 border-green-500/50',
+    teal: 'hover:bg-teal-600/80 border-teal-500/50',
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-primary-foreground/20 ${
+          isActive ? 'bg-primary/80' : colorClasses[color]
+        }`}
+      >
+        <Icon size={16} />
+        <span className="hidden lg:inline">{title}</span>
+        <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[180px] z-50">
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              {item.icon && <item.icon size={14} />}
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();
