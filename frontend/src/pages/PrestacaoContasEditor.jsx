@@ -508,6 +508,153 @@ const PrestacaoContasEditor = () => {
           </div>
         )}
 
+        {/* Tab Content - Documentos */}
+        {activeTab === 'documentos' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Comprovantes e Documentos</h2>
+              <button
+                onClick={() => setShowDocumentoModal(true)}
+                className="flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 text-sm"
+                data-testid="upload-documento-btn"
+              >
+                <Upload size={16} /> Enviar Documento
+              </button>
+            </div>
+
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm">
+              <p className="text-purple-800">
+                <strong>Lei 13.019/2014 (MROSC):</strong> Todos os comprovantes de despesas devem ser anexados para prestação de contas.
+                Apenas arquivos PDF são aceitos. Limite: 10MB por arquivo.
+              </p>
+            </div>
+
+            {documentos.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-8 text-center">
+                <File size={40} className="mx-auto mb-3 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">Nenhum documento anexado</p>
+                <button
+                  onClick={() => setShowDocumentoModal(true)}
+                  className="mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm"
+                >
+                  Enviar primeiro documento
+                </button>
+              </div>
+            ) : (
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Tipo</th>
+                      <th className="px-3 py-2 text-left">Arquivo</th>
+                      <th className="px-3 py-2 text-left">Número</th>
+                      <th className="px-3 py-2 text-center">Data</th>
+                      <th className="px-3 py-2 text-right">Valor</th>
+                      <th className="px-3 py-2 text-center">Tamanho</th>
+                      <th className="px-3 py-2 text-center">Status</th>
+                      <th className="px-3 py-2 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {documentos.map((doc) => (
+                      <tr key={doc.documento_id} className="border-b border-border hover:bg-muted/50">
+                        <td className="px-3 py-2">
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                            {TIPOS_DOCUMENTO[doc.tipo_documento] || doc.tipo_documento}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <FileText size={14} className="text-red-500" />
+                            <span className="truncate max-w-[200px]" title={doc.arquivo_nome}>
+                              {doc.arquivo_nome}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">{doc.numero_documento || '-'}</td>
+                        <td className="px-3 py-2 text-center">{formatDate(doc.data_documento)}</td>
+                        <td className="px-3 py-2 text-right font-medium text-green-600">
+                          {formatCurrency(doc.valor)}
+                        </td>
+                        <td className="px-3 py-2 text-center text-muted-foreground">
+                          {formatFileSize(doc.arquivo_tamanho)}
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          {doc.validado ? (
+                            <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                              <CheckCircle size={12} /> Validado
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                              <XCircle size={12} /> Pendente
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handleViewDocumento(doc)}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Visualizar"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleViewDocumento(doc)}
+                              className="p-1 text-green-600 hover:bg-green-50 rounded"
+                              title="Download"
+                            >
+                              <Download size={14} />
+                            </button>
+                            {!doc.validado && (
+                              <button
+                                onClick={() => handleValidarDocumento(doc)}
+                                className="p-1 text-amber-600 hover:bg-amber-50 rounded"
+                                title="Validar"
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteDocumento(doc)}
+                              className="p-1 text-destructive hover:bg-destructive/10 rounded"
+                              title="Excluir"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Resumo de documentos */}
+            {documentos.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground">Total Documentos</div>
+                  <div className="text-2xl font-bold text-foreground">{documentos.length}</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground">Validados</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {documentos.filter(d => d.validado).length}
+                  </div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground">Valor Total Comprovado</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {formatCurrency(documentos.reduce((sum, d) => sum + (d.valor || 0), 0))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Modal RH */}
         {showRHModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
