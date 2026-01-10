@@ -7312,6 +7312,285 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
 # Registrar router MROSC
 app.include_router(mrosc_router)
 
+# ===== DASHBOARD ANALÍTICO E SISTEMA DE ALERTAS =====
+analytics_router = APIRouter(prefix="/api/analytics", tags=["Dashboard Analítico"])
+
+@analytics_router.get("/dashboard")
+async def get_dashboard_analytics(request: Request):
+    """
+    Dashboard analítico consolidado com métricas de todos os módulos
+    """
+    user = await get_current_user(request)
+    
+    # Estatísticas de PACs
+    pacs = await db.pacs.find({}, {'_id': 0}).to_list(1000)
+    pac_items = await db.pac_items.find({}, {'_id': 0}).to_list(10000)
+    
+    # Estatísticas de PACs Geral
+    pacs_geral = await db.pacs_geral.find({}, {'_id': 0}).to_list(100)
+    pac_geral_items = await db.pac_geral_items.find({}, {'_id': 0}).to_list(10000)
+    
+    # Estatísticas de PACs Obras
+    pacs_obras = await db.pacs_geral_obras.find({}, {'_id': 0}).to_list(100)
+    pac_obras_items = await db.pac_geral_obras_items.find({}, {'_id': 0}).to_list(10000)
+    
+    # Estatísticas de Processos
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    # Estatísticas de MROSC
+    projetos_mrosc = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(100)
+    rh_mrosc = await db.mrosc_rh.find({}, {'_id': 0}).to_list(500)
+    despesas_mrosc = await db.mrosc_despesas.find({}, {'_id': 0}).to_list(5000)
+    docs_mrosc = await db.mrosc_documentos.find({}, {'_id': 0}).to_list(1000)
+    
+    # Cálculos
+    total_pac = sum(item.get('valorTotal', 0) for item in pac_items)
+    total_pac_geral = sum(item.get('valorTotal', 0) for item in pac_geral_items)
+    total_pac_obras = sum(item.get('valorTotal', 0) for item in pac_obras_items)
+    total_mrosc = sum(p.get('valor_total', 0) for p in projetos_mrosc)
+    total_rh_mrosc = sum(rh.get('custo_total_projeto', 0) for rh in rh_mrosc)
+    total_despesas_mrosc = sum(d.get('valor_total', 0) for d in despesas_mrosc)
+    
+    # Processos por status
+    processos_por_status = {}
+    for p in processos:
+        status = p.get('status', 'Não Definido')
+        processos_por_status[status] = processos_por_status.get(status, 0) + 1
+    
+    # Execução orçamentária MROSC
+    execucao_mrosc = []
+    for proj in projetos_mrosc:
+        proj_id = proj.get('projeto_id')
+        rh_proj = sum(r.get('custo_total_projeto', 0) for r in rh_mrosc if r.get('projeto_id') == proj_id)
+        desp_proj = sum(d.get('valor_total', 0) for d in despesas_mrosc if d.get('projeto_id') == proj_id)
+        docs_proj = len([d for d in docs_mrosc if d.get('projeto_id') == proj_id])
+        total_exec = rh_proj + desp_proj
+        percentual = (total_exec / proj.get('valor_total', 1)) * 100 if proj.get('valor_total') else 0
+        execucao_mrosc.append({
+            'projeto_id': proj_id,
+            'nome': proj.get('nome_projeto', ''),
+            'valor_total': proj.get('valor_total', 0),
+            'executado': total_exec,
+            'rh': rh_proj,
+            'despesas': desp_proj,
+            'documentos': docs_proj,
+            'percentual': round(percentual, 1),
+            'saldo': proj.get('valor_total', 0) - total_exec
+        })
+    
+    # Top 5 itens por valor (PAC Geral)
+    top_items = sorted(pac_geral_items, key=lambda x: x.get('valorTotal', 0), reverse=True)[:5]
+    
+    # Distribuição por secretaria
+    distribuicao_secretarias = {}
+    for item in pac_geral_items:
+        for sec in ['AD', 'FA', 'SA', 'SE', 'AS', 'AG', 'OB', 'TR', 'CUL']:
+            qtd = item.get(f'qtd_{sec.lower()}', 0)
+            if qtd > 0:
+                valor = qtd * item.get('valorUnitario', 0)
+                if sec not in distribuicao_secretarias:
+                    distribuicao_secretarias[sec] = {'quantidade': 0, 'valor': 0}
+                distribuicao_secretarias[sec]['quantidade'] += qtd
+                distribuicao_secretarias[sec]['valor'] += valor
+    
+    sec_labels = {
+        'AD': 'Administração', 'FA': 'Fazenda', 'SA': 'Saúde', 'SE': 'Educação',
+        'AS': 'Assist. Social', 'AG': 'Agricultura', 'OB': 'Obras', 'TR': 'Transporte', 'CUL': 'Cultura'
+    }
+    
+    distribuicao_chart = [
+        {'secretaria': sec_labels.get(k, k), 'codigo': k, 'valor': v['valor'], 'quantidade': v['quantidade']}
+        for k, v in distribuicao_secretarias.items()
+    ]
+    distribuicao_chart.sort(key=lambda x: x['valor'], reverse=True)
+    
+    return {
+        'resumo': {
+            'total_geral': total_pac + total_pac_geral + total_pac_obras,
+            'total_pac_individual': total_pac,
+            'total_pac_geral': total_pac_geral,
+            'total_pac_obras': total_pac_obras,
+            'total_mrosc': total_mrosc,
+            'total_executado_mrosc': total_rh_mrosc + total_despesas_mrosc
+        },
+        'contadores': {
+            'pacs': len(pacs),
+            'pacs_geral': len(pacs_geral),
+            'pacs_obras': len(pacs_obras),
+            'itens_pac': len(pac_items),
+            'itens_pac_geral': len(pac_geral_items),
+            'itens_pac_obras': len(pac_obras_items),
+            'processos': len(processos),
+            'projetos_mrosc': len(projetos_mrosc),
+            'funcionarios_mrosc': len(rh_mrosc),
+            'despesas_mrosc': len(despesas_mrosc),
+            'documentos_mrosc': len(docs_mrosc)
+        },
+        'processos_por_status': [
+            {'status': k, 'quantidade': v} for k, v in processos_por_status.items()
+        ],
+        'execucao_mrosc': execucao_mrosc,
+        'top_itens': [
+            {'descricao': i.get('descricao', '')[:50], 'valor': i.get('valorTotal', 0), 'catmat': i.get('catmat', '')}
+            for i in top_items
+        ],
+        'distribuicao_secretarias': distribuicao_chart
+    }
+
+
+# ===== SISTEMA DE ALERTAS =====
+alertas_router = APIRouter(prefix="/api/alertas", tags=["Sistema de Alertas"])
+
+class AlertaCreate(BaseModel):
+    tipo: str  # PRAZO, DOCUMENTO, CONTRATO, PRESTACAO_CONTAS, SISTEMA
+    titulo: str
+    mensagem: str
+    prioridade: str = "MEDIA"  # BAIXA, MEDIA, ALTA, CRITICA
+    modulo: str  # PAC, MROSC, PROCESSO, DOEM
+    referencia_id: Optional[str] = None
+    data_vencimento: Optional[datetime] = None
+
+@alertas_router.get("/")
+async def get_alertas(request: Request):
+    """
+    Lista todos os alertas ativos do sistema, incluindo alertas automáticos
+    """
+    user = await get_current_user(request)
+    
+    alertas = []
+    hoje = datetime.now(timezone.utc)
+    
+    # ===== ALERTAS DE MROSC =====
+    projetos_mrosc = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(100)
+    docs_mrosc = await db.mrosc_documentos.find({}, {'_id': 0}).to_list(1000)
+    
+    for proj in projetos_mrosc:
+        # Alerta de prazo do projeto
+        data_conclusao = proj.get('data_conclusao')
+        if data_conclusao:
+            if isinstance(data_conclusao, str):
+                data_conclusao = datetime.fromisoformat(data_conclusao.replace('Z', '+00:00'))
+            
+            dias_restantes = (data_conclusao - hoje).days
+            
+            if dias_restantes < 0:
+                alertas.append({
+                    'tipo': 'PRAZO',
+                    'titulo': 'Projeto MROSC Vencido',
+                    'mensagem': f'O projeto "{proj.get("nome_projeto")}" está vencido há {abs(dias_restantes)} dias.',
+                    'prioridade': 'CRITICA',
+                    'modulo': 'MROSC',
+                    'referencia_id': proj.get('projeto_id'),
+                    'data_vencimento': data_conclusao.isoformat() if isinstance(data_conclusao, datetime) else data_conclusao,
+                    'dias_restantes': dias_restantes
+                })
+            elif dias_restantes <= 30:
+                alertas.append({
+                    'tipo': 'PRAZO',
+                    'titulo': 'Prazo de Projeto MROSC',
+                    'mensagem': f'O projeto "{proj.get("nome_projeto")}" vence em {dias_restantes} dias.',
+                    'prioridade': 'ALTA' if dias_restantes <= 7 else 'MEDIA',
+                    'modulo': 'MROSC',
+                    'referencia_id': proj.get('projeto_id'),
+                    'data_vencimento': data_conclusao.isoformat() if isinstance(data_conclusao, datetime) else data_conclusao,
+                    'dias_restantes': dias_restantes
+                })
+        
+        # Alerta de documentos pendentes de validação
+        docs_pendentes = [d for d in docs_mrosc if d.get('projeto_id') == proj.get('projeto_id') and not d.get('validado')]
+        if len(docs_pendentes) > 0:
+            alertas.append({
+                'tipo': 'DOCUMENTO',
+                'titulo': 'Documentos Pendentes de Validação',
+                'mensagem': f'{len(docs_pendentes)} documento(s) do projeto "{proj.get("nome_projeto")}" aguardam validação.',
+                'prioridade': 'MEDIA',
+                'modulo': 'MROSC',
+                'referencia_id': proj.get('projeto_id'),
+                'quantidade': len(docs_pendentes)
+            })
+    
+    # ===== ALERTAS DE PROCESSOS =====
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    for proc in processos:
+        # Alerta de processos sem número
+        if not proc.get('numero_processo'):
+            alertas.append({
+                'tipo': 'SISTEMA',
+                'titulo': 'Processo sem Número',
+                'mensagem': f'O processo "{proc.get("objeto", "")[:50]}" não possui número de processo.',
+                'prioridade': 'BAIXA',
+                'modulo': 'PROCESSO',
+                'referencia_id': proc.get('processo_id')
+            })
+        
+        # Alerta de prazo de processo
+        data_abertura = proc.get('data_abertura')
+        if data_abertura and proc.get('status') not in ['Concluído', 'Cancelado', 'Homologado']:
+            if isinstance(data_abertura, str):
+                try:
+                    data_abertura = datetime.fromisoformat(data_abertura.replace('Z', '+00:00'))
+                except:
+                    continue
+            
+            dias_aberto = (hoje - data_abertura).days
+            if dias_aberto > 90:
+                alertas.append({
+                    'tipo': 'PRAZO',
+                    'titulo': 'Processo Aberto há Muito Tempo',
+                    'mensagem': f'O processo "{proc.get("objeto", "")[:40]}" está aberto há {dias_aberto} dias.',
+                    'prioridade': 'MEDIA' if dias_aberto < 180 else 'ALTA',
+                    'modulo': 'PROCESSO',
+                    'referencia_id': proc.get('processo_id'),
+                    'dias_aberto': dias_aberto
+                })
+    
+    # ===== ALERTAS DE DOEM =====
+    edicoes = await db.doem_edicoes.find({'status': {'$ne': 'PUBLICADA'}}, {'_id': 0}).to_list(50)
+    
+    for edicao in edicoes:
+        if edicao.get('status') == 'RASCUNHO':
+            alertas.append({
+                'tipo': 'DOCUMENTO',
+                'titulo': 'Edição do DOEM em Rascunho',
+                'mensagem': f'A edição {edicao.get("numero_edicao", "")} do DOEM está em rascunho.',
+                'prioridade': 'BAIXA',
+                'modulo': 'DOEM',
+                'referencia_id': edicao.get('edicao_id')
+            })
+    
+    # Ordenar por prioridade
+    prioridade_ordem = {'CRITICA': 0, 'ALTA': 1, 'MEDIA': 2, 'BAIXA': 3}
+    alertas.sort(key=lambda x: prioridade_ordem.get(x.get('prioridade', 'MEDIA'), 2))
+    
+    return {
+        'total': len(alertas),
+        'criticos': len([a for a in alertas if a.get('prioridade') == 'CRITICA']),
+        'altos': len([a for a in alertas if a.get('prioridade') == 'ALTA']),
+        'medios': len([a for a in alertas if a.get('prioridade') == 'MEDIA']),
+        'baixos': len([a for a in alertas if a.get('prioridade') == 'BAIXA']),
+        'alertas': alertas
+    }
+
+
+@alertas_router.get("/resumo")
+async def get_alertas_resumo(request: Request):
+    """Resumo rápido de alertas para exibição no header"""
+    user = await get_current_user(request)
+    alertas = await get_alertas(request)
+    
+    return {
+        'total': alertas['total'],
+        'criticos': alertas['criticos'],
+        'altos': alertas['altos'],
+        'tem_alertas_urgentes': alertas['criticos'] > 0 or alertas['altos'] > 0
+    }
+
+
+# Registrar routers
+app.include_router(analytics_router)
+app.include_router(alertas_router)
+
 # ===== Router de Validação de Documentos (Público) =====
 validation_router = APIRouter(prefix="/api/validar", tags=["Validação de Documentos"])
 
