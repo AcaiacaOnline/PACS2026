@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, List, LogOut, Building2, Users, Shield, ClipboardList, 
   Database, Globe, Newspaper, FileSignature, ChevronDown, Hammer, DollarSign,
-  FileText, Settings, BarChart3, Bell
+  FileText, Settings, BarChart3, Bell, User
 } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
