@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, UserPlus, ArrowLeft, Building2 } from 'lucide-react';
+import { LogIn, UserPlus, ArrowLeft, Building2, User, Users } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+
+const TIPOS_USUARIO = {
+  'SERVIDOR': { label: 'Servidor Municipal', icon: Building2, desc: 'Acesso completo ao sistema' },
+  'PESSOA_EXTERNA': { label: 'Pessoa Externa (OSC)', icon: Users, desc: 'Acesso apenas ao MROSC' }
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -10,7 +15,8 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    tipo_usuario: 'SERVIDOR'
   });
   const [loading, setLoading] = useState(false);
 
@@ -19,8 +25,14 @@ const Login = () => {
     if (token) {
       const checkAuth = async () => {
         try {
-          await api.get('/auth/me');
-          navigate('/dashboard', { replace: true });
+          const response = await api.get('/auth/me');
+          const user = response.data;
+          // Redirecionar baseado no tipo de usuário
+          if (user.tipo_usuario === 'PESSOA_EXTERNA' || user.permissions?.mrosc_only) {
+            navigate('/prestacao-contas', { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
         } catch (error) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -46,13 +58,21 @@ const Login = () => {
           localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         
+        const user = response.data.user;
         toast.success('Login realizado com sucesso!');
-        navigate('/dashboard', { replace: true });
+        
+        // Redirecionar baseado no tipo de usuário
+        if (user.tipo_usuario === 'PESSOA_EXTERNA' || user.permissions?.mrosc_only) {
+          navigate('/prestacao-contas', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         await api.post('/auth/register', {
           email: formData.email,
           password: formData.password,
-          name: formData.name
+          name: formData.name,
+          tipo_usuario: formData.tipo_usuario
         });
         
         toast.success('Conta criada! Faça login para continuar.');
