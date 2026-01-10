@@ -74,6 +74,8 @@ const PortalPublico = () => {
         endpoint = `/api/public/pacs/${id}/items`;
       } else if (type === 'pac-geral') {
         endpoint = `/api/public/pacs-geral/${id}/items`;
+      } else if (type === 'pac-geral-obras') {
+        endpoint = `/api/public/pacs-geral-obras/${id}/items`;
       }
       const response = await publicApi.get(endpoint);
       setItemDetails(response.data.data);
