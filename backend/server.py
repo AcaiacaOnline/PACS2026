@@ -2502,6 +2502,9 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
                 'X-Validation-Code': validation_code
             }
         )
+    except HTTPException:
+        # Re-raise HTTPException para validação de CPF/Cargo
+        raise
     except Exception as e:
         logging.error(f"Erro ao adicionar assinatura ao PDF: {e}")
         buffer.seek(0)
@@ -3109,6 +3112,9 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape")
                 "X-Validation-Code": validation_code
             }
         )
+    except HTTPException:
+        # Re-raise HTTPException para validação de CPF/Cargo
+        raise
     except Exception as e:
         logging.error(f"Erro ao adicionar assinatura ao PDF de processos: {e}")
         buffer.seek(0)
