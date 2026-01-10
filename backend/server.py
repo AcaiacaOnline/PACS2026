@@ -6843,7 +6843,7 @@ async def upload_documento_mrosc(
     await db.mrosc_documentos.insert_one(documento_doc)
     
     # Remove _id para retorno
-    del documento_doc['_id'] if '_id' in documento_doc else None
+    documento_doc.pop('_id', None)
     
     return DocumentoMROSC(**documento_doc)
 
