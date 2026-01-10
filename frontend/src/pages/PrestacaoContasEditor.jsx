@@ -310,9 +310,55 @@ const PrestacaoContasEditor = () => {
     }
   };
 
+  const handleSubmeterPrestacao = async () => {
+    if (!window.confirm('Deseja submeter esta prestação de contas para análise? Após submissão, você não poderá editar até que o gestor autorize.')) return;
+    try {
+      await api.post(`/mrosc/projetos/${id}/submeter`);
+      toast.success('Prestação de contas submetida!');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao submeter');
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
+        {/* Alerta de bloqueio de edição */}
+        {!canEdit && !isAdmin && (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
+            <Lock className="text-amber-600" size={24} />
+            <div>
+              <p className="font-medium text-amber-800">Edição Bloqueada</p>
+              <p className="text-sm text-amber-700">
+                {projeto?.aprovado 
+                  ? 'Este projeto já foi aprovado e não pode mais ser editado.'
+                  : 'Este projeto foi submetido e aguarda análise. Você não pode editar no momento.'
+                }
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta de correção solicitada */}
+        {projeto?.correcao_solicitada && canEdit && (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
+            <AlertTriangle className="text-amber-600" size={24} />
+            <div className="flex-1">
+              <p className="font-medium text-amber-800">Correção Solicitada</p>
+              <p className="text-sm text-amber-700">
+                O gestor solicitou correções neste projeto. Motivo: {projeto.motivo_correcao}
+              </p>
+            </div>
+            <button
+              onClick={handleSubmeterPrestacao}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+            >
+              <Send size={16} /> Resubmeter
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/prestacao-contas')} className="p-2 hover:bg-muted rounded-lg">
@@ -322,16 +368,32 @@ const PrestacaoContasEditor = () => {
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <DollarSign className="text-green-600" />
               {projeto?.nome_projeto}
+              {projeto?.aprovado && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle size={12} /> Aprovado
+                </span>
+              )}
             </h1>
             <p className="text-muted-foreground text-sm">{projeto?.organizacao_parceira}</p>
           </div>
-          <button
-            onClick={handleExportPDF}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
-            data-testid="export-pdf-mrosc-btn"
-          >
-            <Download size={16} /> Exportar PDF
-          </button>
+          <div className="flex gap-2">
+            {canEdit && !projeto?.submetido && isExternalUser && (
+              <button
+                onClick={handleSubmeterPrestacao}
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
+                data-testid="submeter-prestacao-btn"
+              >
+                <Send size={16} /> Submeter
+              </button>
+            )}
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
+              data-testid="export-pdf-mrosc-btn"
+            >
+              <Download size={16} /> PDF
+            </button>
+          </div>
         </div>
 
         {/* Resumo Orçamentário */}
