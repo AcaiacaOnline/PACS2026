@@ -1,30 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Plus, FileText, Trash2, Edit, DollarSign, Users, Building2, 
-  ArrowRight, Calendar, CheckCircle, Clock, AlertCircle
+  DollarSign, Plus, FileText, Building2, Search, Eye, Trash2,
+  CheckCircle, Clock, AlertTriangle, Send, FileCheck, Edit3,
+  XCircle, History, Download
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
-import { maskCNPJ } from '../utils/masks';
 
-const STATUS_COLORS = {
-  'ELABORACAO': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Em Elaboração' },
-  'APROVADO': { bg: 'bg-green-100', text: 'text-green-700', label: 'Aprovado' },
-  'EXECUCAO': { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Em Execução' },
-  'PRESTACAO_CONTAS': { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Prestação de Contas' },
-  'CONCLUIDO': { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Concluído' }
+const STATUS_CONFIG = {
+  'ELABORACAO': { label: 'Em Elaboração', color: 'bg-gray-100 text-gray-700', icon: Edit3 },
+  'SUBMETIDO': { label: 'Submetido', color: 'bg-blue-100 text-blue-700', icon: Send },
+  'EM_ANALISE': { label: 'Em Análise', color: 'bg-purple-100 text-purple-700', icon: Clock },
+  'CORRECAO_SOLICITADA': { label: 'Correção Solicitada', color: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
+  'APROVADO': { label: 'Aprovado', color: 'bg-green-100 text-green-700', icon: CheckCircle },
+  'REJEITADO': { label: 'Rejeitado', color: 'bg-red-100 text-red-700', icon: XCircle },
+  'EXECUCAO': { label: 'Em Execução', color: 'bg-cyan-100 text-cyan-700', icon: Clock },
+  'PRESTACAO_CONTAS': { label: 'Prestação de Contas', color: 'bg-indigo-100 text-indigo-700', icon: FileText },
+  'CONCLUIDO': { label: 'Concluído', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle }
 };
-
-const STATUS_OPTIONS = ['ELABORACAO', 'APROVADO', 'EXECUCAO', 'PRESTACAO_CONTAS', 'CONCLUIDO'];
 
 const PrestacaoContasList = () => {
   const navigate = useNavigate();
   const [projetos, setProjetos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [user, setUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingProjeto, setEditingProjeto] = useState(null);
+  const [showCorrecaoModal, setShowCorrecaoModal] = useState(false);
+  const [showHistoricoModal, setShowHistoricoModal] = useState(false);
+  const [selectedProjeto, setSelectedProjeto] = useState(null);
+  const [motivoCorrecao, setMotivoCorrecao] = useState('');
+  const [historico, setHistorico] = useState([]);
   const [formData, setFormData] = useState({
     nome_projeto: '',
     objeto: '',
@@ -36,18 +44,21 @@ const PrestacaoContasList = () => {
     prazo_meses: 12,
     valor_total: 0,
     valor_repasse_publico: 0,
-    valor_contrapartida: 0,
-    status: 'ELABORACAO'
+    valor_contrapartida: 0
   });
 
   useEffect(() => {
-    fetchProjetos();
+    fetchData();
   }, []);
 
-  const fetchProjetos = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/mrosc/projetos');
-      setProjetos(response.data);
+      const [projetosRes, userRes] = await Promise.all([
+        api.get('/mrosc/projetos'),
+        api.get('/auth/me')
+      ]);
+      setProjetos(projetosRes.data);
+      setUser(userRes.data);
     } catch (error) {
       toast.error('Erro ao carregar projetos');
     } finally {
@@ -55,60 +66,19 @@ const PrestacaoContasList = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const isAdmin = user?.is_admin;
+  const isExternalUser = user?.tipo_usuario === 'PESSOA_EXTERNA' || user?.permissions?.mrosc_only;
+
+  const handleCreateProjeto = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
+      await api.post('/mrosc/projetos', {
         ...formData,
         data_inicio: new Date(formData.data_inicio).toISOString(),
         data_conclusao: new Date(formData.data_conclusao).toISOString()
-      };
-
-      if (editingProjeto) {
-        await api.put(`/mrosc/projetos/${editingProjeto.projeto_id}`, payload);
-        toast.success('Projeto atualizado!');
-      } else {
-        await api.post('/mrosc/projetos', payload);
-        toast.success('Projeto criado!');
-      }
-      setShowModal(false);
-      setEditingProjeto(null);
-      fetchProjetos();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao salvar');
-    }
-  };
-
-  const handleDelete = async (projeto) => {
-    if (!window.confirm(`Excluir projeto "${projeto.nome_projeto}"? Esta ação também excluirá todos os dados de RH e despesas.`)) return;
-    try {
-      await api.delete(`/mrosc/projetos/${projeto.projeto_id}`);
-      toast.success('Projeto excluído!');
-      fetchProjetos();
-    } catch (error) {
-      toast.error('Erro ao excluir');
-    }
-  };
-
-  const openModal = (projeto = null) => {
-    if (projeto) {
-      setEditingProjeto(projeto);
-      setFormData({
-        nome_projeto: projeto.nome_projeto,
-        objeto: projeto.objeto,
-        organizacao_parceira: projeto.organizacao_parceira,
-        cnpj_parceira: projeto.cnpj_parceira,
-        responsavel_osc: projeto.responsavel_osc,
-        data_inicio: projeto.data_inicio?.split('T')[0] || '',
-        data_conclusao: projeto.data_conclusao?.split('T')[0] || '',
-        prazo_meses: projeto.prazo_meses,
-        valor_total: projeto.valor_total,
-        valor_repasse_publico: projeto.valor_repasse_publico,
-        valor_contrapartida: projeto.valor_contrapartida,
-        status: projeto.status
       });
-    } else {
-      setEditingProjeto(null);
+      toast.success('Projeto criado com sucesso!');
+      setShowModal(false);
       setFormData({
         nome_projeto: '',
         objeto: '',
@@ -120,11 +90,100 @@ const PrestacaoContasList = () => {
         prazo_meses: 12,
         valor_total: 0,
         valor_repasse_publico: 0,
-        valor_contrapartida: 0,
-        status: 'ELABORACAO'
+        valor_contrapartida: 0
       });
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao criar projeto');
     }
-    setShowModal(true);
+  };
+
+  const handleDeleteProjeto = async (projeto) => {
+    // Verificar se pode deletar
+    if (projeto.submetido && !projeto.pode_editar) {
+      toast.error('Não é possível excluir um projeto já submetido');
+      return;
+    }
+    if (!window.confirm(`Excluir projeto "${projeto.nome_projeto}"?`)) return;
+    
+    try {
+      await api.delete(`/mrosc/projetos/${projeto.projeto_id}`);
+      toast.success('Projeto excluído!');
+      fetchData();
+    } catch (error) {
+      toast.error('Erro ao excluir');
+    }
+  };
+
+  // ===== AÇÕES DE WORKFLOW =====
+  
+  const handleSubmeterPrestacao = async (projeto) => {
+    if (!window.confirm('Deseja submeter esta prestação de contas para análise? Após submissão, você não poderá editar até que o gestor autorize.')) return;
+    
+    try {
+      await api.post(`/mrosc/projetos/${projeto.projeto_id}/submeter`);
+      toast.success('Prestação de contas submetida com sucesso!');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao submeter');
+    }
+  };
+
+  const handleReceberPrestacao = async (projeto) => {
+    try {
+      await api.post(`/mrosc/projetos/${projeto.projeto_id}/receber`);
+      toast.success('Prestação de contas recebida!');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao receber');
+    }
+  };
+
+  const openCorrecaoModal = (projeto) => {
+    setSelectedProjeto(projeto);
+    setMotivoCorrecao('');
+    setShowCorrecaoModal(true);
+  };
+
+  const handleSolicitarCorrecao = async () => {
+    if (!motivoCorrecao.trim()) {
+      toast.error('Informe o motivo da correção');
+      return;
+    }
+    
+    try {
+      await api.post(`/mrosc/projetos/${selectedProjeto.projeto_id}/solicitar-correcao`, {
+        motivo: motivoCorrecao
+      });
+      toast.success('Correção solicitada! O usuário pode editar novamente.');
+      setShowCorrecaoModal(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao solicitar correção');
+    }
+  };
+
+  const handleAprovarPrestacao = async (projeto) => {
+    if (!window.confirm('Confirma a aprovação desta prestação de contas?')) return;
+    
+    try {
+      await api.post(`/mrosc/projetos/${projeto.projeto_id}/aprovar`);
+      toast.success('Prestação de contas aprovada!');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao aprovar');
+    }
+  };
+
+  const openHistoricoModal = async (projeto) => {
+    try {
+      const response = await api.get(`/mrosc/projetos/${projeto.projeto_id}/historico`);
+      setHistorico(response.data.historico);
+      setSelectedProjeto(projeto);
+      setShowHistoricoModal(true);
+    } catch (error) {
+      toast.error('Erro ao carregar histórico');
+    }
   };
 
   const formatCurrency = (value) => {
@@ -136,6 +195,126 @@ const PrestacaoContasList = () => {
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
+  const filteredProjetos = projetos.filter(p => 
+    p.nome_projeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.organizacao_parceira?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Determinar ações disponíveis baseado no status e tipo de usuário
+  const getAcoesDisponiveis = (projeto) => {
+    const acoes = [];
+    
+    // Visualizar sempre disponível
+    acoes.push({ 
+      action: 'visualizar', 
+      label: 'Gerenciar', 
+      icon: Eye, 
+      color: 'text-blue-600 hover:bg-blue-50' 
+    });
+    
+    // Histórico sempre disponível
+    acoes.push({ 
+      action: 'historico', 
+      label: 'Histórico', 
+      icon: History, 
+      color: 'text-purple-600 hover:bg-purple-50' 
+    });
+    
+    // Ações para usuário externo
+    if (isExternalUser) {
+      if (projeto.pode_editar && !projeto.aprovado) {
+        acoes.push({ 
+          action: 'submeter', 
+          label: 'Submeter', 
+          icon: Send, 
+          color: 'text-green-600 hover:bg-green-50' 
+        });
+      }
+      if (projeto.pode_editar && !projeto.submetido) {
+        acoes.push({ 
+          action: 'excluir', 
+          label: 'Excluir', 
+          icon: Trash2, 
+          color: 'text-red-600 hover:bg-red-50' 
+        });
+      }
+    }
+    
+    // Ações para administrador
+    if (isAdmin) {
+      if (projeto.submetido && projeto.status === 'SUBMETIDO') {
+        acoes.push({ 
+          action: 'receber', 
+          label: 'Receber', 
+          icon: FileCheck, 
+          color: 'text-teal-600 hover:bg-teal-50' 
+        });
+      }
+      if (projeto.submetido && !projeto.aprovado && projeto.status !== 'CORRECAO_SOLICITADA') {
+        acoes.push({ 
+          action: 'correcao', 
+          label: 'Pedir Correção', 
+          icon: AlertTriangle, 
+          color: 'text-amber-600 hover:bg-amber-50' 
+        });
+      }
+      if (projeto.submetido && !projeto.aprovado) {
+        acoes.push({ 
+          action: 'aprovar', 
+          label: 'Aprovar', 
+          icon: CheckCircle, 
+          color: 'text-green-600 hover:bg-green-50' 
+        });
+      }
+      acoes.push({ 
+        action: 'excluir', 
+        label: 'Excluir', 
+        icon: Trash2, 
+        color: 'text-red-600 hover:bg-red-50' 
+      });
+    }
+    
+    return acoes;
+  };
+
+  const handleAction = (action, projeto) => {
+    switch (action) {
+      case 'visualizar':
+        navigate(`/prestacao-contas/${projeto.projeto_id}`);
+        break;
+      case 'historico':
+        openHistoricoModal(projeto);
+        break;
+      case 'submeter':
+        handleSubmeterPrestacao(projeto);
+        break;
+      case 'receber':
+        handleReceberPrestacao(projeto);
+        break;
+      case 'correcao':
+        openCorrecaoModal(projeto);
+        break;
+      case 'aprovar':
+        handleAprovarPrestacao(projeto);
+        break;
+      case 'excluir':
+        handleDeleteProjeto(projeto);
+        break;
+      default:
+        break;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -146,146 +325,138 @@ const PrestacaoContasList = () => {
               <DollarSign className="text-green-600" />
               Prestação de Contas - MROSC
             </h1>
-            <p className="text-muted-foreground">
-              Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil
-            </p>
+            <p className="text-muted-foreground">Lei 13.019/2014 - Marco Regulatório das OSC</p>
           </div>
           <button
-            onClick={() => openModal()}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            data-testid="create-projeto-mrosc-btn"
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            data-testid="create-projeto-btn"
           >
             <Plus size={18} />
             Novo Projeto
           </button>
         </div>
 
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="text-sm text-muted-foreground">Total de Projetos</div>
-            <div className="text-2xl font-bold text-foreground">{projetos.length}</div>
+        {/* Info para usuário externo */}
+        {isExternalUser && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-purple-800 text-sm">
+              <strong>Bem-vindo(a)!</strong> Como representante de Organização da Sociedade Civil (OSC), 
+              você pode criar e gerenciar projetos de prestação de contas conforme a Lei 13.019/2014. 
+              Após submeter, aguarde a análise do gestor municipal.
+            </p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="text-sm text-muted-foreground">Em Execução</div>
-            <div className="text-2xl font-bold text-amber-600">
-              {projetos.filter(p => p.status === 'EXECUCAO').length}
-            </div>
+        )}
+
+        {/* Info para admin */}
+        {isAdmin && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-800 text-sm">
+              <strong>Painel Administrativo:</strong> Você pode receber, analisar, solicitar correções e aprovar 
+              as prestações de contas das organizações parceiras.
+            </p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="text-sm text-muted-foreground">Valor Total</div>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(projetos.reduce((sum, p) => sum + (p.valor_total || 0), 0))}
-            </div>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <div className="text-sm text-muted-foreground">Repasse Público</div>
-            <div className="text-2xl font-bold text-blue-600">
-              {formatCurrency(projetos.reduce((sum, p) => sum + (p.valor_repasse_publico || 0), 0))}
-            </div>
-          </div>
+        )}
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por nome do projeto ou organização..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring"
+          />
         </div>
 
         {/* Lista de Projetos */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          </div>
-        ) : projetos.length === 0 ? (
+        {filteredProjetos.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
-            <DollarSign size={48} className="mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum projeto cadastrado</h3>
-            <p className="text-muted-foreground mb-4">
-              Crie seu primeiro projeto de parceria conforme MROSC
-            </p>
+            <Building2 size={48} className="mx-auto text-muted-foreground opacity-50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum projeto encontrado</h3>
+            <p className="text-muted-foreground mb-4">Comece criando seu primeiro projeto de parceria.</p>
             <button
-              onClick={() => openModal()}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
-              Criar Projeto
+              <Plus size={18} /> Criar Projeto
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {projetos.map((projeto) => {
-              const statusInfo = STATUS_COLORS[projeto.status] || STATUS_COLORS['ELABORACAO'];
+          <div className="grid gap-4">
+            {filteredProjetos.map((projeto) => {
+              const statusConfig = STATUS_CONFIG[projeto.status] || STATUS_CONFIG['ELABORACAO'];
+              const StatusIcon = statusConfig.icon;
+              const acoes = getAcoesDisponiveis(projeto);
+              
               return (
                 <div
                   key={projeto.projeto_id}
-                  className="bg-card border border-border rounded-xl p-5 hover:shadow-lg transition-shadow"
+                  className="bg-card border border-border rounded-xl p-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground text-lg">{projeto.nome_projeto}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{projeto.objeto}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${statusInfo.bg} ${statusInfo.text}`}>
-                      {statusInfo.label}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 size={14} />
-                      <span className="truncate" title={projeto.organizacao_parceira}>
-                        {projeto.organizacao_parceira}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users size={14} />
-                      <span>{projeto.responsavel_osc}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar size={14} />
-                      <span>{formatDate(projeto.data_inicio)} - {formatDate(projeto.data_conclusao)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock size={14} />
-                      <span>{projeto.prazo_meses} meses</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-muted/30 rounded-lg p-3 mb-4">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <div className="text-xs text-muted-foreground">Total</div>
-                        <div className="font-semibold text-green-600">{formatCurrency(projeto.valor_total)}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Repasse</div>
-                        <div className="font-semibold text-blue-600">{formatCurrency(projeto.valor_repasse_publico)}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Contrapartida</div>
-                        <div className="font-semibold text-amber-600">{formatCurrency(projeto.valor_contrapartida)}</div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <FileText className="text-green-600" size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-foreground">{projeto.nome_projeto}</h3>
+                            <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${statusConfig.color}`}>
+                              <StatusIcon size={12} />
+                              {statusConfig.label}
+                            </span>
+                            {projeto.correcao_solicitada && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
+                                <AlertTriangle size={12} />
+                                Correção Pendente
+                              </span>
+                            )}
+                            {projeto.aprovado && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-1">
+                                <CheckCircle size={12} />
+                                Aprovado
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{projeto.organizacao_parceira}</p>
+                          <p className="text-xs text-muted-foreground">{projeto.objeto?.substring(0, 100)}...</p>
+                          
+                          {/* Alerta de correção */}
+                          {projeto.correcao_solicitada && projeto.motivo_correcao && (
+                            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                              <strong>Motivo da correção:</strong> {projeto.motivo_correcao}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-3 border-t border-border">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openModal(projeto)}
-                        className="p-2 text-primary hover:bg-primary/10 rounded-lg"
-                        title="Editar"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(projeto)}
-                        className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"
-                        title="Excluir"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">{formatCurrency(projeto.valor_total)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDate(projeto.data_inicio)} - {formatDate(projeto.data_conclusao)}
+                        </div>
+                      </div>
+                      
+                      {/* Botões de Ação */}
+                      <div className="flex flex-wrap gap-1">
+                        {acoes.map((acao, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAction(acao.action, projeto)}
+                            className={`p-2 rounded-lg transition-colors ${acao.color}`}
+                            title={acao.label}
+                            data-testid={`action-${acao.action}-${projeto.projeto_id}`}
+                          >
+                            <acao.icon size={16} />
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <button
-                      onClick={() => navigate(`/prestacao-contas/${projeto.projeto_id}`)}
-                      className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium"
-                      data-testid="open-projeto-btn"
-                    >
-                      Gerenciar <ArrowRight size={14} />
-                    </button>
                   </div>
                 </div>
               );
@@ -293,17 +464,18 @@ const PrestacaoContasList = () => {
           </div>
         )}
 
-        {/* Modal de Projeto */}
+        {/* Modal Criar Projeto */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
-                <h3 className="text-xl font-bold text-foreground">
-                  {editingProjeto ? 'Editar Projeto MROSC' : 'Novo Projeto MROSC'}
+                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <DollarSign className="text-green-600" />
+                  Novo Projeto MROSC
                 </h3>
               </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              
+              <form onSubmit={handleCreateProjeto} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Nome do Projeto *</label>
                   <input
@@ -312,12 +484,11 @@ const PrestacaoContasList = () => {
                     onChange={(e) => setFormData({...formData, nome_projeto: e.target.value})}
                     className="w-full px-3 py-2 border border-input rounded-lg bg-background"
                     required
-                    data-testid="projeto-nome-input"
                   />
                 </div>
-
+                
                 <div>
-                  <label className="block text-sm font-medium mb-1">Objeto *</label>
+                  <label className="block text-sm font-medium mb-1">Objeto/Descrição *</label>
                   <textarea
                     value={formData.objeto}
                     onChange={(e) => setFormData({...formData, objeto: e.target.value})}
@@ -326,7 +497,7 @@ const PrestacaoContasList = () => {
                     required
                   />
                 </div>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Organização Parceira (OSC) *</label>
@@ -342,26 +513,26 @@ const PrestacaoContasList = () => {
                     <label className="block text-sm font-medium mb-1">CNPJ da OSC *</label>
                     <input
                       type="text"
-                      value={maskCNPJ(formData.cnpj_parceira)}
-                      onChange={(e) => setFormData({...formData, cnpj_parceira: e.target.value.replace(/\D/g, '')})}
+                      value={formData.cnpj_parceira}
+                      onChange={(e) => setFormData({...formData, cnpj_parceira: e.target.value})}
                       className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      placeholder="00.000.000/0001-00"
                       required
                     />
                   </div>
                 </div>
-
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Responsável da OSC *</label>
+                  <input
+                    type="text"
+                    value={formData.responsavel_osc}
+                    onChange={(e) => setFormData({...formData, responsavel_osc: e.target.value})}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    required
+                  />
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Responsável OSC *</label>
-                    <input
-                      type="text"
-                      value={formData.responsavel_osc}
-                      onChange={(e) => setFormData({...formData, responsavel_osc: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      required
-                    />
-                  </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Data Início *</label>
                     <input
@@ -382,26 +553,25 @@ const PrestacaoContasList = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Prazo (meses) *</label>
+                    <label className="block text-sm font-medium mb-1">Prazo (meses)</label>
                     <input
                       type="number"
                       value={formData.prazo_meses}
-                      onChange={(e) => setFormData({...formData, prazo_meses: parseInt(e.target.value) || 0})}
+                      onChange={(e) => setFormData({...formData, prazo_meses: parseInt(e.target.value)})}
                       className="w-full px-3 py-2 border border-input rounded-lg bg-background"
                       min="1"
-                      required
                     />
                   </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Valor Total (R$) *</label>
                     <input
                       type="number"
                       value={formData.valor_total}
-                      onChange={(e) => setFormData({...formData, valor_total: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setFormData({...formData, valor_total: parseFloat(e.target.value)})}
                       className="w-full px-3 py-2 border border-input rounded-lg bg-background"
                       min="0"
                       step="0.01"
@@ -409,15 +579,14 @@ const PrestacaoContasList = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Repasse Público (R$) *</label>
+                    <label className="block text-sm font-medium mb-1">Repasse Público (R$)</label>
                     <input
                       type="number"
                       value={formData.valor_repasse_publico}
-                      onChange={(e) => setFormData({...formData, valor_repasse_publico: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setFormData({...formData, valor_repasse_publico: parseFloat(e.target.value)})}
                       className="w-full px-3 py-2 border border-input rounded-lg bg-background"
                       min="0"
                       step="0.01"
-                      required
                     />
                   </div>
                   <div>
@@ -425,29 +594,14 @@ const PrestacaoContasList = () => {
                     <input
                       type="number"
                       value={formData.valor_contrapartida}
-                      onChange={(e) => setFormData({...formData, valor_contrapartida: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setFormData({...formData, valor_contrapartida: parseFloat(e.target.value)})}
                       className="w-full px-3 py-2 border border-input rounded-lg bg-background"
                       min="0"
                       step="0.01"
                     />
                   </div>
                 </div>
-
-                {editingProjeto && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      {STATUS_OPTIONS.map(s => (
-                        <option key={s} value={s}>{STATUS_COLORS[s].label}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
+                
                 <div className="flex justify-end gap-3 pt-4 border-t border-border">
                   <button
                     type="button"
@@ -458,12 +612,112 @@ const PrestacaoContasList = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                   >
-                    {editingProjeto ? 'Salvar' : 'Criar'}
+                    <Plus size={16} /> Criar Projeto
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Solicitar Correção */}
+        {showCorrecaoModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-md">
+              <div className="border-b border-border px-6 py-4">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <AlertTriangle className="text-amber-600" />
+                  Solicitar Correção
+                </h3>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Informe o motivo pelo qual a prestação de contas precisa ser corrigida. 
+                  O usuário externo será notificado e poderá editar o projeto novamente.
+                </p>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Motivo da Correção *</label>
+                  <textarea
+                    value={motivoCorrecao}
+                    onChange={(e) => setMotivoCorrecao(e.target.value)}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    rows={4}
+                    placeholder="Descreva o que precisa ser corrigido..."
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowCorrecaoModal(false)}
+                    className="px-4 py-2 border border-input rounded-lg hover:bg-muted"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSolicitarCorrecao}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2"
+                  >
+                    <AlertTriangle size={16} /> Solicitar Correção
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Histórico */}
+        {showHistoricoModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+              <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <History className="text-purple-600" />
+                  Histórico do Projeto
+                </h3>
+                <p className="text-sm text-muted-foreground">{selectedProjeto?.nome_projeto}</p>
+              </div>
+              
+              <div className="p-6">
+                {historico.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">Nenhuma ação registrada</p>
+                ) : (
+                  <div className="space-y-4">
+                    {historico.map((item, idx) => (
+                      <div key={idx} className="flex gap-3 pb-4 border-b border-border last:border-0">
+                        <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">{item.acao}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {item.usuario && <span>Por: {item.usuario} • </span>}
+                            {item.data && formatDate(item.data)}
+                          </div>
+                          {item.motivo && (
+                            <div className="text-sm text-amber-600 mt-1">Motivo: {item.motivo}</div>
+                          )}
+                          {item.observacoes && (
+                            <div className="text-sm text-muted-foreground mt-1">{item.observacoes}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t border-border mt-4">
+                  <button
+                    onClick={() => setShowHistoricoModal(false)}
+                    className="w-full px-4 py-2 border border-input rounded-lg hover:bg-muted"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
