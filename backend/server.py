@@ -6778,12 +6778,12 @@ async def upload_documento_mrosc(
     projeto_id: str,
     request: Request,
     file: UploadFile = File(...),
-    tipo_documento: str = "COMPROVANTE",
-    numero_documento: str = "",
-    data_documento: str = "",
-    valor: float = 0.0,
-    despesa_id: str = None,
-    observacoes: str = ""
+    tipo_documento: str = Form("COMPROVANTE"),
+    numero_documento: str = Form(""),
+    data_documento: str = Form(""),
+    valor: float = Form(0.0),
+    despesa_id: str = Form(None),
+    observacoes: str = Form("")
 ):
     """Faz upload de um documento/comprovante PDF para o projeto MROSC"""
     user = await get_current_user(request)
