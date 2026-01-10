@@ -206,8 +206,8 @@ const GestaoProcessual = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.numero_processo || !formData.objeto || !formData.secretaria) {
-      toast.error('Preencha os campos obrigatórios');
+    if (!formData.numero_processo || !formData.objeto || !formData.modalidade_contratacao) {
+      toast.error('Preencha os campos obrigatórios: Número do Processo, Modalidade e Objeto');
       return;
     }
 
