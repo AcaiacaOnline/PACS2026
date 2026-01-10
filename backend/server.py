@@ -6907,6 +6907,250 @@ async def validar_documento_mrosc(projeto_id: str, documento_id: str, request: R
     
     return {'message': 'Documento validado com sucesso'}
 
+# ===== RELATÓRIO PDF DE PRESTAÇÃO DE CONTAS MROSC =====
+@mrosc_router.get("/projetos/{projeto_id}/relatorio/pdf")
+async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
+    """
+    Gera relatório PDF consolidado de prestação de contas conforme MROSC (Lei 13.019/2014)
+    Inclui: dados do projeto, recursos humanos, despesas e documentos anexados
+    """
+    user = await get_current_user(request)
+    
+    # Buscar dados do projeto
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Buscar RH, despesas e documentos
+    rhs = await db.mrosc_rh.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    despesas = await db.mrosc_despesas.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(1000)
+    documentos = await db.mrosc_documentos.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(500)
+    
+    # Calcular totais
+    total_rh = sum(rh.get('custo_total_projeto', 0) for rh in rhs)
+    total_despesas = sum(d.get('valor_total', 0) for d in despesas)
+    total_geral = total_rh + total_despesas
+    total_docs_valor = sum(d.get('valor', 0) for d in documentos)
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=20*mm,
+        rightMargin=20*mm,
+        topMargin=20*mm,
+        bottomMargin=20*mm,
+        title=f'Prestação de Contas - {projeto["nome_projeto"]}'
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos customizados
+    titulo_style = ParagraphStyle(
+        'TituloMROSC',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#1F4E78'),
+        alignment=TA_CENTER,
+        spaceAfter=6*mm
+    )
+    
+    subtitulo_style = ParagraphStyle(
+        'SubtituloMROSC',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor('#2E7D32'),
+        spaceBefore=8*mm,
+        spaceAfter=4*mm
+    )
+    
+    normal_style = ParagraphStyle(
+        'NormalMROSC',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12
+    )
+    
+    # ===== CABEÇALHO =====
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
+    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', parent=styles['Normal'], alignment=TA_CENTER, fontSize=9)))
+    elements.append(Spacer(1, 4*mm))
+    elements.append(Paragraph('<b>RELATÓRIO DE PRESTAÇÃO DE CONTAS</b>', ParagraphStyle('RelTitulo', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14, textColor=colors.HexColor('#2E7D32'))))
+    elements.append(Paragraph('Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)', ParagraphStyle('Lei', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
+    elements.append(Spacer(1, 8*mm))
+    
+    # ===== DADOS DO PROJETO =====
+    elements.append(Paragraph('1. IDENTIFICAÇÃO DO PROJETO', subtitulo_style))
+    
+    projeto_data = [
+        ['Nome do Projeto:', projeto.get('nome_projeto', '-')],
+        ['Objeto:', Paragraph(projeto.get('objeto', '-'), normal_style)],
+        ['Organização Parceira (OSC):', projeto.get('organizacao_parceira', '-')],
+        ['CNPJ da OSC:', projeto.get('cnpj_parceira', '-')],
+        ['Responsável OSC:', projeto.get('responsavel_osc', '-')],
+        ['Período:', f"{projeto.get('data_inicio', '-')[:10] if projeto.get('data_inicio') else '-'} a {projeto.get('data_conclusao', '-')[:10] if projeto.get('data_conclusao') else '-'}"],
+        ['Prazo:', f"{projeto.get('prazo_meses', 0)} meses"],
+        ['Status:', projeto.get('status', '-')]
+    ]
+    
+    projeto_table = Table(projeto_data, colWidths=[50*mm, 120*mm])
+    projeto_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E8F5E9')),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#C8E6C9')),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(projeto_table)
+    
+    # ===== RESUMO FINANCEIRO =====
+    elements.append(Paragraph('2. RESUMO FINANCEIRO', subtitulo_style))
+    
+    financeiro_data = [
+        ['Descrição', 'Valor (R$)'],
+        ['Valor Total do Projeto', f"R$ {projeto.get('valor_total', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Repasse Público', f"R$ {projeto.get('valor_repasse_publico', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Contrapartida', f"R$ {projeto.get('valor_contrapartida', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Total Recursos Humanos', f"R$ {total_rh:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Total Despesas', f"R$ {total_despesas:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Total Executado', f"R$ {total_geral:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Saldo', f"R$ {(projeto.get('valor_total', 0) - total_geral):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')]
+    ]
+    
+    fin_table = Table(financeiro_data, colWidths=[100*mm, 70*mm])
+    fin_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BBDEFB')),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E3F2FD')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(fin_table)
+    
+    # ===== RECURSOS HUMANOS =====
+    if rhs:
+        elements.append(Paragraph('3. RECURSOS HUMANOS', subtitulo_style))
+        
+        rh_header = ['Função', 'Regime', 'Salário', 'Encargos', 'Meses', 'Custo Total']
+        rh_data = [rh_header]
+        
+        for rh in rhs:
+            encargos = rh.get('provisao_ferias', 0) + rh.get('provisao_13_salario', 0) + rh.get('fgts', 0) + rh.get('inss_patronal', 0)
+            rh_data.append([
+                rh.get('nome_funcao', '-'),
+                rh.get('regime_contratacao', '-'),
+                f"R$ {rh.get('salario_bruto', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {encargos:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                str(rh.get('numero_meses', 0)),
+                f"R$ {rh.get('custo_total_projeto', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            ])
+        
+        rh_table = Table(rh_data, colWidths=[45*mm, 20*mm, 30*mm, 30*mm, 15*mm, 30*mm])
+        rh_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0D47A1')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#90CAF9')),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#E3F2FD')]),
+        ]))
+        elements.append(rh_table)
+    
+    # ===== DESPESAS =====
+    if despesas:
+        elements.append(Paragraph('4. DESPESAS', subtitulo_style))
+        
+        desp_header = ['Natureza', 'Descrição', 'Qtd', 'Unit.', 'Total']
+        desp_data = [desp_header]
+        
+        for d in despesas:
+            desp_data.append([
+                d.get('natureza_despesa', '-'),
+                Paragraph(d.get('descricao', '-')[:50], ParagraphStyle('DescDesp', fontSize=7)),
+                f"{d.get('quantidade', 0)} {d.get('unidade', '')}",
+                f"R$ {d.get('valor_unitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {d.get('valor_total', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            ])
+        
+        desp_table = Table(desp_data, colWidths=[25*mm, 65*mm, 25*mm, 25*mm, 30*mm])
+        desp_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E65100')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#FFCC80')),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FFF3E0')]),
+        ]))
+        elements.append(desp_table)
+    
+    # ===== DOCUMENTOS =====
+    if documentos:
+        elements.append(Paragraph('5. DOCUMENTOS COMPROBATÓRIOS', subtitulo_style))
+        
+        docs_header = ['Tipo', 'Número', 'Data', 'Valor', 'Status']
+        docs_data = [docs_header]
+        
+        for doc in documentos:
+            data_doc = doc.get('data_documento', '')
+            if data_doc:
+                data_doc = str(data_doc)[:10]
+            docs_data.append([
+                doc.get('tipo_documento', '-'),
+                doc.get('numero_documento', '-') or '-',
+                data_doc,
+                f"R$ {doc.get('valor', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                'Validado' if doc.get('validado') else 'Pendente'
+            ])
+        
+        docs_table = Table(docs_data, colWidths=[35*mm, 40*mm, 30*mm, 35*mm, 30*mm])
+        docs_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6A1B9A')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (3, 1), (3, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CE93D8')),
+            ('PADDING', (0, 0), (-1, -1), 4),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F3E5F5')]),
+        ]))
+        elements.append(docs_table)
+        
+        elements.append(Spacer(1, 4*mm))
+        elements.append(Paragraph(f"<b>Total de documentos:</b> {len(documentos)} | <b>Validados:</b> {len([d for d in documentos if d.get('validado')])} | <b>Valor comprovado:</b> R$ {total_docs_valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), normal_style))
+    
+    # ===== ASSINATURA =====
+    elements.append(Spacer(1, 15*mm))
+    elements.append(Paragraph('_' * 60, ParagraphStyle('Linha', alignment=TA_CENTER)))
+    elements.append(Paragraph(f'<b>{user.get("name", "Responsável")}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
+    elements.append(Paragraph(f'Responsável pela Prestação de Contas', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
+    
+    # ===== RODAPÉ =====
+    elements.append(Spacer(1, 10*mm))
+    data_geracao = datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M')
+    elements.append(Paragraph(f'Documento gerado em {data_geracao} | Planejamento Acaiaca © 2026', ParagraphStyle('Rodape', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"Prestacao_Contas_{projeto['nome_projeto'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
+
 # Registrar router MROSC
 app.include_router(mrosc_router)
 
