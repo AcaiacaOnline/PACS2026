@@ -27,6 +27,8 @@ const PortalPublico = () => {
   const [pacsGeral, setPacsGeral] = useState([]);
   const [pacsGeralObras, setPacsGeralObras] = useState([]);
   const [processos, setProcessos] = useState([]);
+  const [mroscProjetos, setMroscProjetos] = useState([]);
+  const [mroscStats, setMroscStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -36,6 +38,9 @@ const PortalPublico = () => {
   // Paginação para Processos
   const [processosPage, setProcessosPage] = useState(1);
   const [processosPageSize, setProcessosPageSize] = useState(20);
+  
+  // Dropdown states
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
     fetchData();
