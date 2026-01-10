@@ -7141,7 +7141,7 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
         ['Organização Parceira (OSC):', projeto.get('organizacao_parceira', '-')],
         ['CNPJ da OSC:', projeto.get('cnpj_parceira', '-')],
         ['Responsável OSC:', projeto.get('responsavel_osc', '-')],
-        ['Período:', f"{projeto.get('data_inicio', '-')[:10] if projeto.get('data_inicio') else '-'} a {projeto.get('data_conclusao', '-')[:10] if projeto.get('data_conclusao') else '-'}"],
+        ['Período:', f"{projeto.get('data_inicio').strftime('%d/%m/%Y') if projeto.get('data_inicio') else '-'} a {projeto.get('data_conclusao').strftime('%d/%m/%Y') if projeto.get('data_conclusao') else '-'}"],
         ['Prazo:', f"{projeto.get('prazo_meses', 0)} meses"],
         ['Status:', projeto.get('status', '-')]
     ]
