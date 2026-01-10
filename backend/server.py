@@ -5094,17 +5094,50 @@ async def publicar_edicao(edicao_id: str, request: Request, background_tasks: Ba
     if not assinantes_lote:
         user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
         user_signature = user_doc.get('signature_data', {}) if user_doc else {}
+        
+        # Validar campos obrigatórios para assinatura
+        cpf = (user_signature.get('cpf', '') or '').strip()
+        cargo = (user_signature.get('cargo', '') or '').strip()
+        
+        if not cpf:
+            raise HTTPException(
+                status_code=400, 
+                detail="CPF é obrigatório para publicar edições. Por favor, atualize seu perfil com o CPF."
+            )
+        
+        if not cargo:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cargo é obrigatório para publicar edições. Por favor, atualize seu perfil com seu cargo."
+            )
+        
         assinantes_lote = [{
             'user_id': user.user_id,
             'nome': user.name,
             'email': user.email,
-            'cpf': user_signature.get('cpf', ''),
-            'cargo': user_signature.get('cargo', ''),
+            'cpf': cpf,
+            'cargo': cargo,
             'data_assinatura': datetime.now(timezone.utc).isoformat()
         }]
     else:
-        # Atualizar data de assinatura de todos os assinantes
-        for assinante in assinantes_lote:
+        # Validar campos obrigatórios para todos os assinantes pré-configurados
+        for i, assinante in enumerate(assinantes_lote):
+            cpf = (assinante.get('cpf', '') or '').strip()
+            cargo = (assinante.get('cargo', '') or '').strip()
+            nome = assinante.get('nome', f'Assinante {i+1}')
+            
+            if not cpf:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"O assinante '{nome}' não possui CPF cadastrado. Por favor, atualize os dados do usuário."
+                )
+            
+            if not cargo:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"O assinante '{nome}' não possui Cargo cadastrado. Por favor, atualize os dados do usuário."
+                )
+            
             assinante['data_assinatura'] = datetime.now(timezone.utc).isoformat()
     
     # Preparar lista de signers para validação e PDF
