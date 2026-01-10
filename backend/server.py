@@ -4658,6 +4658,115 @@ async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "lan
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+# ===== ROTAS PÚBLICAS PAC GERAL OBRAS =====
+@public_router.get("/pacs-geral-obras")
+async def public_get_pacs_geral_obras(ano: str = None, page: int = 1, limit: int = 50):
+    """Lista todos os PAC Geral Obras (público - transparência)"""
+    query = {}
+    if ano:
+        query['ano'] = ano
+    pacs = await db.pacs_geral_obras.find(query, {'_id': 0}).to_list(limit)
+    return {'data': pacs, 'total': len(pacs)}
+
+@public_router.get("/pacs-geral-obras/{pac_obras_id}")
+async def public_get_pac_geral_obras(pac_obras_id: str):
+    """Obtém detalhes de um PAC Geral Obras (público)"""
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    return {'data': pac}
+
+@public_router.get("/pacs-geral-obras/{pac_obras_id}/items")
+async def public_get_pac_geral_obras_items(pac_obras_id: str):
+    """Lista itens de um PAC Geral Obras (público)"""
+    items = await db.pac_geral_obras_items.find({'pac_obras_id': pac_obras_id}, {'_id': 0}).to_list(1000)
+    return {'data': items}
+
+@public_router.get("/pacs-geral-obras/{pac_obras_id}/export/pdf")
+async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str = "landscape"):
+    """Exporta PAC Geral Obras para PDF (público)"""
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    
+    items = await db.pac_geral_obras_items.find({'pac_obras_id': pac_obras_id}, {'_id': 0}).to_list(1000)
+    
+    buffer = BytesIO()
+    page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
+    
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=page_size,
+        leftMargin=REPORT_MARGIN_LEFT, 
+        rightMargin=REPORT_MARGIN_RIGHT, 
+        topMargin=REPORT_MARGIN_TOP, 
+        bottomMargin=REPORT_MARGIN_BOTTOM
+    )
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Cabeçalho
+    elements.append(Paragraph('<b>PREFEITURA MUNICIPAL DE ACAIACA - MG</b>', ParagraphStyle('Center', fontSize=12, fontName='Helvetica-Bold', alignment=1)))
+    elements.append(Paragraph('<b>PAC GERAL OBRAS E SERVIÇOS</b>', ParagraphStyle('Center', fontSize=10, fontName='Helvetica-Bold', alignment=1)))
+    elements.append(Paragraph('Lei Federal nº 14.133/2021', ParagraphStyle('Center', fontSize=8, alignment=1)))
+    elements.append(Paragraph(f'Secretaria: {pac.get("nome_secretaria", "")}', ParagraphStyle('Center', fontSize=9, fontName='Helvetica-Bold', alignment=1)))
+    elements.append(Paragraph(f'Data de Geração: {datetime.now().strftime("%d/%m/%Y às %H:%M")}', ParagraphStyle('Center', fontSize=8, alignment=1)))
+    elements.append(Spacer(1, 4*mm))
+    
+    # Dados do PAC
+    info_style = ParagraphStyle('Info', fontSize=8)
+    elements.append(Paragraph(f'<b>Responsável:</b> {pac.get("secretario", "")}', info_style))
+    elements.append(Paragraph(f'<b>Fiscal:</b> {pac.get("fiscal_contrato", "-")}', info_style))
+    elements.append(Paragraph(f'<b>Email:</b> {pac.get("email", "")}', info_style))
+    elements.append(Paragraph(f'<b>Ano:</b> {pac.get("ano", "2026")}', info_style))
+    elements.append(Spacer(1, 4*mm))
+    
+    # Tabela de itens
+    if items:
+        valor_total = sum(item.get('valorTotal', 0) for item in items)
+        elements.append(Paragraph(f'<b>Total de Itens: {len(items)} | Valor Total: R$ {valor_total:,.2f}</b>', ParagraphStyle('Info', fontSize=9, fontName='Helvetica-Bold')))
+        elements.append(Spacer(1, 2*mm))
+        
+        table_data = [['#', 'Descrição', 'Classificação', 'Unidade', 'Qtd', 'Valor Unit.', 'Valor Total']]
+        for idx, item in enumerate(items, start=1):
+            table_data.append([
+                str(idx),
+                Paragraph(f"<font size=6>{item.get('descricao', '')}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{item.get('codigo_classificacao', '')} - {item.get('subitem_classificacao', '')}</font>", styles['Normal']),
+                item.get('unidade', ''),
+                str(item.get('quantidade_total', 0)),
+                f"R$ {item.get('valorUnitario', 0):,.2f}",
+                f"R$ {item.get('valorTotal', 0):,.2f}"
+            ])
+        
+        col_widths = [0.5*cm, 6*cm, 5*cm, 1.5*cm, 1*cm, 2*cm, 2.5*cm] if orientation.lower() == 'landscape' else [0.5*cm, 4*cm, 3.5*cm, 1*cm, 0.8*cm, 1.5*cm, 2*cm]
+        
+        table = Table(table_data, colWidths=col_widths, repeatRows=1)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 7),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (-2, 1), (-1, -1), 'RIGHT'),
+        ]))
+        
+        elements.append(table)
+    else:
+        elements.append(Paragraph('Nenhum item cadastrado.', ParagraphStyle('Center', fontSize=10, alignment=1)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f'PAC_Obras_{pac.get("nome_secretaria", "").replace(" ", "_")}.pdf'
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
 @public_router.get("/processos/export/pdf")
 async def public_export_processos_pdf(orientation: str = "landscape"):
     """Exporta todos os processos para PDF (público)."""
