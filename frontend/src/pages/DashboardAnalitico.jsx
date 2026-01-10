@@ -53,6 +53,22 @@ const DashboardAnalitico = () => {
     return formatCurrency(value);
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get('/relatorios/consolidado/pdf', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Relatorio_Consolidado.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Relatório gerado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao gerar relatório');
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -75,12 +91,21 @@ const DashboardAnalitico = () => {
             </h1>
             <p className="text-muted-foreground">Visão consolidada de todos os módulos</p>
           </div>
-          <button
-            onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <RefreshCw size={16} /> Atualizar
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              data-testid="export-consolidado-btn"
+            >
+              <Download size={16} /> Relatório PDF
+            </button>
+            <button
+              onClick={fetchData}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <RefreshCw size={16} /> Atualizar
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
