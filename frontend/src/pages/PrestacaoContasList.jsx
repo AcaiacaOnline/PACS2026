@@ -204,6 +204,10 @@ const PrestacaoContasList = () => {
   const getAcoesDisponiveis = (projeto) => {
     const acoes = [];
     
+    // Verificar se está submetido (por campo ou por status)
+    const isSubmetido = projeto.submetido || ['SUBMETIDO', 'EM_ANALISE', 'CORRECAO_SOLICITADA', 'APROVADO', 'REJEITADO'].includes(projeto.status);
+    const isAprovado = projeto.aprovado || projeto.status === 'APROVADO';
+    
     // Visualizar/Editar sempre disponível
     acoes.push({ 
       action: 'visualizar', 
@@ -230,7 +234,7 @@ const PrestacaoContasList = () => {
     
     // Ações para usuário externo
     if (isExternalUser) {
-      if (projeto.pode_editar && !projeto.aprovado) {
+      if (projeto.pode_editar && !isAprovado && !isSubmetido) {
         acoes.push({ 
           action: 'submeter', 
           label: 'Submeter para Análise', 
@@ -238,7 +242,7 @@ const PrestacaoContasList = () => {
           color: 'text-green-600 hover:bg-green-50' 
         });
       }
-      if (projeto.pode_editar && !projeto.submetido) {
+      if (projeto.pode_editar && !isSubmetido) {
         acoes.push({ 
           action: 'excluir', 
           label: 'Excluir', 
@@ -251,7 +255,7 @@ const PrestacaoContasList = () => {
     // Ações para administrador
     if (isAdmin) {
       // Receber - só quando foi submetido mas não recebido ainda
-      if (projeto.submetido && projeto.status === 'SUBMETIDO') {
+      if (isSubmetido && projeto.status === 'SUBMETIDO') {
         acoes.push({ 
           action: 'receber', 
           label: 'Confirmar Recebimento', 
@@ -261,7 +265,7 @@ const PrestacaoContasList = () => {
       }
       
       // Pedir Correção - quando submetido e não aprovado
-      if (projeto.submetido && !projeto.aprovado) {
+      if (isSubmetido && !isAprovado) {
         acoes.push({ 
           action: 'correcao', 
           label: 'Pedir Correção', 
@@ -271,7 +275,7 @@ const PrestacaoContasList = () => {
       }
       
       // Aprovar - quando submetido e não aprovado
-      if (projeto.submetido && !projeto.aprovado) {
+      if (isSubmetido && !isAprovado) {
         acoes.push({ 
           action: 'aprovar', 
           label: 'Aprovar Prestação', 
