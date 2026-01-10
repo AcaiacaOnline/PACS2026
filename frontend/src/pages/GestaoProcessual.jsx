@@ -28,11 +28,19 @@ const MODALIDADE_OPTIONS = [
 
 const STATUS_COLORS = {
   'Concluído': 'bg-green-100 text-green-800',
+  'Em Elaboração': 'bg-blue-100 text-blue-800',
+  'Aguardando Aprovação': 'bg-yellow-100 text-yellow-800',
+  'Aprovado': 'bg-emerald-100 text-emerald-800',
+  'Em Licitação': 'bg-purple-100 text-purple-800',
+  'Homologado': 'bg-teal-100 text-teal-800',
+  'Contratado': 'bg-indigo-100 text-indigo-800',
+  'Em Execução': 'bg-orange-100 text-orange-800',
+  'Cancelado': 'bg-red-100 text-red-800',
+  'Suspenso': 'bg-gray-100 text-gray-800',
+  // Legado (para compatibilidade)
   'Iniciado': 'bg-blue-100 text-blue-800',
   'Publicado': 'bg-purple-100 text-purple-800',
   'Aguardando Jurídico': 'bg-yellow-100 text-yellow-800',
-  'Homologado': 'bg-emerald-100 text-emerald-800',
-  'Cancelado': 'bg-red-100 text-red-800',
 };
 
 const DASHBOARD_COLORS = ['#1F4E78', '#2E7D32', '#F57C00', '#7B1FA2', '#C62828', '#00838F'];
