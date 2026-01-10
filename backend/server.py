@@ -51,7 +51,7 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'pac-acaiaca-secret-key-2026')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_DAYS = 7
 
-app = FastAPI(title="PAC Acaiaca 2026 - Plano Anual de Contratações")
+app = FastAPI(title="Planejamento Acaiaca - Sistema de Gestão Municipal")
 api_router = APIRouter(prefix="/api")
 
 # Models
@@ -1359,7 +1359,7 @@ def create_signature_section(pac_data: dict, styles: dict, is_pac_geral: bool = 
 
 def create_footer_text():
     """Cria texto de rodapé padrão"""
-    return f'<font size=7><i>Documento gerado eletronicamente pelo Sistema PAC Acaiaca em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento</i></font>'
+    return f'<font size=7><i>Documento gerado eletronicamente pelo Sistema Planejamento Acaiaca em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento</i></font>'
 
 @api_router.get("/pacs/anos")
 async def get_pacs_anos(request: Request):
@@ -3439,7 +3439,7 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape")
     elements.append(Spacer(1, 8*mm))
     
     # Rodapé
-    footer_text = f'<font size=6><i>Total de {len(processos)} processos | Gerado em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Sistema PAC Acaiaca 2026</i></font>'
+    footer_text = f'<font size=6><i>Total de {len(processos)} processos | Gerado em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Sistema Planejamento Acaiaca</i></font>'
     elements.append(Paragraph(footer_text, ParagraphStyle('Footer', alignment=TA_CENTER, textColor=colors.grey)))
     
     doc.build(elements)
@@ -3558,7 +3558,7 @@ async def export_backup(request: Request):
                 'version': '1.0',
                 'exported_at': datetime.now(timezone.utc).isoformat(),
                 'exported_by': user.email,
-                'system': 'PAC Acaiaca 2026'
+                'system': 'Planejamento Acaiaca'
             },
             'users': [],
             'pacs': [],
@@ -4003,7 +4003,7 @@ async def public_dashboard_stats():
         },
         'meta': {
             'generated_at': datetime.now(timezone.utc).isoformat(),
-            'system': 'PAC Acaiaca 2026 - Portal de Transparência'
+            'system': 'Planejamento Acaiaca - Portal de Transparência'
         }
     }
 
