@@ -1,84 +1,89 @@
 <analysis>**original_problem_statement:**
-O usuário solicitou inicialmente um sistema de Plano Anual de Contratações (PAC). A aplicação foi expandida para incluir múltiplos módulos CRUD, gestão de usuários, dashboards e relatórios.
+O usuário inicialmente solicitou um sistema de Plano Anual de Contratações (PAC). A aplicação evoluiu para uma plataforma completa de gestão governamental com múltiplos módulos, incluindo Processos, Diário Oficial (DOEM), gestão de usuários, e um portal de transparência.
 
-Nesta sessão, o usuário solicitou um novo conjunto de funcionalidades abrangentes:
-1.  **Paginação Configurável:** Implementar paginação em todas as listas, permitindo que o usuário selecione a quantidade de itens por página (20, 30, 50, 100). Inicialmente implementado no frontend, foi posteriormente refatorado para ser controlado pelo backend.
-2.  **Assinatura Digital Avançada:** Implementar um selo de assinatura visual em todos os PDFs gerados.
-    *   O selo deve suportar assinaturas individuais e em lote (múltiplos assinantes).
-    *   Deve conter um código de validação único e um QR Code.
-    *   O CPF do usuário deve ser mascarado para conformidade com a LGPD.
-    *   O layout do selo foi ajustado duas vezes: primeiro para ser mais compacto, e depois para ser movido para a lateral esquerda do documento.
-3.  **Validação de Documentos:** Criar uma página pública para validar a autenticidade de qualquer documento gerado pelo sistema usando seu código de validação.
-4.  **Ajustes de Cadastro de Usuário:** Adicionar campos obrigatórios ao perfil do usuário (Nome Completo, CPF, Cargo, Endereço, CEP) para serem usados na assinatura digital.
-5.  **Histórico de Assinaturas:** Criar uma página onde cada usuário possa ver um histórico de todos os documentos que assinou.
-6.  **Notificações por Email:** Enviar notificações por email aos usuários quando um documento que eles precisam assinar for publicado.
+Nesta sessão, as solicitações incluíram:
+1.  **Finalizar Histórico de Assinaturas:** Concluir a página onde os usuários podem ver os documentos que assinaram.
+2.  **Ajustes no Selo de Assinatura:** Mover o selo para a lateral direita e refinar seu design para ser mais profissional.
+3.  **Correção da Paginação:** O usuário especificou que a paginação deveria ser implementada nas tabelas de itens dentro dos editores do PAC/PAC Geral e na página pública de Processos, e **removida** da geração de PDF para evitar desperdício de papel.
+4.  **Refatoração do PDF:** Gerar relatórios PDF (PAC/PAC Geral) com um layout profissional baseado em um documento modelo , com paginação de 15 itens por página. (Este requisito foi posteriormente revertido pelo usuário).
+5.  **Correção do Link de Validação:** A URL no QR Code dos documentos assinados estava apontando para o domínio de preview e não preenchia o código automaticamente na página de destino. O usuário solicitou que a URL fosse  e que o código fosse preenchido automaticamente.
+6.  **Correção do Acesso Público:** A página pública do DOEM não exibia dados para visitantes não logados. O dashboard de Processos não estava visível.
+7.  **Refatoração do Backend:** A principal solicitação foi refatorar o arquivo monolítico  (com ~6000 linhas) em uma estrutura modular com s.
 
 **PRODUCT REQUIREMENTS:**
--   **Máscaras de Input:** Todos os formulários do sistema devem aplicar máscaras automáticas para campos de moeda (R$), telefone, CEP, CPF, etc. (Tarefa herdada e concluída).
--   **Assinatura Digital:** O selo de assinatura deve ser discreto, posicionado na lateral esquerda e não deve sobrepor o conteúdo do documento. Deve ser aplicado a TODOS os relatórios (PAC, Processos, etc.) e publicações do DOEM.
--   **Paginação:** A paginação de dados deve ser gerenciada pelo backend para melhor performance, com o frontend consumindo os dados paginados via API.
--   **Validação:** A página de validação pública deve ser funcional e intuitiva.
--   **Histórico de Assinaturas:** Cada usuário deve ter acesso ao seu próprio histórico de documentos assinados.
+-   **Selo de Assinatura:** O selo deve estar na lateral direita, ter um design profissional e não deve quebrar o conteúdo do PDF em várias páginas desnecessariamente.
+-   **Paginação do Frontend:**
+    -   As tabelas de itens nos editores de PAC e PAC Geral devem ter paginação (15, 30, 50, 100 itens).
+    -   A listagem pública de Processos no Portal da Transparência deve ter paginação com opções de 20, 40, 60, 80, 100 itens.
+-   **Acesso Público:** Os dados do DOEM devem ser visíveis para todos os usuários, sem necessidade de login.
+-   **Dashboard de Processos:** Um dashboard resumido com KPIs e gráficos deve ser integrado diretamente na página de listagem de Processos.
+-   **Backend:** O arquivo  deve ser refatorado para uma arquitetura modular para melhorar a manutenibilidade.
 
 **User's preferred language**: Portuguese (Brazil)
 
 **what currently exists?**
-Uma aplicação full-stack (React/FastAPI/MongoDB) com autenticação, múltiplos módulos CRUD (PACs, Processos, etc.), e um módulo DOEM com geração de PDF. Nesta sessão, foram concluídas as seguintes funcionalidades:
--   **Máscaras de Input**: Foram implementadas em todos os formulários relevantes (, , , , ).
--   **Paginação via Backend**: Os módulos de  e  foram refatorados para usar paginação controlada pelo backend.
--   **Perfis de Usuário Estendidos**: O cadastro de usuários agora inclui os campos necessários para a assinatura digital (CPF, Cargo, etc.).
--   **Sistema de Assinatura Digital**: Um sistema robusto foi implementado, suportando assinaturas individuais e em lote. O selo é aplicado a todos os relatórios em PDF.
--   **Sistema de Validação de Documentos**: Uma página () e um endpoint de backend () estão totalmente funcionais.
--   **Notificações por Email**: O sistema envia emails aos assinantes quando um documento DOEM é publicado.
+Uma aplicação full-stack (React/FastAPI/MongoDB) funcional. As principais funcionalidades concluídas nesta sessão são:
+-   A página Histórico de Assinaturas foi finalizada e testada.
+-   O selo de assinatura digital foi movido para a direita e seu design foi aprimorado.
+-   A paginação foi implementada corretamente no frontend para as listagens de itens de PAC/PAC Geral e na página pública de Processos. A paginação forçada foi removida dos relatórios em PDF.
+-   A página pública do DOEM agora funciona sem necessidade de login.
+-   Um dashboard resumido foi integrado à página de Gestão de Processos.
+-   A URL de validação nos QR Codes foi corrigida, e a página de validação agora preenche o código automaticamente a partir do parâmetro da URL.
+-   Foi criada uma estrutura de diretórios modular para o backend (, , , ) como primeiro passo para a refatoração do . O código, no entanto, ainda reside no arquivo monolítico.
 
 **Last working item**:
--   **Last item agent was working**: O agente estava atendendo às duas últimas solicitações do usuário:
-    1.  Mover o selo de assinatura digital para a **lateral esquerda** dos documentos PDF. A função  em  foi reescrita para isso.
-    2.  Criar uma página de **histórico de assinaturas** para os usuários. Para isso, foram criados o endpoint  no backend e a página .
+-   **Last item agent was working**: O agente iniciou a refatoração do backend (P1), criando a estrutura de diretórios e arquivos vazios para os módulos de rotas, modelos e serviços (, , ). O objetivo era preparar o ambiente para a migração gradual do código do arquivo .
 -   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both.
-    1.  **Backend**: Usar  para testar o novo endpoint  e garantir que ele retorna os documentos assinados pelo usuário logado.
-    2.  **Frontend**: Usar a ferramenta de  para verificar a nova página , confirmar que ela exibe os dados da API e que a navegação até ela funciona.
-    3.  **PDF**: Gerar um novo PDF de qualquer relatório para confirmar visualmente que o selo de assinatura está posicionado corretamente na lateral esquerda.
+-   **Agent Testing Done**: Y (smoke test)
+-   **Which testing method agent to use?**: both. Após mover cada bloco de código (ex: rotas de autenticação) de  para seu respectivo novo arquivo, o agente de testes de backend deve ser executado para garantir que nenhuma funcionalidade foi quebrada. Após a conclusão de toda a migração, o agente de testes de frontend deve ser executado para uma validação completa E2E.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
 Nenhum.
 
 **In progress Task List**:
--   **Task 1**: Concluir e testar a funcionalidade de Histórico de Assinaturas. (P0)
+-   **Task 1**: Concluir a refatoração do backend. (P1)
+-   **Task 2**: Tornar os campos CPF e Cargo obrigatórios para assinar documentos. (P2)
 
 **Task Detail**:
--   **Task 1: Concluir e testar a funcionalidade de Histórico de Assinaturas**
-    -   **Where to resume**: Os arquivos ,  e  foram criados/modificados. Os próximos passos são:
-        1.  Adicionar um link para a nova página no menu principal da aplicação (provavelmente em ).
-        2.  Testar o endpoint  para garantir que ele retorna a lista correta de assinaturas para o usuário autenticado.
-        3.  Testar a página  para garantir que ela busca e exibe os dados corretamente.
-        4.  Gerar um novo PDF de um relatório (ex: Processos) para validar se o selo de assinatura foi movido para a lateral esquerda, como solicitado.
-    -   **What will be achieved with this?**: O usuário poderá visualizar todos os documentos que assinou digitalmente, e o layout do selo de assinatura atenderá aos requisitos do usuário.
+-   **Task 1: Concluir a refatoração do backend (P1)**
+    -   **Where to resume**: A estrutura de arquivos em ,  e  foi criada. O próximo passo é mover gradualmente a lógica do  para esses novos arquivos, seguindo a ordem de prioridade sugerida pelo usuário:
+        1.  Rotas de autenticação () para .
+        2.  Rotas do PAC para .
+        3.  Rotas de Processos para .
+        4.  Rotas do DOEM para .
+        5.  Modelos Pydantic para os respectivos arquivos em .
+        6.  Funções auxiliares (PDF, email) para .
+        7.  Atualizar o  principal para importar e registrar os s dos módulos.
+    -   **What will be achieved with this?**: Um backend mais organizado, manutenível e escalável, reduzindo a complexidade do arquivo .
     -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: both
+    -   **Blocked on something**: Não.
+
+-   **Task 2: Tornar CPF/Cargo obrigatórios para assinatura (P2)**
+    -   **Where to resume**:
+        1.  No frontend, na página de perfil do usuário, adicionar validação para garantir que os campos  e  sejam preenchidos.
+        2.  No backend, na função que gera a assinatura ( em ), adicionar uma verificação que lança uma exceção  (ex: 400 Bad Request) se o usuário que está tentando assinar não tiver os campos  e  em seus dados de assinatura.
+    -   **What will be achieved with this?**: Garantir que todos os documentos assinados contenham as informações completas do assinante, evitando selos de assinatura com dados ausentes.
+    -   **Status**: NOT STARTED
     -   **Should Test frontend/backend/both after fix?**: both
     -   **Blocked on something**: Não.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks**:
-    -   (P1) Refatorar o arquivo monolítico  em múltiplos s para melhorar a manutenibilidade.
+    -   (P1.2) Migrar rotas de  para arquivos separados (auth → pac → processos → doem).
+    -   (P2) Tornar CPF/Cargo obrigatórios para assinatura.
 -   **Future Tasks**:
-    -   (P2) Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar.
+    -   (P3) Revisitar e finalizar o instalador para cPanel (PHP/MySQL) na pasta , caso o usuário volte a solicitar.
 
 **Completed work in this session**
--   **Máscaras de Input**: Implementadas em todos os formulários (, , , etc.) usando .
--   **Paginação via Backend**: Implementada para  e , com a criação de um modelo  e um componente  reutilizável.
--   **Cadastro de Usuário Estendido**: O formulário e o modelo de usuário (, ) foram atualizados para incluir dados de assinatura (CPF, cargo, etc.).
--   **Sistema de Assinatura Digital e Validação**:
-    -   Criada a função  em  para adicionar um selo visual aos PDFs. O layout foi ajustado duas vezes.
-    -   Implementada lógica para assinaturas individuais e em lote no DOEM.
-    -   Criada a coleção  no MongoDB para armazenar metadados de assinatura.
-    -   Criada a página pública  e o endpoint de validação.
--   **Correção de Bugs Críticos**: Corrigido um bug em que os códigos de validação de assinatura não eram salvos no banco de dados. Corrigido um erro de URL duplicada () no frontend.
--   **Aplicação de Assinaturas em Relatórios**: A lógica de assinatura foi aplicada a todos os relatórios em PDF (PAC e Processos).
--   **Notificações por Email**: Implementado o envio de emails para assinantes na publicação de um DOEM.
+-   Implementada e testada a página de Histórico de Assinaturas.
+-   O selo de assinatura digital foi ajustado (movido para a direita, design refinado).
+-   A paginação foi corrigida em toda a aplicação conforme solicitação: adicionada aos editores de PAC/PAC Geral e ao Portal da Transparência; removida dos PDFs.
+-   Corrigido o bug que impedia o acesso público à página do DOEM.
+-   Um dashboard resumido foi integrado à página de Gestão de Processos.
+-   Corrigida a URL de validação de documentos no QR Code e o preenchimento automático na página de destino.
+-   Iniciada a refatoração do backend com a criação da estrutura de diretórios modular.
 
 **Earlier issues found/mentioned but not fixed**
 -   Nenhum.
@@ -93,56 +98,59 @@ Nenhum.
 -   **Frontend**: React, TailwindCSS, , Axios
 -   **Backend**: FastAPI (Python), Pydantic
 -   **Database**: MongoDB
--   **Relatórios/PDF**: ,  (NOVO)
--   **Notificações**: 
--   **Geração de QR Code**:  (NOVO)
+-   **Refatoração**: Migração de um padrão monolítico para uma arquitetura modular com s em FastAPI.
 
 **key DB schema**
--   **document_signatures**: 
--   **users**: O modelo agora contém .
--   **doem_edicoes**: O modelo agora contém  para assinaturas em lote.
+-   Nenhuma alteração no schema nesta sessão.
 
 **changes in tech stack**
--   : Adicionado para gerar QR Codes para os selos de assinatura.
--   : Adicionado para manipular e sobrepor o selo de assinatura em PDFs existentes.
+-   Nenhuma alteração no stack de tecnologia.
 
 **All files of reference**
--   **/app/backend/server.py**: Arquivo central que recebeu a maior parte das modificações, incluindo novos endpoints, modelos Pydantic, e a lógica de geração de PDF, paginação e assinatura.
--   **/app/frontend/src/pages/GestaoProcessual.jsx**: Refatorado para usar paginação via backend.
--   **/app/frontend/src/pages/Users.jsx**: Atualizado com novos campos de formulário, máscaras e paginação.
--   **/app/frontend/src/pages/ValidarDocumento.jsx**: Nova página para validação pública de documentos.
--   **/app/frontend/src/pages/HistoricoAssinaturas.jsx**: Nova página para o histórico de assinaturas do usuário (em andamento).
--   **/app/frontend/src/components/Pagination.jsx**: Novo componente reutilizável para a interface de paginação.
--   **/app/frontend/src/App.js**: Atualizado para adicionar as novas rotas (, ).
+-   **/app/backend/server.py**: O arquivo principal que ainda contém a maior parte da lógica e que é o alvo da refatoração.
+-   **/app/backend/routes/**, **/app/backend/models/**, **/app/backend/services/**: Novos diretórios e arquivos criados para a estrutura modular.
+-   **/app/frontend/src/pages/GestaoProcessual.jsx**: Modificado para incluir o dashboard resumido.
+-   **/app/frontend/src/pages/DOEMPublico.jsx**: Modificado para permitir acesso público sem autenticação.
+-   **/app/frontend/src/pages/PortalPublico.jsx**: Modificado para adicionar paginação à aba de Processos.
+-   **/app/frontend/src/pages/PACEditor.jsx**, **/app/frontend/src/pages/PACGeralEditor.jsx**: Modificados para adicionar paginação à tabela de itens.
+-   **/app/frontend/src/pages/ValidarDocumento.jsx**: Modificado para ler o código de validação da URL.
 
 **Areas that need refactoring**:
--   O arquivo **/app/backend/server.py** continua a ser uma dívida técnica crítica. Sua complexidade e tamanho (+5400 linhas) tornam a manutenção extremamente difícil. A refatoração em s modulares deve ser a próxima grande prioridade após a conclusão da tarefa atual.
+-   O arquivo  é a dívida técnica mais crítica. A refatoração já foi iniciada e deve ser a principal prioridade.
 
 **key api endpoints**
--   : Novo endpoint para buscar processos com paginação.
--   : Adiciona um assinante a uma edição do DOEM.
--   : Permite que um usuário assine uma edição.
--   : Valida um documento a partir do seu código.
--   : Novo endpoint para buscar o histórico de assinaturas do usuário logado.
+-   : Novo endpoint para buscar PACs com paginação.
+-   : Novo endpoint para buscar PACs Gerais com paginação.
+-   : Endpoint para popular o dashboard de processos.
 
 **Critical Info for New Agent**
--   A prioridade máxima é finalizar a tarefa de Histórico de Assinaturas. Siga os passos definidos em Where to resume na seção In progress Task List.
--   É crucial testar visualmente o novo posicionamento do selo de assinatura (lateral esquerda) em um PDF recém-gerado.
--   Após a conclusão da tarefa atual, a refatoração do  deve ser fortemente recomendada ao usuário, explicando os riscos de instabilidade e a dificuldade de manutenção do estado atual.
+-   A prioridade máxima é continuar a refatoração do . Siga a abordagem incremental definida na seção Task Detail, movendo um módulo de cada vez (começando por ) e testando extensivamente após cada etapa para evitar regressões.
+-   Após a refatoração, a próxima prioridade é implementar a obrigatoriedade dos campos CPF e Cargo para assinatura de documentos (Task 2).
+-   O usuário tem sido muito específico sobre os requisitos de UI/UX, especialmente em relação à paginação e ao layout dos PDFs. Preste muita atenção a esses detalhes.
 
 **documents and test reports created in this job**
--   /app/memory/PRD.md (atualizado múltiplas vezes)
--   /app/test_reports/iteration_5.json
--   /app/test_reports/iteration_6.json
+-   /app/memory/PRD.md
+-   /app/test_reports/iteration_7.json
+-   /app/test_reports/iteration_8.json
+-   /app/test_reports/iteration_9.json
+-   /app/test_reports/iteration_10.json
+-   /app/test_reports/iteration_11.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Usuário (Msg 469)**: Solicitou a execução da sugestão do agente (histórico de assinaturas) e pediu para mover o selo de assinatura para a **lateral esquerda** do documento. **(TAREFA ATUAL - EM ANDAMENTO)**.
-2.  **Agente (Msg 468)**: Finalizou as correções e sugeriu como próxima melhoria a criação de uma página de Histórico de Assinaturas para cada usuário.
-3.  **Usuário (Msg 368)**: Reportou que o selo de assinatura estava muito grande, que a assinatura não havia sido implementada nos outros relatórios (além do DOEM), e que a paginação deveria ser feita no backend. Também aprovou a sugestão de notificações por email. **(CONCLUÍDO)**.
+1.  **Usuário (Msg 453)**: Pediu para executar os próximos itens da lista: refatorar o  e tornar CPF/Cargo obrigatórios para assinatura. **(TAREFA ATUAL - EM ANDAMENTO)**
+2.  **Agente (Msg 452)**: Finalizou a criação da estrutura modular do backend e propôs o plano de migração gradual.
+3.  **Usuário (Msg 408)**: Solicitou a execução da refatoração do .
+4.  **Agente (Msg 407)**: Finalizou a implementação do dashboard de processos e do DOEM público.
+5.  **Usuário (Msg 362)**: Reportou que o DOEM público não exibia dados sem login e que o dashboard de processos não estava visível no menu Processos.
+6.  **Agente (Msg 361)**: Finalizou a correção da URL de validação.
+7.  **Usuário (Msg 332)**: Reportou que a URL de validação no QR Code estava errada e que o código não era preenchido automaticamente na página.
+8.  **Agente (Msg 331)**: Finalizou as correções de paginação.
+9.  **Usuário (Msg 269)**: Reportou vários problemas: o PDF estava sendo paginado incorretamente, a paginação que ele queria era nas tabelas do frontend, e a página pública de processos precisava de opções de paginação (20, 40, etc.).
+10. **Agente (Msg 268)**: Finalizou a refatoração do PDF com paginação de 15 itens (que depois foi revertida).
 
 **Project Health Check:**
--   **Healthy**: A aplicação está funcional e rica em funcionalidades. As novas implementações complexas (assinatura, validação, paginação) foram concluídas com sucesso.
--   **Technical Debt**: **CRITICAL**. O arquivo  é um monólito com mais de 5400 linhas. Adicionar ou modificar funcionalidades é arriscado e demorado. A refatoração é urgente.
+-   **Healthy**: A aplicação está estável e rica em funcionalidades, com as últimas solicitações do usuário implementadas e testadas.
+-   **Technical Debt**: **CRITICAL**. O arquivo  continua sendo um monólito, mas a refatoração para uma arquitetura modular já foi iniciada e é a tarefa de maior prioridade.
 
 **3rd Party Integrations**
 -   Emergent-managed Google Auth
@@ -154,10 +162,10 @@ Nenhum.
 -    (manipulação de PDF)
 
 **Testing status**
--   **Testing agent used after significant changes**: YES. O agente de testes foi usado duas vezes nesta sessão. Na segunda vez, ele foi crucial para identificar um bug crítico no salvamento de códigos de validação que o agente não havia percebido.
+-   **Testing agent used after significant changes**: YES. O agente de testes foi utilizado extensivamente nesta sessão, validando com sucesso a página de histórico, as novas paginações, as correções de acesso público e o dashboard.
+-   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**:
-    -   /app/test_reports/iteration_5.json
-    -   /app/test_reports/iteration_6.json
+    -   /app/test_reports/iteration_7.json a iteration_11.json.
 -   **Known regressions**: Nenhuma.
 
 **Credentials to test flow:**
@@ -166,5 +174,4 @@ Nenhum.
     -   **Senha**: 
 
 **What agent forgot to execute**
--   Inicialmente, o agente esqueceu de aplicar a paginação à página de Usuários, mas corrigiu rapidamente após o feedback do usuário.
--   O agente também não aplicou a assinatura digital a todos os relatórios na primeira tentativa, focando apenas no DOEM. Isso também foi corrigido após feedback.</analysis>
+-   O agente inicialmente interpretou mal os requisitos de paginação do usuário, aplicando-a aos relatórios em PDF em vez das tabelas no frontend. O erro foi corrigido após feedback claro do usuário. Isso destaca a importância de confirmar os requisitos de UI/UX antes da implementação.</analysis>
