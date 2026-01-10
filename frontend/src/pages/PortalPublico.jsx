@@ -25,6 +25,7 @@ const PortalPublico = () => {
   const [stats, setStats] = useState(null);
   const [pacs, setPacs] = useState([]);
   const [pacsGeral, setPacsGeral] = useState([]);
+  const [pacsGeralObras, setPacsGeralObras] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
