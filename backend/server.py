@@ -7289,7 +7289,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
     # ===== ASSINATURA =====
     elements.append(Spacer(1, 15*mm))
     elements.append(Paragraph('_' * 60, ParagraphStyle('Linha', alignment=TA_CENTER)))
-    elements.append(Paragraph(f'<b>{user.get("name", "Responsável")}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Responsável') if isinstance(user, dict) else 'Responsável'
+    elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
     elements.append(Paragraph(f'Responsável pela Prestação de Contas', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
     
     # ===== RODAPÉ =====
