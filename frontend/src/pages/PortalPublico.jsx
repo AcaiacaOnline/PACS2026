@@ -997,34 +997,67 @@ const PortalPublico = () => {
         {/* Navegação */}
         <nav className="bg-white/95 backdrop-blur-sm border-b shadow-sm print:hidden">
           <div className="container mx-auto px-4">
-            <div className="flex gap-1 overflow-x-auto">
-              {[
-                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-                { id: 'pacs', label: 'PAC Individual', icon: FileText },
-                { id: 'pacs-geral', label: 'PAC Geral', icon: Building2 },
-                { id: 'pacs-geral-obras', label: 'PAC Obras', icon: Hammer },
-                { id: 'processos', label: 'Processos', icon: ClipboardList },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
-                    activeTab === tab.id 
-                      ? 'border-[#1F4E78] text-[#1F4E78] font-medium' 
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <tab.icon size={18} />
-                  {tab.label}
-                </button>
-              ))}
-              {/* Link para DOEM */}
+            <div className="flex gap-1 overflow-x-auto items-center">
+              {/* Dashboard */}
               <button
-                onClick={() => navigate('/doem-publico')}
-                className="flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-purple-600 hover:text-purple-800 transition-colors whitespace-nowrap"
+                onClick={() => { setActiveTab('dashboard'); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'dashboard' 
+                    ? 'border-[#1F4E78] text-[#1F4E78] font-medium' 
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Newspaper size={18} />
-                DOEM
+                <BarChart3 size={18} />
+                Dashboard
+              </button>
+
+              {/* Dropdown PACs */}
+              <DropdownMenu
+                title="PACs"
+                icon={FileText}
+                isActive={['pacs', 'pacs-geral', 'pacs-geral-obras'].includes(activeTab)}
+                onSelect={(id) => { setActiveTab(id); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
+                items={[
+                  { id: 'pacs', label: 'PAC Individual', icon: FileText },
+                  { id: 'pacs-geral', label: 'PAC Geral', icon: Building2 },
+                  { id: 'pacs-geral-obras', label: 'PAC Obras', icon: Hammer },
+                ]}
+              />
+
+              {/* Dropdown Processos */}
+              <DropdownMenu
+                title="Processos"
+                icon={ClipboardList}
+                isActive={activeTab === 'processos'}
+                onSelect={(id) => { setActiveTab(id); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
+                items={[
+                  { id: 'processos', label: 'Gestão Processual', icon: ClipboardList },
+                ]}
+              />
+
+              {/* Dropdown DOEM */}
+              <DropdownMenu
+                title="DOEM"
+                icon={Newspaper}
+                color="purple"
+                isActive={false}
+                onSelect={() => navigate('/doem-publico')}
+                items={[
+                  { id: 'doem', label: 'Diário Oficial', icon: Newspaper },
+                ]}
+              />
+
+              {/* MROSC */}
+              <button
+                onClick={() => { setActiveTab('mrosc'); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'mrosc' 
+                    ? 'border-green-600 text-green-700 font-medium' 
+                    : 'border-transparent text-green-600 hover:text-green-800 border-green-300'
+                }`}
+              >
+                <DollarSign size={18} />
+                MROSC
               </button>
             </div>
           </div>
@@ -1043,6 +1076,7 @@ const PortalPublico = () => {
               {activeTab === 'pacs-geral' && renderPacsGeral()}
               {activeTab === 'pacs-geral-obras' && renderPacsGeralObras()}
               {activeTab === 'processos' && renderProcessos()}
+              {activeTab === 'mrosc' && renderMrosc()}
             </>
           )}
         </main>
