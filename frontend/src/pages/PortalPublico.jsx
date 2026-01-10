@@ -97,6 +97,9 @@ const PortalPublico = () => {
       } else if (type === 'pac-geral') {
         endpoint = `/api/public/pacs-geral/${id}/export/pdf?orientation=${orientation}`;
         filename = `PAC_Geral_${id}.pdf`;
+      } else if (type === 'pac-geral-obras') {
+        endpoint = `/api/public/pacs-geral-obras/${id}/export/pdf?orientation=${orientation}`;
+        filename = `PAC_Obras_${id}.pdf`;
       } else if (type === 'processos') {
         endpoint = `/api/public/processos/export/pdf?orientation=${orientation}`;
         filename = `Processos_PAC.pdf`;
