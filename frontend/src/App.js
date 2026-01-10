@@ -112,8 +112,10 @@ const AppRoutes = () => {
       <Route path="/pacs-geral" element={<ProtectedRoute><PACGeralList /></ProtectedRoute>} />
       <Route path="/pacs-geral/:id/edit" element={<ProtectedRoute><PACGeralEditor /></ProtectedRoute>} />
       <Route path="/pacs-geral/new" element={<ProtectedRoute><PACGeralEditor /></ProtectedRoute>} />
+      <Route path="/pacs-geral-obras" element={<ProtectedRoute><PACGeralObrasList /></ProtectedRoute>} />
+      <Route path="/pacs-geral-obras/:id" element={<ProtectedRoute><PACGeralObrasEditor /></ProtectedRoute>} />
       <Route path="/gestao-processual" element={<ProtectedRoute><GestaoProcessual /></ProtectedRoute>} />
-      <Route path="/gestao-processual/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
+      <Route path="/processos/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
       <Route path="/doem" element={<ProtectedRoute><DOEM /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
