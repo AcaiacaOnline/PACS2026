@@ -12,14 +12,40 @@ Sistema completo de gestão municipal que inclui:
 - **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
-- **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅ NOVO
-- **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅ NOVO
+- **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅
+- **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅
+- **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅ NOVO
+- **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅ NOVO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Última Atualização: 10/01/2026 (Sessão 3)
+## Última Atualização: 10/01/2026 (Sessão 4)
+
+### Changelog - Sessão 4 (10/01/2026)
+
+#### ✅ 1. Notificações por Email no MROSC
+- Envio automático quando projeto é submetido (notifica admins)
+- Envio quando correção é solicitada (notifica criador)
+- Envio quando projeto é aprovado (notifica criador)
+- HTML formatado com branding da prefeitura
+
+#### ✅ 2. Relatórios Gerenciais Consolidados
+- Endpoint `GET /api/relatorios/consolidado/pdf`
+- PDF com resumo de todos os módulos
+- Totais: PACs, Processos, MROSC
+- Processos por Status
+- Botão "Relatório PDF" no Dashboard Analítico
+
+#### ✅ 3. Estrutura de Menus Organizada
+- Menu dropdown **PACs** (Individual, Geral, Obras)
+- Menu dropdown **Processos** (Gestão, Dashboard)
+- Menu dropdown **DOEM**
+- Botão **Analítico** (azul)
+- Botão **MROSC** (verde)
+
+---
 
 ### Changelog - Sessão 3 (10/01/2026)
 
