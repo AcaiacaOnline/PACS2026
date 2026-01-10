@@ -6512,6 +6512,247 @@ async def cancelar_inscricao(email: str):
 # Registrar router Newsletter
 app.include_router(newsletter_router)
 
+# ============ MÓDULO MROSC - PRESTAÇÃO DE CONTAS (Lei 13.019/2014) ============
+mrosc_router = APIRouter(prefix="/api/mrosc", tags=["Prestação de Contas MROSC"])
+
+def calcular_encargos_clt(salario_bruto: float, numero_meses: int) -> dict:
+    """Calcula encargos trabalhistas CLT conforme MROSC"""
+    provisao_ferias = salario_bruto / 12
+    provisao_13_salario = salario_bruto / 12
+    base_fgts = salario_bruto + provisao_ferias + provisao_13_salario
+    fgts = base_fgts * 0.08
+    inss_patronal = salario_bruto * 0.20
+    custo_mensal = salario_bruto + provisao_ferias + provisao_13_salario + fgts + inss_patronal
+    return {
+        'provisao_ferias': round(provisao_ferias, 2),
+        'provisao_13_salario': round(provisao_13_salario, 2),
+        'fgts': round(fgts, 2),
+        'inss_patronal': round(inss_patronal, 2),
+        'custo_mensal_total': round(custo_mensal, 2),
+        'custo_total_projeto': round(custo_mensal * numero_meses, 2)
+    }
+
+def calcular_media_orcamentos(orc1: float, orc2: float, orc3: float) -> float:
+    """Calcula média dos três orçamentos"""
+    valores = [v for v in [orc1, orc2, orc3] if v and v > 0]
+    return round(sum(valores) / len(valores), 2) if valores else 0.0
+
+# Endpoint para naturezas de despesa
+@mrosc_router.get("/naturezas-despesa")
+async def get_naturezas_despesa():
+    """Retorna naturezas de despesa conforme MROSC"""
+    return NATUREZAS_DESPESA_MROSC
+
+# ===== PROJETOS MROSC =====
+@mrosc_router.get("/projetos", response_model=List[ProjetoMROSC])
+async def get_projetos_mrosc(request: Request):
+    """Lista todos os projetos MROSC"""
+    user = await get_current_user(request)
+    query = {} if user.is_admin else {'user_id': user.user_id}
+    projetos = await db.mrosc_projetos.find(query, {'_id': 0}).to_list(100)
+    return [ProjetoMROSC(**p) for p in projetos]
+
+@mrosc_router.post("/projetos", response_model=ProjetoMROSC)
+async def create_projeto_mrosc(projeto_data: ProjetoMROSCCreate, request: Request):
+    """Cria um novo projeto MROSC"""
+    user = await get_current_user(request)
+    projeto_id = f"mrosc_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    projeto_doc = {
+        'projeto_id': projeto_id,
+        'user_id': user.user_id,
+        **projeto_data.model_dump(),
+        'created_at': now,
+        'updated_at': now
+    }
+    await db.mrosc_projetos.insert_one(projeto_doc)
+    return ProjetoMROSC(**projeto_doc)
+
+@mrosc_router.get("/projetos/{projeto_id}", response_model=ProjetoMROSC)
+async def get_projeto_mrosc(projeto_id: str, request: Request):
+    """Obtém um projeto MROSC específico"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    return ProjetoMROSC(**projeto)
+
+@mrosc_router.put("/projetos/{projeto_id}", response_model=ProjetoMROSC)
+async def update_projeto_mrosc(projeto_id: str, projeto_data: ProjetoMROSCUpdate, request: Request):
+    """Atualiza um projeto MROSC"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    update_data = {k: v for k, v in projeto_data.model_dump().items() if v is not None}
+    update_data['updated_at'] = datetime.now(timezone.utc)
+    await db.mrosc_projetos.update_one({'projeto_id': projeto_id}, {'$set': update_data})
+    updated = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    return ProjetoMROSC(**updated)
+
+@mrosc_router.delete("/projetos/{projeto_id}")
+async def delete_projeto_mrosc(projeto_id: str, request: Request):
+    """Exclui um projeto MROSC e todos os dados relacionados"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    # Excluir dados relacionados
+    await db.mrosc_rh.delete_many({'projeto_id': projeto_id})
+    await db.mrosc_despesas.delete_many({'projeto_id': projeto_id})
+    await db.mrosc_documentos.delete_many({'projeto_id': projeto_id})
+    await db.mrosc_projetos.delete_one({'projeto_id': projeto_id})
+    return {'message': 'Projeto excluído com sucesso'}
+
+# ===== RECURSOS HUMANOS MROSC =====
+@mrosc_router.get("/projetos/{projeto_id}/rh", response_model=List[RecursoHumanoMROSC])
+async def get_rh_mrosc(projeto_id: str, request: Request):
+    """Lista recursos humanos de um projeto"""
+    user = await get_current_user(request)
+    rhs = await db.mrosc_rh.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    return [RecursoHumanoMROSC(**rh) for rh in rhs]
+
+@mrosc_router.post("/projetos/{projeto_id}/rh", response_model=RecursoHumanoMROSC)
+async def create_rh_mrosc(projeto_id: str, rh_data: RecursoHumanoMROSCCreate, request: Request):
+    """Adiciona um recurso humano ao projeto"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    rh_id = f"rh_{uuid.uuid4().hex[:12]}"
+    rh_dict = rh_data.model_dump()
+    
+    # Calcular encargos CLT automaticamente
+    encargos = calcular_encargos_clt(rh_dict['salario_bruto'], rh_dict['numero_meses'])
+    
+    # Calcular média de orçamentos se fornecidos
+    media = calcular_media_orcamentos(
+        rh_dict.get('orcamento_1', 0),
+        rh_dict.get('orcamento_2', 0),
+        rh_dict.get('orcamento_3', 0)
+    )
+    
+    # Incluir benefícios no custo mensal total
+    custo_mensal = encargos['custo_mensal_total'] + rh_dict.get('vale_transporte', 0) + rh_dict.get('vale_alimentacao', 0)
+    custo_total = custo_mensal * rh_dict['numero_meses']
+    
+    rh_doc = {
+        'rh_id': rh_id,
+        'projeto_id': projeto_id,
+        **rh_dict,
+        'provisao_ferias': encargos['provisao_ferias'],
+        'provisao_13_salario': encargos['provisao_13_salario'],
+        'fgts': encargos['fgts'],
+        'inss_patronal': encargos['inss_patronal'],
+        'custo_mensal_total': round(custo_mensal, 2),
+        'custo_total_projeto': round(custo_total, 2),
+        'media_orcamentos': media,
+        'created_at': datetime.now(timezone.utc)
+    }
+    await db.mrosc_rh.insert_one(rh_doc)
+    return RecursoHumanoMROSC(**rh_doc)
+
+@mrosc_router.delete("/projetos/{projeto_id}/rh/{rh_id}")
+async def delete_rh_mrosc(projeto_id: str, rh_id: str, request: Request):
+    """Remove um recurso humano do projeto"""
+    user = await get_current_user(request)
+    result = await db.mrosc_rh.delete_one({'rh_id': rh_id, 'projeto_id': projeto_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Recurso humano não encontrado")
+    return {'message': 'Recurso humano excluído com sucesso'}
+
+# ===== DESPESAS MROSC =====
+@mrosc_router.get("/projetos/{projeto_id}/despesas", response_model=List[DespesaMROSC])
+async def get_despesas_mrosc(projeto_id: str, request: Request):
+    """Lista despesas de um projeto"""
+    user = await get_current_user(request)
+    despesas = await db.mrosc_despesas.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(1000)
+    return [DespesaMROSC(**d) for d in despesas]
+
+@mrosc_router.post("/projetos/{projeto_id}/despesas", response_model=DespesaMROSC)
+async def create_despesa_mrosc(projeto_id: str, despesa_data: DespesaMROSCCreate, request: Request):
+    """Adiciona uma despesa ao projeto"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    despesa_id = f"desp_{uuid.uuid4().hex[:12]}"
+    despesa_dict = despesa_data.model_dump()
+    
+    # Calcular média de orçamentos
+    media = calcular_media_orcamentos(
+        despesa_dict['orcamento_1'],
+        despesa_dict['orcamento_2'],
+        despesa_dict['orcamento_3']
+    )
+    
+    valor_total = despesa_dict['quantidade'] * despesa_dict['valor_unitario']
+    
+    despesa_doc = {
+        'despesa_id': despesa_id,
+        'projeto_id': projeto_id,
+        **despesa_dict,
+        'media_orcamentos': media,
+        'valor_total': round(valor_total, 2),
+        'created_at': datetime.now(timezone.utc)
+    }
+    await db.mrosc_despesas.insert_one(despesa_doc)
+    return DespesaMROSC(**despesa_doc)
+
+@mrosc_router.delete("/projetos/{projeto_id}/despesas/{despesa_id}")
+async def delete_despesa_mrosc(projeto_id: str, despesa_id: str, request: Request):
+    """Remove uma despesa do projeto"""
+    user = await get_current_user(request)
+    result = await db.mrosc_despesas.delete_one({'despesa_id': despesa_id, 'projeto_id': projeto_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Despesa não encontrada")
+    return {'message': 'Despesa excluída com sucesso'}
+
+# ===== RESUMO ORÇAMENTÁRIO =====
+@mrosc_router.get("/projetos/{projeto_id}/resumo")
+async def get_resumo_orcamentario_mrosc(projeto_id: str, request: Request):
+    """Retorna resumo orçamentário do projeto"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Somar recursos humanos
+    rhs = await db.mrosc_rh.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    total_rh = sum(rh.get('custo_total_projeto', 0) for rh in rhs)
+    
+    # Somar despesas
+    despesas = await db.mrosc_despesas.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(1000)
+    total_despesas = sum(d.get('valor_total', 0) for d in despesas)
+    
+    # Agrupar despesas por natureza
+    despesas_por_natureza = {}
+    for d in despesas:
+        nat = d.get('natureza_despesa', 'OUTROS')
+        if nat not in despesas_por_natureza:
+            despesas_por_natureza[nat] = 0
+        despesas_por_natureza[nat] += d.get('valor_total', 0)
+    
+    total_geral = total_rh + total_despesas
+    
+    return {
+        'projeto': projeto,
+        'resumo': {
+            'total_recursos_humanos': round(total_rh, 2),
+            'total_despesas': round(total_despesas, 2),
+            'total_geral': round(total_geral, 2),
+            'quantidade_rh': len(rhs),
+            'quantidade_despesas': len(despesas)
+        },
+        'despesas_por_natureza': despesas_por_natureza,
+        'diferenca_orcamento': round(projeto.get('valor_total', 0) - total_geral, 2)
+    }
+
+# Registrar router MROSC
+app.include_router(mrosc_router)
+
 # ===== Router de Validação de Documentos (Público) =====
 validation_router = APIRouter(prefix="/api/validar", tags=["Validação de Documentos"])
 
