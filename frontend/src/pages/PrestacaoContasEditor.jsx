@@ -350,6 +350,18 @@ const PrestacaoContasEditor = () => {
             <FileText size={16} className="inline mr-2" />
             Despesas ({despesas.length})
           </button>
+          <button
+            onClick={() => setActiveTab('documentos')}
+            className={`px-4 py-2 font-medium text-sm transition-colors ${
+              activeTab === 'documentos' 
+                ? 'text-green-600 border-b-2 border-green-600' 
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            data-testid="tab-documentos"
+          >
+            <Upload size={16} className="inline mr-2" />
+            Documentos ({documentos.length})
+          </button>
         </div>
 
         {/* Tab Content - Recursos Humanos */}
