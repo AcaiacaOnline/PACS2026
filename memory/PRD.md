@@ -9,15 +9,51 @@ Sistema completo de gestão municipal que inclui:
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
 - **Portal de Transparência** - Acesso público às informações
-- **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ NOVO
+- **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Última Atualização: 10/01/2026
+## Última Atualização: 10/01/2026 (Sessão 2)
 
-### Changelog desta Sessão
+### Changelog desta Sessão (10/01/2026)
+
+#### ✅ 1. Upload de Documentos PDF - MROSC
+- Endpoint `POST /api/mrosc/projetos/{id}/documentos/upload` (multipart/form-data)
+- Endpoint `GET /api/mrosc/projetos/{id}/documentos` (listar)
+- Endpoint `GET /api/mrosc/documentos/{doc_id}/download` (visualizar/download)
+- Endpoint `DELETE /api/mrosc/projetos/{id}/documentos/{doc_id}` (excluir)
+- Endpoint `PUT /api/mrosc/projetos/{id}/documentos/{doc_id}/validar` (validar)
+- Nova aba "Documentos" no frontend com tabela e resumo
+- Modal de upload com campos: Tipo, Número, Data, Valor, Despesa vinculada
+- Limite de 10MB, apenas PDF
+
+#### ✅ 2. Relatório PDF - Prestação de Contas MROSC
+- Endpoint `GET /api/mrosc/projetos/{id}/relatorio/pdf`
+- PDF consolidado com: Dados do projeto, Resumo financeiro, RH, Despesas, Documentos
+- Formatação profissional conforme Lei 13.019/2014
+- Botão "Exportar PDF" no frontend
+
+#### ✅ 3. Exportação PDF - PAC Geral Obras
+- Endpoint `GET /api/pacs-geral-obras/{id}/export/pdf`
+- PDF com classificação Lei 14.133/2021 e Portaria 448/ME
+- Botão "PDF" no frontend do editor
+
+#### ✅ 4. Refatoração Backend - Modelos
+- Criados arquivos modulares em `/app/backend/models/`:
+  - `user.py` - Modelos de usuário
+  - `pac.py` - Modelos PAC Individual e Geral
+  - `pac_obras.py` - Modelos PAC Obras com classificações
+  - `mrosc.py` - Modelos MROSC completos
+  - `processo.py` - Modelos de processos
+  - `doem.py` - Modelos DOEM
+  - `newsletter.py` - Modelos Newsletter
+- Exportação centralizada em `__init__.py`
+
+---
+
+### Changelog Sessão Anterior
 
 #### ✅ 1. Renomeação do Sistema
 - Nome alterado de "PAC Acaiaca 2026" para **"Planejamento Acaiaca"**
