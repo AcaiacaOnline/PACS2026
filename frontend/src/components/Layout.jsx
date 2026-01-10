@@ -132,46 +132,43 @@ const Layout = ({ children }) => {
                 <LayoutDashboard size={16} />
                 <span className="hidden lg:inline">Dashboard</span>
               </Link>
-              <Link
-                to="/pacs"
-                data-testid="nav-pacs-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
-                  isActive('/pacs') && !isActive('/pacs-geral') ? 'bg-primary/80' : 'hover:bg-primary/80'
-                }`}
-              >
-                <List size={16} />
-                <span className="hidden lg:inline">Meus PACs</span>
-              </Link>
-              <Link
-                to="/pacs-geral"
-                data-testid="nav-pac-geral-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-primary-foreground/20 ${
-                  isActive('/pacs-geral') ? 'bg-primary/80' : 'hover:bg-primary/80'
-                }`}
-              >
-                <Building2 size={16} />
-                <span className="hidden lg:inline">PAC Geral</span>
-              </Link>
-              <Link
-                to="/gestao-processual"
-                data-testid="nav-gestao-processual-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-amber-500/50 ${
-                  isActive('/gestao-processual') ? 'bg-amber-600' : 'hover:bg-amber-600/80'
-                }`}
-              >
-                <ClipboardList size={16} />
-                <span className="hidden lg:inline">Gestão Processual</span>
-              </Link>
-              <Link
-                to="/doem"
-                data-testid="nav-doem-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-purple-500/50 ${
-                  isActive('/doem') ? 'bg-purple-600' : 'hover:bg-purple-600/80'
-                }`}
-              >
-                <Newspaper size={16} />
-                <span className="hidden lg:inline">DOEM</span>
-              </Link>
+              
+              {/* Menu PACS */}
+              <DropdownMenu
+                title="PACs"
+                icon={FileText}
+                isActive={isActive('/pacs') || isActive('/pacs-geral')}
+                items={[
+                  { path: '/pacs', label: 'PAC Individual', icon: List },
+                  { path: '/pacs-geral', label: 'PAC Geral', icon: Building2 },
+                  { path: '/pacs-geral-obras', label: 'PAC Geral Obras', icon: Hammer },
+                ]}
+              />
+
+              {/* Menu Processos */}
+              <DropdownMenu
+                title="Processos"
+                icon={ClipboardList}
+                color="amber"
+                isActive={isActive('/gestao-processual') || isActive('/processos')}
+                items={[
+                  { path: '/gestao-processual', label: 'Gestão Processual', icon: ClipboardList },
+                  { path: '/processos/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                ]}
+              />
+
+              {/* Menu Diário Oficial */}
+              <DropdownMenu
+                title="DOEM"
+                icon={Newspaper}
+                color="purple"
+                isActive={isActive('/doem')}
+                items={[
+                  { path: '/doem', label: 'Edições', icon: Newspaper },
+                  { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
+                ]}
+              />
+
               <Link
                 to="/historico-assinaturas"
                 data-testid="nav-historico-assinaturas-btn"
@@ -187,10 +184,10 @@ const Layout = ({ children }) => {
                 <>
                   <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
                   <Link
-                    to="/users"
+                    to="/usuarios"
                     data-testid="nav-users-btn"
                     className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
-                      isActive('/users') ? 'bg-primary/80' : 'hover:bg-primary/80'
+                      isActive('/usuarios') ? 'bg-primary/80' : 'hover:bg-primary/80'
                     }`}
                   >
                     <Users size={16} />
