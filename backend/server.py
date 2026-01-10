@@ -4849,6 +4849,77 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+# ===== ROTAS PÚBLICAS MROSC =====
+@public_router.get("/mrosc/projetos")
+async def public_get_projetos_mrosc():
+    """Lista projetos MROSC aprovados (público - transparência)"""
+    # Mostrar apenas projetos aprovados ou em análise
+    query = {'status': {'$in': ['APROVADO', 'ANALISE']}}
+    projetos = await db.mrosc_projetos.find(query, {'_id': 0}).to_list(100)
+    return {'data': projetos, 'total': len(projetos)}
+
+@public_router.get("/mrosc/projetos/{projeto_id}")
+async def public_get_projeto_mrosc(projeto_id: str):
+    """Obtém detalhes de um projeto MROSC (público)"""
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    return {'data': projeto}
+
+@public_router.get("/mrosc/projetos/{projeto_id}/resumo")
+async def public_get_resumo_mrosc(projeto_id: str):
+    """Resumo financeiro de um projeto MROSC (público)"""
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Buscar RH e despesas
+    rhs = await db.mrosc_rh.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    despesas = await db.mrosc_despesas.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(500)
+    
+    # Calcular totais
+    total_rh = sum(rh.get('custo_total_projeto', 0) for rh in rhs)
+    total_despesas = sum(d.get('valor_total', 0) for d in despesas)
+    valor_total_projeto = projeto.get('valor_total', 0)
+    repasse_publico = projeto.get('valor_repasse_publico', 0)
+    contrapartida = projeto.get('valor_contrapartida', 0)
+    
+    return {
+        'data': {
+            'projeto': projeto,
+            'total_rh': total_rh,
+            'total_despesas': total_despesas,
+            'total_executado': total_rh + total_despesas,
+            'valor_total_projeto': valor_total_projeto,
+            'repasse_publico': repasse_publico,
+            'contrapartida': contrapartida,
+            'saldo': valor_total_projeto - (total_rh + total_despesas),
+            'quantidade_rh': len(rhs),
+            'quantidade_despesas': len(despesas)
+        }
+    }
+
+@public_router.get("/mrosc/estatisticas")
+async def public_get_estatisticas_mrosc():
+    """Estatísticas gerais do MROSC (público)"""
+    projetos = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(100)
+    
+    total_projetos = len(projetos)
+    total_aprovados = len([p for p in projetos if p.get('status') == 'APROVADO'])
+    total_em_analise = len([p for p in projetos if p.get('status') == 'ANALISE'])
+    valor_total = sum(p.get('valor_total', 0) for p in projetos)
+    valor_repasse = sum(p.get('valor_repasse_publico', 0) for p in projetos)
+    
+    return {
+        'data': {
+            'total_projetos': total_projetos,
+            'total_aprovados': total_aprovados,
+            'total_em_analise': total_em_analise,
+            'valor_total': valor_total,
+            'valor_repasse_publico': valor_repasse
+        }
+    }
+
 # ============ MÓDULO DOEM - Diário Oficial Eletrônico Municipal ============
 
 doem_router = APIRouter(prefix="/api/doem", tags=["DOEM"])
