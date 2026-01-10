@@ -7085,6 +7085,40 @@ class PedidoCorrecaoRequest(BaseModel):
 class AprovarPrestacaoRequest(BaseModel):
     observacoes: Optional[str] = None
 
+# ===== FUNÇÃO DE NOTIFICAÇÃO MROSC =====
+def enviar_notificacao_mrosc(destinatario: str, assunto: str, projeto_nome: str, mensagem: str, acao: str):
+    """Envia notificação por email sobre mudança de status no MROSC"""
+    try:
+        corpo_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #2E7D32; color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">Prestação de Contas - MROSC</h1>
+                <p style="margin: 5px 0 0 0; font-size: 14px;">Prefeitura Municipal de Acaiaca</p>
+            </div>
+            <div style="padding: 20px; background: #f5f5f5;">
+                <h2 style="color: #1F4E78;">{assunto}</h2>
+                <p><strong>Projeto:</strong> {projeto_nome}</p>
+                <p>{mensagem}</p>
+                <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <p style="margin: 0; color: #666;"><strong>Ação:</strong> {acao}</p>
+                </div>
+                <p style="font-size: 12px; color: #888;">
+                    Acesse o sistema para mais detalhes: <a href="https://planejamento-acaiaca.preview.emergentagent.com/prestacao-contas">Planejamento Acaiaca</a>
+                </p>
+            </div>
+            <div style="background: #1F4E78; color: white; padding: 10px; text-align: center; font-size: 12px;">
+                <p style="margin: 0;">CNPJ: 18.295.287/0001-90 | Lei 13.019/2014 - MROSC</p>
+            </div>
+        </body>
+        </html>
+        """
+        enviar_email_smtp(destinatario, f"[MROSC] {assunto}", corpo_html)
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao enviar notificação MROSC: {e}")
+        return False
+
 @mrosc_router.post("/projetos/{projeto_id}/submeter")
 async def submeter_prestacao_contas(projeto_id: str, request: Request, data: SubmeterPrestacaoRequest = None):
     """
