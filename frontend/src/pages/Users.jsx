@@ -579,14 +579,14 @@ const Users = () => {
                   <div className="flex items-center gap-2 mb-4">
                     <PenTool className="w-5 h-5 text-primary" />
                     <h4 className="text-lg font-semibold text-foreground">Dados para Assinatura Digital</h4>
-                    <span className="text-xs text-muted-foreground">(Necessários para assinar documentos)</span>
+                    <span className="text-xs text-amber-600 font-medium">(CPF e Cargo são obrigatórios para assinar documentos)</span>
                   </div>
                   
                   <div className="bg-muted/30 rounded-lg p-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1">
-                          CPF
+                          CPF <span className="text-red-500">*</span>
                         </label>
                         <CPFInput
                           value={formData.signature_data?.cpf || ''}
@@ -594,15 +594,17 @@ const Users = () => {
                             ...formData,
                             signature_data: { ...formData.signature_data, cpf: e.target.value }
                           })}
-                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent ${
+                            !formData.signature_data?.cpf?.trim() ? 'border-amber-400' : 'border-border'
+                          }`}
                           data-testid="user-cpf-input"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Será exibido mascarado nos documentos</p>
+                        <p className="text-xs text-muted-foreground mt-1">Obrigatório para assinar documentos</p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1">
-                          Cargo Ocupado
+                          Cargo Ocupado <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -611,10 +613,13 @@ const Users = () => {
                             ...formData,
                             signature_data: { ...formData.signature_data, cargo: e.target.value }
                           })}
-                          className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className={`w-full px-3 py-2 border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent ${
+                            !formData.signature_data?.cargo?.trim() ? 'border-amber-400' : 'border-border'
+                          }`}
                           placeholder="Ex: Assessor de Planejamento"
                           data-testid="user-cargo-input"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">Obrigatório para assinar documentos</p>
                       </div>
 
                       <div>
