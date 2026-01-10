@@ -7254,9 +7254,14 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
         docs_data = [docs_header]
         
         for doc in documentos:
-            data_doc = doc.get('data_documento', '')
+            data_doc = doc.get('data_documento', None)
             if data_doc:
-                data_doc = str(data_doc)[:10]
+                if isinstance(data_doc, datetime):
+                    data_doc = data_doc.strftime('%d/%m/%Y')
+                else:
+                    data_doc = str(data_doc)[:10]
+            else:
+                data_doc = '-'
             docs_data.append([
                 doc.get('tipo_documento', '-'),
                 doc.get('numero_documento', '-') or '-',
