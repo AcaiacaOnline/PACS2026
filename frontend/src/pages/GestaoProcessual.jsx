@@ -675,7 +675,7 @@ const GestaoProcessual = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs">{processo.modalidade}</span>
+                      <span className="text-xs">{processo.modalidade_contratacao || processo.modalidade}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="max-w-xs truncate" title={processo.objeto}>
