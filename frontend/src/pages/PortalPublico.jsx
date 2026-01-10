@@ -64,6 +64,13 @@ const PortalPublico = () => {
       } else if (activeTab === 'processos') {
         const response = await publicApi.get('/api/public/processos');
         setProcessos(response.data.data);
+      } else if (activeTab === 'mrosc') {
+        const [projetosRes, statsRes] = await Promise.all([
+          publicApi.get('/api/public/mrosc/projetos'),
+          publicApi.get('/api/public/mrosc/estatisticas')
+        ]);
+        setMroscProjetos(projetosRes.data.data);
+        setMroscStats(statsRes.data.data);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
