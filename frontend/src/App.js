@@ -6,6 +6,8 @@ import PACList from './pages/PACList';
 import PACEditor from './pages/PACEditor';
 import PACGeralList from './pages/PACGeralList';
 import PACGeralEditor from './pages/PACGeralEditor';
+import PACGeralObrasList from './pages/PACGeralObrasList';
+import PACGeralObrasEditor from './pages/PACGeralObrasEditor';
 import GestaoProcessual from './pages/GestaoProcessual';
 import DashboardProcessual from './pages/DashboardProcessual';
 import Users from './pages/Users';
