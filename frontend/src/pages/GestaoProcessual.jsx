@@ -655,7 +655,7 @@ const GestaoProcessual = () => {
                 <tr>
                   <th className="px-4 py-3 text-left">Processo</th>
                   <th className="px-4 py-3 text-center">Status</th>
-                  <th className="px-4 py-3 text-left">Modalidade</th>
+                  <th className="px-4 py-3 text-left">Modalidade de Contratação</th>
                   <th className="px-4 py-3 text-left">Objeto</th>
                   <th className="px-4 py-3 text-left">Secretaria</th>
                   <th className="px-4 py-3 text-center">Data Início</th>
