@@ -998,9 +998,9 @@ const PortalPublico = () => {
         </header>
 
         {/* Navegação */}
-        <nav className="bg-white/95 backdrop-blur-sm border-b shadow-sm print:hidden">
-          <div className="container mx-auto px-4">
-            <div className="flex gap-1 overflow-x-auto items-center">
+        <nav className="bg-white/95 backdrop-blur-sm border-b shadow-sm print:hidden relative z-50">
+          <div className="container mx-auto px-4 overflow-visible">
+            <div className="flex gap-1 items-center overflow-visible">
               {/* Dashboard */}
               <button
                 onClick={() => { setActiveTab('dashboard'); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
