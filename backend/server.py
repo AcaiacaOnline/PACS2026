@@ -7253,8 +7253,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
         docs_header = ['Tipo', 'Número', 'Data', 'Valor', 'Status']
         docs_data = [docs_header]
         
-        for doc in documentos:
-            data_doc = doc.get('data_documento', None)
+        for documento in documentos:
+            data_doc = documento.get('data_documento', None)
             if data_doc:
                 if isinstance(data_doc, datetime):
                     data_doc = data_doc.strftime('%d/%m/%Y')
@@ -7263,11 +7263,11 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
             else:
                 data_doc = '-'
             docs_data.append([
-                doc.get('tipo_documento', '-'),
-                doc.get('numero_documento', '-') or '-',
+                documento.get('tipo_documento', '-'),
+                documento.get('numero_documento', '-') or '-',
                 data_doc,
-                f"R$ {doc.get('valor', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-                'Validado' if doc.get('validado') else 'Pendente'
+                f"R$ {documento.get('valor', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                'Validado' if documento.get('validado') else 'Pendente'
             ])
         
         docs_table = Table(docs_data, colWidths=[35*mm, 40*mm, 30*mm, 35*mm, 30*mm])
