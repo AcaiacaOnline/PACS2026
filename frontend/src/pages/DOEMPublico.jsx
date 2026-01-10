@@ -433,7 +433,7 @@ const DOEMPublico = () => {
         <footer className="bg-slate-900/95 backdrop-blur-lg border-t border-white/10 py-6 mt-12">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <p className="text-slate-400 text-sm">
-              Prefeitura Municipal de Acaiaca | CNPJ: 18.294.659/0001-71
+              Prefeitura Municipal de Acaiaca | CNPJ: 18.295.287/0001-90
             </p>
             <p className="text-slate-500 text-xs mt-2">
               Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística

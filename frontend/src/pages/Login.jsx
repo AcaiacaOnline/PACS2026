@@ -98,7 +98,7 @@ const Login = () => {
               <Building2 className="text-primary-foreground w-10 h-10" />
             </div>
           </div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">PAC Acaiaca 2026</h1>
+          <h1 className="text-3xl font-heading font-bold text-foreground">Planejamento Acaiaca</h1>
           <p className="text-muted-foreground text-sm mt-2">Plano Anual de Contratações</p>
           <p className="text-muted-foreground text-xs mt-1">Prefeitura Municipal de Acaiaca - MG</p>
         </div>

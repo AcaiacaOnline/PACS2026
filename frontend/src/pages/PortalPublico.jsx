@@ -628,7 +628,7 @@ const PortalPublico = () => {
                   <Building2 className="text-[#1F4E78] w-8 h-8" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">PAC Acaiaca 2026</h1>
+                  <h1 className="text-2xl font-bold">Planejamento Acaiaca</h1>
                   <div className="text-sm opacity-90 flex items-center gap-2">
                     <Shield size={14} />
                     Portal da Transparência
@@ -710,7 +710,7 @@ const PortalPublico = () => {
         <footer className="bg-[#1F4E78]/95 backdrop-blur-sm text-white py-4 mt-8 print:hidden">
           <div className="container mx-auto px-4 text-center text-sm">
             <p className="font-medium">Prefeitura Municipal de Acaiaca - MG</p>
-            <p>PAC Acaiaca 2026 - Lei Federal nº 14.133/2021</p>
+            <p>Planejamento Acaiaca - Lei Federal nº 14.133/2021</p>
             <p className="text-xs mt-2 opacity-75">
               Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística
             </p>

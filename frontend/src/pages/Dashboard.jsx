@@ -117,7 +117,7 @@ const Dashboard = () => {
       <div className="space-y-6 fade-in" data-testid="dashboard">
         <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h2 className="text-3xl font-heading font-bold text-foreground">Dashboard PAC Acaiaca 2026</h2>
+            <h2 className="text-3xl font-heading font-bold text-foreground">Dashboard Planejamento Acaiaca</h2>
             <p className="text-muted-foreground mt-1">Valores totais por Classificação Orçamentária</p>
           </div>
           
@@ -366,7 +366,7 @@ const Dashboard = () => {
         {/* Info Card */}
         <div className="bg-accent/5 border border-accent/20 rounded-lg p-6">
           <h3 className="text-lg font-heading font-semibold text-foreground mb-2">
-            Sobre o Sistema PAC Acaiaca 2026
+            Sobre o Sistema Planejamento Acaiaca
           </h3>
           <p className="text-muted-foreground mb-4">
             Sistema de Planejamento Anual de Contratações desenvolvido para auxiliar as secretarias
