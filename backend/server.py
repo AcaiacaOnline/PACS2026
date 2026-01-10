@@ -7052,12 +7052,222 @@ async def validar_documento_mrosc(projeto_id: str, documento_id: str, request: R
         {'documento_id': documento_id},
         {'$set': {
             'validado': True,
-            'validado_por': user['name'],
+            'validado_por': user.name if hasattr(user, 'name') else user.get('name', 'Admin'),
             'data_validacao': datetime.now(timezone.utc)
         }}
     )
     
     return {'message': 'Documento validado com sucesso'}
+
+# ===== WORKFLOW DE PRESTAÇÃO DE CONTAS MROSC =====
+
+class SubmeterPrestacaoRequest(BaseModel):
+    observacoes: Optional[str] = None
+
+class PedidoCorrecaoRequest(BaseModel):
+    motivo: str
+
+class AprovarPrestacaoRequest(BaseModel):
+    observacoes: Optional[str] = None
+
+@mrosc_router.post("/projetos/{projeto_id}/submeter")
+async def submeter_prestacao_contas(projeto_id: str, request: Request, data: SubmeterPrestacaoRequest = None):
+    """
+    Usuário externo submete a prestação de contas para análise.
+    Após submissão, não pode mais editar até que admin solicite correção.
+    """
+    user = await get_current_user(request)
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    if projeto.get('submetido') and not projeto.get('correcao_solicitada'):
+        raise HTTPException(status_code=400, detail="Projeto já foi submetido e aguarda análise")
+    
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Usuário')
+    
+    await db.mrosc_projetos.update_one(
+        {'projeto_id': projeto_id},
+        {'$set': {
+            'submetido': True,
+            'data_submissao': datetime.now(timezone.utc),
+            'submetido_por': user_name,
+            'pode_editar': False,  # Bloqueia edição
+            'correcao_solicitada': False,  # Reseta se estava em correção
+            'status': 'SUBMETIDO',
+            'updated_at': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {'message': 'Prestação de contas submetida com sucesso! Aguarde análise do gestor.'}
+
+
+@mrosc_router.post("/projetos/{projeto_id}/receber")
+async def receber_prestacao_contas(projeto_id: str, request: Request):
+    """
+    Administrador recebe/confirma recebimento da prestação de contas.
+    Muda status para EM_ANALISE.
+    """
+    user = await get_current_user(request)
+    
+    # Verificar se é admin
+    user_is_admin = user.is_admin if hasattr(user, 'is_admin') else user.get('is_admin', False)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem receber prestação de contas")
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    if not projeto.get('submetido'):
+        raise HTTPException(status_code=400, detail="Projeto ainda não foi submetido")
+    
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Admin')
+    
+    await db.mrosc_projetos.update_one(
+        {'projeto_id': projeto_id},
+        {'$set': {
+            'status': 'EM_ANALISE',
+            'recebido_por': user_name,
+            'data_recebimento': datetime.now(timezone.utc),
+            'updated_at': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {'message': 'Prestação de contas recebida. Iniciando análise.'}
+
+
+@mrosc_router.post("/projetos/{projeto_id}/solicitar-correcao")
+async def solicitar_correcao_prestacao(projeto_id: str, request: Request, data: PedidoCorrecaoRequest):
+    """
+    Administrador solicita correção. Habilita edição para o usuário externo.
+    """
+    user = await get_current_user(request)
+    
+    user_is_admin = user.is_admin if hasattr(user, 'is_admin') else user.get('is_admin', False)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem solicitar correção")
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Admin')
+    
+    await db.mrosc_projetos.update_one(
+        {'projeto_id': projeto_id},
+        {'$set': {
+            'correcao_solicitada': True,
+            'data_correcao_solicitada': datetime.now(timezone.utc),
+            'motivo_correcao': data.motivo,
+            'solicitado_por': user_name,
+            'pode_editar': True,  # Habilita edição novamente
+            'status': 'CORRECAO_SOLICITADA',
+            'updated_at': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {'message': 'Correção solicitada. O usuário externo pode editar novamente.'}
+
+
+@mrosc_router.post("/projetos/{projeto_id}/aprovar")
+async def aprovar_prestacao_contas(projeto_id: str, request: Request, data: AprovarPrestacaoRequest = None):
+    """
+    Administrador aprova a prestação de contas.
+    """
+    user = await get_current_user(request)
+    
+    user_is_admin = user.is_admin if hasattr(user, 'is_admin') else user.get('is_admin', False)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem aprovar prestação de contas")
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    if not projeto.get('submetido'):
+        raise HTTPException(status_code=400, detail="Projeto precisa ser submetido antes de aprovar")
+    
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Admin')
+    
+    await db.mrosc_projetos.update_one(
+        {'projeto_id': projeto_id},
+        {'$set': {
+            'aprovado': True,
+            'data_aprovacao': datetime.now(timezone.utc),
+            'aprovado_por': user_name,
+            'observacoes_aprovacao': data.observacoes if data else None,
+            'pode_editar': False,
+            'correcao_solicitada': False,
+            'status': 'APROVADO',
+            'updated_at': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {'message': 'Prestação de contas aprovada com sucesso!'}
+
+
+@mrosc_router.get("/projetos/{projeto_id}/historico")
+async def get_historico_prestacao(projeto_id: str, request: Request):
+    """
+    Retorna o histórico de ações do workflow do projeto
+    """
+    user = await get_current_user(request)
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    historico = []
+    
+    if projeto.get('created_at'):
+        historico.append({
+            'acao': 'Projeto Criado',
+            'data': projeto.get('created_at'),
+            'usuario': None
+        })
+    
+    if projeto.get('data_submissao'):
+        historico.append({
+            'acao': 'Submetido para Análise',
+            'data': projeto.get('data_submissao'),
+            'usuario': projeto.get('submetido_por')
+        })
+    
+    if projeto.get('data_recebimento'):
+        historico.append({
+            'acao': 'Recebido pelo Gestor',
+            'data': projeto.get('data_recebimento'),
+            'usuario': projeto.get('recebido_por')
+        })
+    
+    if projeto.get('data_correcao_solicitada'):
+        historico.append({
+            'acao': 'Correção Solicitada',
+            'data': projeto.get('data_correcao_solicitada'),
+            'usuario': projeto.get('solicitado_por'),
+            'motivo': projeto.get('motivo_correcao')
+        })
+    
+    if projeto.get('data_aprovacao'):
+        historico.append({
+            'acao': 'Aprovado',
+            'data': projeto.get('data_aprovacao'),
+            'usuario': projeto.get('aprovado_por'),
+            'observacoes': projeto.get('observacoes_aprovacao')
+        })
+    
+    # Ordenar por data
+    historico.sort(key=lambda x: x.get('data') or datetime.min, reverse=True)
+    
+    return {
+        'projeto_id': projeto_id,
+        'status_atual': projeto.get('status'),
+        'pode_editar': projeto.get('pode_editar', True),
+        'historico': historico
+    }
+
 
 # ===== RELATÓRIO PDF DE PRESTAÇÃO DE CONTAS MROSC =====
 @mrosc_router.get("/projetos/{projeto_id}/relatorio/pdf")
