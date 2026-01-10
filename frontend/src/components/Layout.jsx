@@ -132,6 +132,17 @@ const Layout = ({ children }) => {
                 <LayoutDashboard size={16} />
                 <span className="hidden lg:inline">Dashboard</span>
               </Link>
+
+              <Link
+                to="/dashboard-analitico"
+                data-testid="nav-analitico-btn"
+                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-blue-500/50 ${
+                  isActive('/dashboard-analitico') ? 'bg-blue-600/80' : 'hover:bg-blue-600/80'
+                }`}
+              >
+                <BarChart3 size={16} />
+                <span className="hidden lg:inline">Analítico</span>
+              </Link>
               
               {/* Menu PACS */}
               <DropdownMenu
