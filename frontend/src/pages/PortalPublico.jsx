@@ -818,6 +818,7 @@ const PortalPublico = () => {
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'pacs', label: 'PAC Individual', icon: FileText },
                 { id: 'pacs-geral', label: 'PAC Geral', icon: Building2 },
+                { id: 'pacs-geral-obras', label: 'PAC Obras', icon: Hammer },
                 { id: 'processos', label: 'Processos', icon: ClipboardList },
               ].map(tab => (
                 <button
@@ -856,6 +857,7 @@ const PortalPublico = () => {
               {activeTab === 'dashboard' && renderDashboard()}
               {activeTab === 'pacs' && renderPacs()}
               {activeTab === 'pacs-geral' && renderPacsGeral()}
+              {activeTab === 'pacs-geral-obras' && renderPacsGeralObras()}
               {activeTab === 'processos' && renderProcessos()}
             </>
           )}
