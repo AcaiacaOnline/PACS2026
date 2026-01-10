@@ -92,6 +92,61 @@ const Layout = ({ children }) => {
   };
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path);
+  
+  // Verificar se usuário é externo (só acessa MROSC)
+  const isExternalUser = user?.tipo_usuario === 'PESSOA_EXTERNA' || user?.permissions?.mrosc_only;
+  const isAdmin = user?.is_admin;
+
+  // Se usuário externo tentar acessar outras páginas, redirecionar
+  useEffect(() => {
+    if (isExternalUser && !location.pathname.startsWith('/prestacao-contas') && location.pathname !== '/') {
+      navigate('/prestacao-contas');
+      toast.info('Você tem acesso apenas ao módulo de Prestação de Contas');
+    }
+  }, [location.pathname, isExternalUser, navigate]);
+
+  // Layout simplificado para usuário externo
+  if (isExternalUser) {
+    return (
+      <div 
+        className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: 'url(/bg-acaiaca.png)' }}
+      >
+        <div className="min-h-screen flex flex-col bg-background/85 backdrop-blur-[1px]">
+          <header className="bg-purple-700 text-white shadow-lg no-print">
+            <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white p-2 rounded">
+                  <DollarSign className="text-purple-700 w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-heading font-bold">Prestação de Contas</h1>
+                  <div className="text-xs opacity-90">MROSC - Lei 13.019/2014</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right hidden md:block">
+                  <div className="text-sm font-medium">{user?.name}</div>
+                  <div className="text-xs opacity-75">Pessoa Externa (OSC)</div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  <LogOut size={16} />
+                  <span className="hidden md:inline">Sair</span>
+                </button>
+              </div>
+            </div>
+          </header>
+          <main className="flex-1 container mx-auto px-4 py-6">{children}</main>
+          <footer className="bg-primary text-primary-foreground py-3 text-center text-xs no-print">
+            <span>© 2026 Prefeitura Municipal de Acaiaca - CNPJ: 18.295.287/0001-90</span>
+          </footer>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
