@@ -6750,6 +6750,163 @@ async def get_resumo_orcamentario_mrosc(projeto_id: str, request: Request):
         'diferenca_orcamento': round(projeto.get('valor_total', 0) - total_geral, 2)
     }
 
+# ===== DOCUMENTOS/COMPROVANTES MROSC =====
+UPLOAD_DIR = ROOT_DIR / "uploads" / "mrosc"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+class DocumentoMROSCCreate(BaseModel):
+    tipo_documento: str  # NOTA_FISCAL, RECIBO, CONTRATO, COMPROVANTE, OUTRO
+    numero_documento: str
+    data_documento: datetime
+    valor: float
+    despesa_id: Optional[str] = None
+    observacoes: Optional[str] = None
+
+@mrosc_router.get("/projetos/{projeto_id}/documentos")
+async def get_documentos_mrosc(projeto_id: str, request: Request):
+    """Lista todos os documentos de um projeto"""
+    user = await get_current_user(request)
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    documentos = await db.mrosc_documentos.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(500)
+    return documentos
+
+@mrosc_router.post("/projetos/{projeto_id}/documentos/upload")
+async def upload_documento_mrosc(
+    projeto_id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    tipo_documento: str = "COMPROVANTE",
+    numero_documento: str = "",
+    data_documento: str = "",
+    valor: float = 0.0,
+    despesa_id: str = None,
+    observacoes: str = ""
+):
+    """Faz upload de um documento/comprovante PDF para o projeto MROSC"""
+    user = await get_current_user(request)
+    
+    # Verifica se o projeto existe
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Valida o arquivo
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são permitidos")
+    
+    # Limite de 10MB
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Arquivo muito grande. Limite: 10MB")
+    
+    # Gera nome único para o arquivo
+    documento_id = f"doc_{uuid.uuid4().hex[:12]}"
+    safe_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
+    arquivo_nome = f"{documento_id}_{safe_filename}"
+    arquivo_path = UPLOAD_DIR / arquivo_nome
+    
+    # Salva o arquivo
+    with open(arquivo_path, "wb") as f:
+        f.write(contents)
+    
+    # Parseia a data do documento
+    try:
+        if data_documento:
+            dt_documento = datetime.fromisoformat(data_documento.replace('Z', '+00:00'))
+        else:
+            dt_documento = datetime.now(timezone.utc)
+    except:
+        dt_documento = datetime.now(timezone.utc)
+    
+    # Cria o registro no banco
+    documento_doc = {
+        'documento_id': documento_id,
+        'projeto_id': projeto_id,
+        'despesa_id': despesa_id if despesa_id and despesa_id != "null" else None,
+        'tipo_documento': tipo_documento,
+        'numero_documento': numero_documento,
+        'data_documento': dt_documento,
+        'valor': valor,
+        'arquivo_url': f"/api/mrosc/documentos/{documento_id}/download",
+        'arquivo_nome': file.filename,
+        'arquivo_tamanho': len(contents),
+        'validado': False,
+        'validado_por': None,
+        'data_validacao': None,
+        'observacoes_validacao': observacoes,
+        'created_at': datetime.now(timezone.utc)
+    }
+    
+    await db.mrosc_documentos.insert_one(documento_doc)
+    
+    # Remove _id para retorno
+    del documento_doc['_id'] if '_id' in documento_doc else None
+    
+    return DocumentoMROSC(**documento_doc)
+
+@mrosc_router.get("/documentos/{documento_id}/download")
+async def download_documento_mrosc(documento_id: str):
+    """Faz download de um documento"""
+    documento = await db.mrosc_documentos.find_one({'documento_id': documento_id}, {'_id': 0})
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    # Procura o arquivo
+    for file in UPLOAD_DIR.iterdir():
+        if file.name.startswith(documento_id):
+            return StreamingResponse(
+                open(file, "rb"),
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"inline; filename=\"{documento['arquivo_nome']}\""
+                }
+            )
+    
+    raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+
+@mrosc_router.delete("/projetos/{projeto_id}/documentos/{documento_id}")
+async def delete_documento_mrosc(projeto_id: str, documento_id: str, request: Request):
+    """Remove um documento do projeto"""
+    user = await get_current_user(request)
+    
+    documento = await db.mrosc_documentos.find_one({'documento_id': documento_id, 'projeto_id': projeto_id}, {'_id': 0})
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    # Remove o arquivo físico
+    for file in UPLOAD_DIR.iterdir():
+        if file.name.startswith(documento_id):
+            file.unlink()
+            break
+    
+    # Remove do banco
+    await db.mrosc_documentos.delete_one({'documento_id': documento_id})
+    
+    return {'message': 'Documento excluído com sucesso'}
+
+@mrosc_router.put("/projetos/{projeto_id}/documentos/{documento_id}/validar")
+async def validar_documento_mrosc(projeto_id: str, documento_id: str, request: Request):
+    """Marca um documento como validado"""
+    user = await get_current_user(request)
+    
+    documento = await db.mrosc_documentos.find_one({'documento_id': documento_id, 'projeto_id': projeto_id}, {'_id': 0})
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    await db.mrosc_documentos.update_one(
+        {'documento_id': documento_id},
+        {'$set': {
+            'validado': True,
+            'validado_por': user['name'],
+            'data_validacao': datetime.now(timezone.utc)
+        }}
+    )
+    
+    return {'message': 'Documento validado com sucesso'}
+
 # Registrar router MROSC
 app.include_router(mrosc_router)
 
