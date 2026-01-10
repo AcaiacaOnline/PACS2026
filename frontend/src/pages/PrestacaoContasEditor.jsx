@@ -184,8 +184,88 @@ const PrestacaoContasEditor = () => {
     }
   };
 
+  // ===== FUNÇÕES DE DOCUMENTOS =====
+  const handleUploadDocumento = async (e) => {
+    e.preventDefault();
+    if (!docForm.file) {
+      toast.error('Selecione um arquivo PDF');
+      return;
+    }
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', docForm.file);
+      formData.append('tipo_documento', docForm.tipo_documento);
+      formData.append('numero_documento', docForm.numero_documento);
+      formData.append('data_documento', new Date(docForm.data_documento).toISOString());
+      formData.append('valor', docForm.valor);
+      formData.append('despesa_id', docForm.despesa_id || '');
+      formData.append('observacoes', docForm.observacoes || '');
+
+      await api.post(`/mrosc/projetos/${id}/documentos/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      toast.success('Documento enviado com sucesso!');
+      setShowDocumentoModal(false);
+      setDocForm({
+        tipo_documento: 'COMPROVANTE',
+        numero_documento: '',
+        data_documento: new Date().toISOString().split('T')[0],
+        valor: 0,
+        despesa_id: '',
+        observacoes: '',
+        file: null
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao enviar documento');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteDocumento = async (doc) => {
+    if (!window.confirm(`Excluir documento "${doc.arquivo_nome}"?`)) return;
+    try {
+      await api.delete(`/mrosc/projetos/${id}/documentos/${doc.documento_id}`);
+      toast.success('Documento excluído!');
+      fetchData();
+    } catch (error) {
+      toast.error('Erro ao excluir documento');
+    }
+  };
+
+  const handleValidarDocumento = async (doc) => {
+    try {
+      await api.put(`/mrosc/projetos/${id}/documentos/${doc.documento_id}/validar`);
+      toast.success('Documento validado!');
+      fetchData();
+    } catch (error) {
+      toast.error('Erro ao validar documento');
+    }
+  };
+
+  const handleViewDocumento = (doc) => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    window.open(`${backendUrl}${doc.arquivo_url}`, '_blank');
+  };
+
   const formatCurrency = (value) => {
     return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('pt-BR');
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   if (loading) {
@@ -197,6 +277,7 @@ const PrestacaoContasEditor = () => {
       </Layout>
     );
   }
+
 
   return (
     <Layout>
