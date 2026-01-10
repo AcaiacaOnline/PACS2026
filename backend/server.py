@@ -4609,6 +4609,8 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
     """
     Adiciona assinatura digital a qualquer PDF gerado pelo sistema.
     Retorna o buffer modificado e o código de validação.
+    
+    IMPORTANTE: Requer que o usuário tenha CPF e Cargo preenchidos.
     """
     from reportlab.pdfgen import canvas as pdf_canvas
     from PyPDF2 import PdfReader, PdfWriter
@@ -4617,10 +4619,26 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
     user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
     user_signature = user_doc.get('signature_data') or {} if user_doc else {}
     
+    # Validar campos obrigatórios para assinatura
+    cpf = user_signature.get('cpf', '').strip()
+    cargo = user_signature.get('cargo', '').strip()
+    
+    if not cpf:
+        raise HTTPException(
+            status_code=400, 
+            detail="CPF é obrigatório para assinar documentos. Por favor, atualize seu perfil com o CPF."
+        )
+    
+    if not cargo:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cargo é obrigatório para assinar documentos. Por favor, atualize seu perfil com seu cargo."
+        )
+    
     signer = {
         'nome': user.name,
-        'cpf': user_signature.get('cpf', ''),
-        'cargo': user_signature.get('cargo', ''),
+        'cpf': cpf,
+        'cargo': cargo,
         'email': user.email
     }
     
