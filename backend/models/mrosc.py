@@ -3,7 +3,7 @@ Modelos de Prestação de Contas MROSC - Planejamento Acaiaca
 Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil
 """
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -17,6 +17,19 @@ NATUREZAS_DESPESA_MROSC = {
     "339046": "Auxílio-Alimentação",
     "339049": "Auxílio-Transporte",
     "449052": "Equipamentos Permanentes"
+}
+
+# Status do workflow de prestação de contas
+STATUS_PRESTACAO = {
+    "ELABORACAO": "Em Elaboração",
+    "SUBMETIDO": "Submetido para Análise",
+    "EM_ANALISE": "Em Análise pelo Gestor",
+    "CORRECAO_SOLICITADA": "Correção Solicitada",
+    "APROVADO": "Aprovado",
+    "EXECUCAO": "Em Execução",
+    "PRESTACAO_CONTAS": "Prestação de Contas",
+    "CONCLUIDO": "Concluído",
+    "REJEITADO": "Rejeitado"
 }
 
 
@@ -37,6 +50,20 @@ class ProjetoMROSC(BaseModel):
     valor_repasse_publico: float
     valor_contrapartida: float
     status: str
+    # Campos de workflow
+    submetido: bool = False
+    data_submissao: Optional[datetime] = None
+    submetido_por: Optional[str] = None
+    pode_editar: bool = True  # Se False, usuário externo não pode editar
+    aprovado: bool = False
+    data_aprovacao: Optional[datetime] = None
+    aprovado_por: Optional[str] = None
+    observacoes_aprovacao: Optional[str] = None
+    # Histórico de correções
+    correcao_solicitada: bool = False
+    data_correcao_solicitada: Optional[datetime] = None
+    motivo_correcao: Optional[str] = None
+    solicitado_por: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
