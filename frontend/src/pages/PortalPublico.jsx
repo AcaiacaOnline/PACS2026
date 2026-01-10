@@ -53,6 +53,9 @@ const PortalPublico = () => {
       } else if (activeTab === 'pacs-geral') {
         const response = await publicApi.get('/api/public/pacs-geral');
         setPacsGeral(response.data.data);
+      } else if (activeTab === 'pacs-geral-obras') {
+        const response = await publicApi.get('/api/public/pacs-geral-obras');
+        setPacsGeralObras(response.data.data);
       } else if (activeTab === 'processos') {
         const response = await publicApi.get('/api/public/processos');
         setProcessos(response.data.data);
