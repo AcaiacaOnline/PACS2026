@@ -79,6 +79,12 @@ GET    /api/mrosc/projetos/{id}/despesas       # Lista despesas
 POST   /api/mrosc/projetos/{id}/despesas       # Adicionar despesa (média automática)
 DELETE /api/mrosc/projetos/{id}/despesas/{id}  # Excluir despesa
 GET    /api/mrosc/projetos/{id}/resumo         # Resumo orçamentário
+# Documentos/Comprovantes (NOVO - 10/01/2026)
+GET    /api/mrosc/projetos/{id}/documentos              # Lista documentos
+POST   /api/mrosc/projetos/{id}/documentos/upload       # Upload PDF (multipart/form-data)
+GET    /api/mrosc/documentos/{doc_id}/download          # Download/visualizar PDF
+DELETE /api/mrosc/projetos/{id}/documentos/{doc_id}     # Excluir documento
+PUT    /api/mrosc/projetos/{id}/documentos/{doc_id}/validar  # Validar documento
 ```
 
 ### Processos (ATUALIZADOS)
