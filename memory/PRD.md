@@ -8,20 +8,44 @@ Sistema completo de gestão municipal que inclui:
 - **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
-- **Portal de Transparência** - Acesso público às informações
+- **Portal de Transparência** - Acesso público às informações ✅ ATUALIZADO
 - **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
 - **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅
 - **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅
-- **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅ NOVO
-- **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅ NOVO
+- **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅
+- **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Última Atualização: 10/01/2026 (Sessão 4)
+## Última Atualização: 10/01/2026 (Sessão 5)
+
+### Changelog - Sessão 5 (10/01/2026)
+
+#### ✅ 1. Portal da Transparência - Menus Alinhados com Backend
+- Adicionada aba **PAC Obras** no Portal Público
+- Navegação agora inclui: Dashboard, PAC Individual, PAC Geral, **PAC Obras**, Processos, DOEM
+- Alinhamento completo com os menus do sistema administrativo
+
+#### ✅ 2. API Pública para PAC Geral Obras
+- `GET /api/public/pacs-geral-obras` - Lista todos os PACs de Obras
+- `GET /api/public/pacs-geral-obras/{id}` - Detalhes de um PAC
+- `GET /api/public/pacs-geral-obras/{id}/items` - Itens do PAC
+- `GET /api/public/pacs-geral-obras/{id}/export/pdf` - Exportação PDF
+
+#### 📋 Tarefas Pendentes (P0)
+1. **Refatoração do `server.py` em módulos** - Backend monolítico (8100+ linhas)
+   - Estrutura de rotas já existe em `/app/backend/routes/`
+   - Modelos já modularizados em `/app/backend/models/`
+   - Requer migração gradual das rotas
+
+2. **Versão cPanel** - Pacote para hospedagem compartilhada
+   - Não iniciado
+
+---
 
 ### Changelog - Sessão 4 (10/01/2026)
 
