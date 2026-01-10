@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, FileText, ClipboardList, BarChart3, Download, Printer,
-  Search, Shield, Eye, Lock, FileSpreadsheet, Newspaper, ChevronLeft, ChevronRight
+  Search, Shield, Eye, Lock, FileSpreadsheet, Newspaper, ChevronLeft, ChevronRight,
+  Hammer, DollarSign, FileSignature
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
