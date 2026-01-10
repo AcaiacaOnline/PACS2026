@@ -2,8 +2,11 @@
 User and Authentication Models - Pydantic schemas
 """
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
+
+# Tipos de usuário
+TIPO_USUARIO = Literal["SERVIDOR", "PESSOA_EXTERNA"]
 
 class UserPermissions(BaseModel):
     """User permissions model"""
@@ -13,6 +16,8 @@ class UserPermissions(BaseModel):
     can_export: bool = False
     can_manage_users: bool = False
     is_full_admin: bool = False
+    # Restrição específica para MROSC
+    mrosc_only: bool = False  # Se True, usuário só pode acessar MROSC
 
 class UserSignatureData(BaseModel):
     """User signature data for digital documents"""
@@ -30,6 +35,7 @@ class User(BaseModel):
     name: str
     is_admin: bool = False
     is_active: bool = True
+    tipo_usuario: str = "SERVIDOR"  # SERVIDOR ou PESSOA_EXTERNA
     picture: Optional[str] = None
     permissions: Optional[UserPermissions] = None
     signature_data: Optional[UserSignatureData] = None
@@ -41,6 +47,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     is_admin: bool = False
+    tipo_usuario: str = "SERVIDOR"  # SERVIDOR ou PESSOA_EXTERNA
     permissions: Optional[UserPermissions] = None
     signature_data: Optional[UserSignatureData] = None
 
@@ -51,6 +58,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     is_admin: Optional[bool] = None
     is_active: bool = True
+    tipo_usuario: Optional[str] = None
     permissions: Optional[UserPermissions] = None
     signature_data: Optional[UserSignatureData] = None
 
@@ -67,6 +75,8 @@ class UserListItem(BaseModel):
     name: str
     is_admin: bool
     is_active: bool = True
+    tipo_usuario: str = "SERVIDOR"
     permissions: Optional[UserPermissions] = None
     signature_data: Optional[UserSignatureData] = None
     created_at: datetime
+
