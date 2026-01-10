@@ -200,6 +200,24 @@ const PACGeralObrasEditor = () => {
 
   const paginatedItems = paginateData(items, currentPage, pageSize);
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get(`/pacs-geral-obras/${id}/export/pdf`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `PAC_Obras_${pac?.nome_secretaria?.replace(/\s+/g, '_')}_${pac?.ano}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar PDF');
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -233,6 +251,14 @@ const PACGeralObrasEditor = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+              data-testid="export-pdf-obras-btn"
+            >
+              <Download size={18} />
+              PDF
+            </button>
             <button
               onClick={() => openModal()}
               className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
