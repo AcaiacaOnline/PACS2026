@@ -10,16 +10,50 @@ Sistema completo de gestão municipal que inclui:
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
 - **Portal de Transparência** - Acesso público às informações
 - **Prestação de Contas MROSC** - Sistema conforme Lei 13.019/2014 ✅ COMPLETO
-- **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅ NOVO
-- **Sistema de Alertas** - Monitoramento de prazos e pendências ✅ NOVO
+- **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
+- **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
+- **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅ NOVO
+- **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅ NOVO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Última Atualização: 10/01/2026 (Sessão 2)
+## Última Atualização: 10/01/2026 (Sessão 3)
 
-### Changelog desta Sessão (10/01/2026)
+### Changelog - Sessão 3 (10/01/2026)
+
+#### ✅ 1. Tipos de Usuário no Registro
+- **SERVIDOR**: Acesso completo ao sistema
+- **PESSOA_EXTERNA**: Acesso restrito apenas ao módulo MROSC
+- Seleção visual no formulário de registro
+- Permissões automáticas baseadas no tipo
+- Redirecionamento automático após login
+
+#### ✅ 2. Workflow de Prestação de Contas (MROSC)
+- **Submeter**: Usuário externo submete prestação para análise
+- **Receber**: Admin confirma recebimento
+- **Solicitar Correção**: Admin pede ajustes (habilita edição)
+- **Aprovar**: Admin aprova prestação de contas
+- **Histórico**: Rastreamento de todas as ações
+- Bloqueio de edição após submissão
+- Desbloqueio automático após pedido de correção
+
+#### ✅ 3. Restrição de Acesso para Pessoa Externa
+- Layout dedicado roxo para usuários externos
+- Navegação limitada apenas ao MROSC
+- Redirecionamento automático se tentar acessar outras páginas
+
+#### ✅ 4. Interface de Administrador MROSC
+- Botão "Receber Prestação de Contas"
+- Botão "Pedir Correção" com modal para motivo
+- Botão "Aprovar"
+- Banner informativo azul
+- Visualização do histórico de ações
+
+---
+
+### Changelog - Sessão 2 (10/01/2026)
 
 #### ✅ 1. Upload de Documentos PDF - MROSC
 - Endpoint `POST /api/mrosc/projetos/{id}/documentos/upload` (multipart/form-data)
