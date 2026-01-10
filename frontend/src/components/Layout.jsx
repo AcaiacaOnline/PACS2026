@@ -169,6 +169,19 @@ const Layout = ({ children }) => {
                 ]}
               />
 
+              {/* Menu Prestação de Contas */}
+              <Link
+                to="/prestacao-contas"
+                data-testid="nav-prestacao-contas-btn"
+                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
+                  isActive('/prestacao-contas') ? 'bg-green-600' : 'hover:bg-green-600/80'
+                }`}
+                title="Prestação de Contas MROSC"
+              >
+                <DollarSign size={16} />
+                <span className="hidden xl:inline">MROSC</span>
+              </Link>
+
               <Link
                 to="/historico-assinaturas"
                 data-testid="nav-historico-assinaturas-btn"
