@@ -7891,9 +7891,120 @@ async def get_alertas_resumo(request: Request):
     }
 
 
+# ===== RELATÓRIOS GERENCIAIS CONSOLIDADOS =====
+relatorios_router = APIRouter(prefix="/api/relatorios", tags=["Relatórios Gerenciais"])
+
+@relatorios_router.get("/consolidado/pdf")
+async def export_relatorio_consolidado_pdf(request: Request):
+    """
+    Gera relatório PDF consolidado de todos os módulos do sistema
+    """
+    user = await get_current_user(request)
+    
+    # Verificar se é admin
+    user_is_admin = user.is_admin if hasattr(user, 'is_admin') else user.get('is_admin', False)
+    if not user_is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem gerar relatórios consolidados")
+    
+    # Buscar dados de todos os módulos
+    pacs = await db.pacs.find({}, {'_id': 0}).to_list(100)
+    pac_items = await db.pac_items.find({}, {'_id': 0}).to_list(10000)
+    pacs_geral = await db.pacs_geral.find({}, {'_id': 0}).to_list(50)
+    pac_geral_items = await db.pac_geral_items.find({}, {'_id': 0}).to_list(10000)
+    pacs_obras = await db.pacs_geral_obras.find({}, {'_id': 0}).to_list(50)
+    pac_obras_items = await db.pac_geral_obras_items.find({}, {'_id': 0}).to_list(10000)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    projetos_mrosc = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(100)
+    
+    # Cálculos
+    total_pac = sum(i.get('valorTotal', 0) for i in pac_items)
+    total_pac_geral = sum(i.get('valorTotal', 0) for i in pac_geral_items)
+    total_obras = sum(i.get('valorTotal', 0) for i in pac_obras_items)
+    total_mrosc = sum(p.get('valor_total', 0) for p in projetos_mrosc)
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=20*mm)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#1F4E78'), alignment=TA_CENTER, spaceAfter=6*mm)
+    subtitulo_style = ParagraphStyle('Subtitulo', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'), spaceBefore=6*mm, spaceAfter=3*mm)
+    
+    # Cabeçalho
+    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
+    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', alignment=TA_CENTER, fontSize=9)))
+    elements.append(Spacer(1, 4*mm))
+    elements.append(Paragraph('<b>RELATÓRIO GERENCIAL CONSOLIDADO</b>', ParagraphStyle('TitDoc', alignment=TA_CENTER, fontSize=14, textColor=colors.HexColor('#1F4E78'))))
+    elements.append(Paragraph(f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}', ParagraphStyle('Data', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
+    elements.append(Spacer(1, 8*mm))
+    
+    # Resumo Executivo
+    elements.append(Paragraph('1. RESUMO EXECUTIVO', subtitulo_style))
+    resumo_data = [
+        ['Indicador', 'Quantidade', 'Valor Total'],
+        ['PACs Individuais', str(len(pacs)), f"R$ {total_pac:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['PACs Gerais', str(len(pacs_geral)), f"R$ {total_pac_geral:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['PACs Obras', str(len(pacs_obras)), f"R$ {total_obras:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Processos', str(len(processos)), '-'],
+        ['Projetos MROSC', str(len(projetos_mrosc)), f"R$ {total_mrosc:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['TOTAL GERAL', '-', f"R$ {(total_pac + total_pac_geral + total_obras + total_mrosc):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')]
+    ]
+    
+    resumo_table = Table(resumo_data, colWidths=[80*mm, 40*mm, 50*mm])
+    resumo_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BBDEFB')),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E3F2FD')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(resumo_table)
+    
+    # Processos por Status
+    elements.append(Paragraph('2. PROCESSOS POR STATUS', subtitulo_style))
+    status_count = {}
+    for p in processos:
+        s = p.get('status', 'Não Definido')
+        status_count[s] = status_count.get(s, 0) + 1
+    
+    status_data = [['Status', 'Quantidade']]
+    for s, c in sorted(status_count.items(), key=lambda x: x[1], reverse=True):
+        status_data.append([s, str(c)])
+    
+    status_table = Table(status_data, colWidths=[100*mm, 40*mm])
+    status_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#C8E6C9')),
+        ('PADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(status_table)
+    
+    # Rodapé
+    elements.append(Spacer(1, 15*mm))
+    user_name = user.name if hasattr(user, 'name') else user.get('name', 'Admin')
+    elements.append(Paragraph('_' * 50, ParagraphStyle('Linha', alignment=TA_CENTER)))
+    elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
+    elements.append(Paragraph('Responsável pelo Relatório', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"Relatorio_Consolidado_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename="{filename}"'})
+
+
 # Registrar routers
 app.include_router(analytics_router)
 app.include_router(alertas_router)
+app.include_router(relatorios_router)
 
 # ===== Router de Validação de Documentos (Público) =====
 validation_router = APIRouter(prefix="/api/validar", tags=["Validação de Documentos"])
