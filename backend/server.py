@@ -7540,6 +7540,10 @@ async def get_alertas(request: Request):
                 except:
                     continue
             
+            # Garantir que a data tem timezone
+            if data_abertura.tzinfo is None:
+                data_abertura = data_abertura.replace(tzinfo=timezone.utc)
+            
             dias_aberto = (hoje - data_abertura).days
             if dias_aberto > 90:
                 alertas.append({
