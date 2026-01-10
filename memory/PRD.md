@@ -189,11 +189,14 @@ Salário Bruto:           R$ X.XXX,XX
 - [x] Exportação PDF do PAC Geral Obras ✅
 - [x] Relatório PDF de Prestação de Contas MROSC ✅
 - [x] Refatoração de modelos (parcial) ✅
+- [x] Dashboard Analítico com gráficos ✅
+- [x] Sistema de Alertas automáticos ✅
 
 ### 🟡 P1 - Alta Prioridade
 - [ ] Continuar refatoração do `server.py` (migrar rotas para módulos)
 
 ### 🟢 P3 - Baixa Prioridade
+- [ ] Notificações de alertas por email
 - [ ] Versão cPanel (PHP/MySQL)
 
 ---
