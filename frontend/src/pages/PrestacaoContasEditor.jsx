@@ -279,6 +279,24 @@ const PrestacaoContasEditor = () => {
   }
 
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get(`/mrosc/projetos/${id}/relatorio/pdf`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Prestacao_Contas_${projeto?.nome_projeto?.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF gerado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -294,6 +312,13 @@ const PrestacaoContasEditor = () => {
             </h1>
             <p className="text-muted-foreground text-sm">{projeto?.organizacao_parceira}</p>
           </div>
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
+            data-testid="export-pdf-mrosc-btn"
+          >
+            <Download size={16} /> Exportar PDF
+          </button>
         </div>
 
         {/* Resumo Orçamentário */}
