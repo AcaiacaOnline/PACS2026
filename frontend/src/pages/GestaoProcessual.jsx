@@ -171,10 +171,9 @@ const GestaoProcessual = () => {
       setEditingProcesso(processo);
       setFormData({
         numero_processo: processo.numero_processo || '',
-        status: processo.status || 'Iniciado',
-        modalidade: processo.modalidade || '',
+        modalidade_contratacao: processo.modalidade_contratacao || processo.modalidade || '',
+        status: processo.status || 'Em Elaboração',
         objeto: processo.objeto || '',
-        situacao: processo.situacao || '',
         responsavel: processo.responsavel || '',
         data_inicio: processo.data_inicio ? processo.data_inicio.split('T')[0] : '',
         data_autuacao: processo.data_autuacao ? processo.data_autuacao.split('T')[0] : '',
@@ -188,10 +187,9 @@ const GestaoProcessual = () => {
       setEditingProcesso(null);
       setFormData({
         numero_processo: '',
-        status: 'Iniciado',
-        modalidade: '',
+        modalidade_contratacao: '',
+        status: 'Em Elaboração',
         objeto: '',
-        situacao: '',
         responsavel: '',
         data_inicio: '',
         data_autuacao: '',
