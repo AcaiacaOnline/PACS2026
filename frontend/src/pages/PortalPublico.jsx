@@ -35,35 +35,38 @@ const DropdownMenu = ({ title, icon: Icon, items, isActive, onSelect, color = 'd
   }, []);
 
   const colorClasses = {
-    default: 'border-gray-300 hover:bg-gray-100',
-    purple: 'border-purple-400 hover:bg-purple-50 text-purple-700',
-    green: 'border-green-400 hover:bg-green-50 text-green-700',
+    default: 'text-gray-600 hover:text-gray-900',
+    purple: 'text-purple-600 hover:text-purple-800',
+    green: 'text-green-600 hover:text-green-800',
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
         className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
           isActive 
-            ? 'border-[#1F4E78] text-[#1F4E78] font-medium' 
-            : `border-transparent ${colorClasses[color]}`
+            ? 'border-[#1F4E78] text-[#1F4E78] font-medium bg-blue-50/50' 
+            : `border-transparent ${colorClasses[color]} hover:bg-gray-50`
         }`}
       >
         <Icon size={18} />
         {title}
-        <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[180px] z-50">
+        <div 
+          className="absolute top-full left-0 mt-0 bg-white border border-gray-200 rounded-lg shadow-2xl py-2 min-w-[200px] z-[9999]"
+          style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}
+        >
           {items.map((item, index) => (
             <button
               key={index}
-              onClick={() => { onSelect(item.id); setIsOpen(false); }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+              onClick={(e) => { e.stopPropagation(); onSelect(item.id); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1F4E78] transition-colors text-left"
             >
-              {item.icon && <item.icon size={16} />}
-              {item.label}
+              {item.icon && <item.icon size={16} className="text-gray-500" />}
+              <span>{item.label}</span>
             </button>
           ))}
         </div>
