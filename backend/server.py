@@ -2675,6 +2675,143 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
         )
 
 
+# ============ ROTAS PAC GERAL OBRAS E SERVIÇOS ============
+
+@api_router.get("/classificacao/obras-servicos")
+async def get_classificacao_obras_servicos():
+    """Retorna códigos de classificação para Obras e Serviços (Lei 14.133/2021 + Portaria 448)"""
+    return CLASSIFICACAO_OBRAS_SERVICOS
+
+@api_router.get("/pacs-geral-obras", response_model=List[PACGeralObras])
+async def get_pacs_geral_obras(request: Request, ano: str = None):
+    """Lista todos os PAC Geral Obras do usuário"""
+    user = await get_current_user(request)
+    query = {'user_id': user.user_id} if not user.is_admin else {}
+    if ano:
+        query['ano'] = ano
+    pacs = await db.pacs_geral_obras.find(query, {'_id': 0}).to_list(100)
+    return [PACGeralObras(**p) for p in pacs]
+
+@api_router.post("/pacs-geral-obras", response_model=PACGeralObras)
+async def create_pac_geral_obras(pac_data: PACGeralObrasCreate, request: Request):
+    """Cria um novo PAC Geral Obras"""
+    user = await get_current_user(request)
+    pac_obras_id = f"pacobras_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    pac_doc = {
+        'pac_obras_id': pac_obras_id,
+        'user_id': user.user_id,
+        **pac_data.model_dump(),
+        'created_at': now,
+        'updated_at': now
+    }
+    await db.pacs_geral_obras.insert_one(pac_doc)
+    return PACGeralObras(**pac_doc)
+
+@api_router.get("/pacs-geral-obras/{pac_obras_id}", response_model=PACGeralObras)
+async def get_pac_geral_obras(pac_obras_id: str, request: Request):
+    """Obtém um PAC Geral Obras específico"""
+    user = await get_current_user(request)
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    return PACGeralObras(**pac)
+
+@api_router.put("/pacs-geral-obras/{pac_obras_id}", response_model=PACGeralObras)
+async def update_pac_geral_obras(pac_obras_id: str, pac_data: PACGeralObrasUpdate, request: Request):
+    """Atualiza um PAC Geral Obras"""
+    user = await get_current_user(request)
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    update_data = {k: v for k, v in pac_data.model_dump().items() if v is not None}
+    update_data['updated_at'] = datetime.now(timezone.utc)
+    await db.pacs_geral_obras.update_one({'pac_obras_id': pac_obras_id}, {'$set': update_data})
+    updated = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    return PACGeralObras(**updated)
+
+@api_router.delete("/pacs-geral-obras/{pac_obras_id}")
+async def delete_pac_geral_obras(pac_obras_id: str, request: Request):
+    """Exclui um PAC Geral Obras e seus itens"""
+    user = await get_current_user(request)
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    await db.pac_geral_obras_items.delete_many({'pac_obras_id': pac_obras_id})
+    await db.pacs_geral_obras.delete_one({'pac_obras_id': pac_obras_id})
+    return {'message': 'PAC Geral Obras excluído com sucesso'}
+
+# ===== ROTAS ITEMS PAC GERAL OBRAS =====
+@api_router.get("/pacs-geral-obras/{pac_obras_id}/items", response_model=List[PACGeralObrasItem])
+async def get_pac_geral_obras_items(pac_obras_id: str, request: Request):
+    """Lista itens de um PAC Geral Obras"""
+    user = await get_current_user(request)
+    items = await db.pac_geral_obras_items.find({'pac_obras_id': pac_obras_id}, {'_id': 0}).to_list(1000)
+    return [PACGeralObrasItem(**item) for item in items]
+
+@api_router.post("/pacs-geral-obras/{pac_obras_id}/items", response_model=PACGeralObrasItem)
+async def create_pac_geral_obras_item(pac_obras_id: str, item_data: PACGeralObrasItemCreate, request: Request):
+    """Adiciona um item ao PAC Geral Obras"""
+    user = await get_current_user(request)
+    pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not pac:
+        raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
+    
+    item_id = f"itemobras_{uuid.uuid4().hex[:12]}"
+    item_dict = item_data.model_dump()
+    
+    # Calcular quantidade total
+    quantidade_total = sum([
+        item_dict.get('qtd_ad', 0), item_dict.get('qtd_fa', 0), item_dict.get('qtd_sa', 0),
+        item_dict.get('qtd_se', 0), item_dict.get('qtd_as', 0), item_dict.get('qtd_ag', 0),
+        item_dict.get('qtd_ob', 0), item_dict.get('qtd_tr', 0), item_dict.get('qtd_cul', 0)
+    ])
+    
+    item_doc = {
+        'item_id': item_id,
+        'pac_obras_id': pac_obras_id,
+        **item_dict,
+        'quantidade_total': quantidade_total,
+        'valorTotal': quantidade_total * item_dict['valorUnitario'],
+        'created_at': datetime.now(timezone.utc)
+    }
+    await db.pac_geral_obras_items.insert_one(item_doc)
+    return PACGeralObrasItem(**item_doc)
+
+@api_router.put("/pacs-geral-obras/{pac_obras_id}/items/{item_id}", response_model=PACGeralObrasItem)
+async def update_pac_geral_obras_item(pac_obras_id: str, item_id: str, item_data: PACGeralObrasItemUpdate, request: Request):
+    """Atualiza um item do PAC Geral Obras"""
+    user = await get_current_user(request)
+    item = await db.pac_geral_obras_items.find_one({'item_id': item_id, 'pac_obras_id': pac_obras_id}, {'_id': 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    update_data = {k: v for k, v in item_data.model_dump().items() if v is not None}
+    
+    # Recalcular totais se necessário
+    merged = {**item, **update_data}
+    quantidade_total = sum([
+        merged.get('qtd_ad', 0), merged.get('qtd_fa', 0), merged.get('qtd_sa', 0),
+        merged.get('qtd_se', 0), merged.get('qtd_as', 0), merged.get('qtd_ag', 0),
+        merged.get('qtd_ob', 0), merged.get('qtd_tr', 0), merged.get('qtd_cul', 0)
+    ])
+    update_data['quantidade_total'] = quantidade_total
+    update_data['valorTotal'] = quantidade_total * merged.get('valorUnitario', 0)
+    
+    await db.pac_geral_obras_items.update_one({'item_id': item_id}, {'$set': update_data})
+    updated = await db.pac_geral_obras_items.find_one({'item_id': item_id}, {'_id': 0})
+    return PACGeralObrasItem(**updated)
+
+@api_router.delete("/pacs-geral-obras/{pac_obras_id}/items/{item_id}")
+async def delete_pac_geral_obras_item(pac_obras_id: str, item_id: str, request: Request):
+    """Exclui um item do PAC Geral Obras"""
+    user = await get_current_user(request)
+    result = await db.pac_geral_obras_items.delete_one({'item_id': item_id, 'pac_obras_id': pac_obras_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {'message': 'Item excluído com sucesso'}
+
+
 # ============ ROTAS DE GESTÃO PROCESSUAL ============
 
 @api_router.get("/processos/anos")
