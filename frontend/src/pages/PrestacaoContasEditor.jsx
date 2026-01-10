@@ -98,13 +98,15 @@ const PrestacaoContasEditor = () => {
         api.get(`/mrosc/projetos/${id}/rh`),
         api.get(`/mrosc/projetos/${id}/despesas`),
         api.get(`/mrosc/projetos/${id}/resumo`),
-        api.get(`/mrosc/projetos/${id}/documentos`)
+        api.get(`/mrosc/projetos/${id}/documentos`),
+        api.get('/auth/me')
       ]);
       setProjeto(projetoRes.data);
       setRhs(rhRes.data);
       setDespesas(despesasRes.data);
       setResumo(resumoRes.data);
       setDocumentos(docsRes.data);
+      setUser(userRes.data);
     } catch (error) {
       toast.error('Projeto não encontrado');
       navigate('/prestacao-contas');
@@ -113,8 +115,17 @@ const PrestacaoContasEditor = () => {
     }
   };
 
+  // Verificar permissões de edição
+  const canEdit = projeto?.pode_editar !== false && !projeto?.aprovado;
+  const isAdmin = user?.is_admin;
+  const isExternalUser = user?.tipo_usuario === 'PESSOA_EXTERNA' || user?.permissions?.mrosc_only;
+
   const handleAddRH = async (e) => {
     e.preventDefault();
+    if (!canEdit && !isAdmin) {
+      toast.error('Você não pode editar este projeto no momento');
+      return;
+    }
     try {
       await api.post(`/mrosc/projetos/${id}/rh`, rhForm);
       toast.success('Recurso humano adicionado com cálculos CLT!');
