@@ -833,15 +833,15 @@ const GestaoProcessual = () => {
                   
                   <div>
                     <label className="block text-sm font-semibold text-foreground mb-1">
-                      Secretaria
+                      Número da Modalidade
                     </label>
                     <input
                       type="text"
-                      value={formData.secretaria}
-                      onChange={(e) => setFormData({ ...formData, secretaria: e.target.value })}
+                      value={formData.numero_modalidade}
+                      onChange={(e) => setFormData({ ...formData, numero_modalidade: e.target.value })}
                       className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
-                      placeholder="Nome da secretaria"
-                      data-testid="processo-secretaria-input"
+                      placeholder="Ex: PE 001/2026"
+                      data-testid="processo-numero-modalidade-input"
                     />
                   </div>
                 </div>
