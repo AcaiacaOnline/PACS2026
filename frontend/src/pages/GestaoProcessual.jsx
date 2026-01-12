@@ -75,6 +75,7 @@ const GestaoProcessual = () => {
     status: 'Em Elaboração',
     objeto: '',
     responsavel: '',
+    numero_modalidade: '',
     data_inicio: '',
     data_autuacao: '',
     data_contrato: '',
