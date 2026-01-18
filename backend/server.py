@@ -298,36 +298,9 @@ async def get_current_user(request: Request) -> User:
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-class DOEMPublicacao(BaseModel):
-    """Publicação individual dentro de uma edição do DOEM"""
-    publicacao_id: str
-    titulo: str
-    texto: str
-    secretaria: str
-    segmento: str = "Decretos"  # Categoria principal
-    tipo: str  # Tipo específico dentro do segmento
-    ordem: int = 1
-
-class DOEMPublicacaoCreate(BaseModel):
-    titulo: str
-    texto: str
-    secretaria: str = "Gabinete do Prefeito"
-    segmento: str = "Decretos"
-    tipo: str = "Decreto"
-    ordem: int = 1
-
-class DOEMAssinante(BaseModel):
-    """Dados de um assinante individual"""
-    user_id: str
-    nome: str
-    cpf: Optional[str] = None
-    cargo: Optional[str] = None
-    email: Optional[str] = None
-    data_assinatura: Optional[datetime] = None
-
-class DOEMAssinatura(BaseModel):
-    """Metadados de assinatura digital (simulada) - Suporta múltiplos assinantes"""
-    assinado: bool = False
+# ============ STARTUP EVENT ============
+@app.on_event("startup")
+async def create_admin_user():
     data_assinatura: Optional[datetime] = None
     hash_documento: Optional[str] = None
     tipo_certificado: str = "ICP-Brasil (Simulado)"
