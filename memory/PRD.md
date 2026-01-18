@@ -25,7 +25,58 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 18/01/2026 (Sessão 6)
+## Última Atualização: 18/01/2026 (Sessão 7)
+
+### Changelog - Sessão 7 (18/01/2026)
+
+#### ✅ 1. REFATORAÇÃO DO BACKEND (Iniciada)
+Criação de arquivos modulares de rotas em `/app/backend/routes/`:
+
+**Novos Arquivos Criados:**
+- `pac.py` - Rotas completas de PAC Individual (CRUD, export PDF/XLSX, import)
+- `pac_geral.py` - Rotas completas de PAC Geral (CRUD, export, import)
+- `pac_obras.py` - Rotas de PAC Obras (CRUD, export, classificação obras)
+- `gestao_processual.py` - Rotas de Processos (CRUD, stats, import/export)
+- `public.py` - Rotas públicas do Portal da Transparência
+- `mrosc.py` - Rotas completas do MROSC (projetos, RH, despesas, documentos, workflow)
+- `analytics.py` - Dashboard analítico, sistema de alertas, relatórios gerenciais
+- `__init__.py` - Exportação de todos os routers e funções setup
+
+**Status:** Os módulos foram criados com toda a lógica extraída. O `server.py` original ainda está funcional como fallback.
+
+#### ✅ 2. VERSÃO cPANEL (Completa)
+Pacote completo para hospedagem compartilhada em `/app/cpanel-version/`:
+
+- `install.php` - Instalador interativo similar ao WordPress
+  - Verificação de requisitos (PHP 7.4+, extensões)
+  - Teste de conexão MySQL
+  - Execução automática do schema
+  - Criação de arquivo de configuração
+  - Interface visual com passos guiados
+
+- `schema.sql` - Esquema completo do banco MySQL
+  - Todas as tabelas (users, pacs, pac_items, processos, mrosc_*, doem_*)
+  - Índices otimizados
+  - Foreign keys
+  - Usuário admin padrão (admin@acaiaca.mg.gov.br / Admin@123)
+
+- `README.md` - Documentação de instalação
+
+#### ✅ 3. TESTES UNITÁRIOS (Estrutura Criada)
+Diretório `/app/backend/tests/` com:
+
+- `conftest.py` - Fixtures (db, client, admin_token, sample data)
+- `test_auth.py` - Testes de autenticação e usuários
+- `test_backup.py` - Testes de backup e classificação
+- `test_pac.py` - Testes de PAC Individual, Geral e Obras
+- `test_processos.py` - Testes de Gestão Processual
+- `test_mrosc.py` - Testes do módulo MROSC
+- `test_public.py` - Testes das rotas públicas
+- `pytest.ini` - Configuração do pytest
+
+**Comando para executar:** `cd /app/backend && python -m pytest tests/ -v`
+
+---
 
 ### Changelog - Sessão 6 (18/01/2026)
 
