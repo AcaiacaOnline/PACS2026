@@ -359,28 +359,76 @@ const PrestacaoContasEditor = () => {
     }
   };
 
-  // Download PDF
-  const handleDownloadPDF = async () => {
+  // Download PDF com confirmação de assinatura
+  const handleDownloadPDF = async (forceSign = false, signatureDate = null) => {
     try {
-      const response = await api.get(`/mrosc/projetos/${id}/relatorio/pdf`, {
+      let url = `/mrosc/projetos/${id}/relatorio/pdf`;
+      if (forceSign && signatureDate) {
+        url += `?assinar=true&data=${encodeURIComponent(signatureDate)}`;
+      }
+      
+      const response = await api.get(url, {
         responseType: 'blob'
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = urlBlob;
       link.setAttribute('download', `Prestacao_Contas_${projeto.nome_projeto.replace(/\s+/g, '_')}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       toast.success('PDF gerado com sucesso!');
+      setShowAssinaturaModal(false);
     } catch (error) {
       toast.error('Erro ao gerar PDF');
     }
   };
 
-  // Download PDF Consolidado
-  const handleDownloadPDFConsolidado = async () => {
+  // Download PDF Consolidado com confirmação de assinatura
+  const handleDownloadPDFConsolidado = async (forceSign = false, signatureDate = null) => {
+    try {
+      let url = `/mrosc/projetos/${id}/relatorio/consolidado/pdf`;
+      if (forceSign && signatureDate) {
+        url += `?assinar=true&data=${encodeURIComponent(signatureDate)}`;
+      }
+      
+      const response = await api.get(url, {
+        responseType: 'blob'
+      });
+      
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      link.setAttribute('download', `MROSC_Consolidado_${projeto.nome_projeto.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF Consolidado gerado com sucesso!');
+      setShowAssinaturaModal(false);
+    } catch (error) {
+      toast.error('Erro ao gerar PDF Consolidado');
+    }
+  };
+
+  // Abrir modal de assinatura
+  const abrirModalAssinatura = (tipo) => {
+    setTipoAssinatura(tipo);
+    // Definir data/hora atual como padrão
+    const now = new Date();
+    const dataFormatada = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR');
+    setDataAssinatura(dataFormatada);
+    setShowAssinaturaModal(true);
+  };
+
+  // Confirmar assinatura
+  const confirmarAssinatura = () => {
+    if (tipoAssinatura === 'pdf') {
+      handleDownloadPDF(true, dataAssinatura);
+    } else {
+      handleDownloadPDFConsolidado(true, dataAssinatura);
+    }
+  };
     try {
       const response = await api.get(`/mrosc/projetos/${id}/relatorio/consolidado/pdf`, {
         responseType: 'blob'
