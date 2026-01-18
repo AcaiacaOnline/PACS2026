@@ -36,6 +36,42 @@ from striprtf.striprtf import rtf_to_text
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# ============ IMPORTAÇÃO DE MODELOS REFATORADOS ============
+# Os modelos agora são importados do pacote 'models/' para reduzir duplicação
+from models import (
+    # User models
+    User as UserModel, UserCreate as UserCreateModel, UserUpdate as UserUpdateModel,
+    UserLogin as UserLoginModel, UserListItem as UserListItemModel,
+    UserPermissions as UserPermissionsModel, UserSignatureData as UserSignatureDataModel,
+    # PAC models
+    PAC as PACModel, PACCreate as PACCreateModel, PACUpdate as PACUpdateModel,
+    PACItem as PACItemModel, PACItemCreate as PACItemCreateModel, PACItemUpdate as PACItemUpdateModel,
+    PACGeral as PACGeralModel, PACGeralCreate as PACGeralCreateModel, PACGeralUpdate as PACGeralUpdateModel,
+    PACGeralItem as PACGeralItemModel, PACGeralItemCreate as PACGeralItemCreateModel, PACGeralItemUpdate as PACGeralItemUpdateModel,
+    # PAC Obras models
+    PACGeralObras as PACGeralObrasModel, PACGeralObrasCreate as PACGeralObrasCreateModel, PACGeralObrasUpdate as PACGeralObrasUpdateModel,
+    PACGeralObrasItem as PACGeralObrasItemModel, PACGeralObrasItemCreate as PACGeralObrasItemCreateModel, PACGeralObrasItemUpdate as PACGeralObrasItemUpdateModel,
+    CLASSIFICACAO_OBRAS_SERVICOS,
+    # Processo models
+    Processo as ProcessoModel, ProcessoCreate as ProcessoCreateModel, ProcessoUpdate as ProcessoUpdateModel,
+    PaginatedResponse as PaginatedResponseModel,
+    # DOEM models
+    DOEMPublicacao as DOEMPublicacaoModel, DOEMPublicacaoCreate as DOEMPublicacaoCreateModel,
+    DOEMAssinante as DOEMAssinanteModel, DOEMAssinatura as DOEMAssinaturaModel,
+    DOEMEdicao as DOEMEdicaoModel, DOEMEdicaoCreate as DOEMEdicaoCreateModel, DOEMEdicaoUpdate as DOEMEdicaoUpdateModel,
+    DOEMConfig as DOEMConfigModel, DOEMConfigUpdate as DOEMConfigUpdateModel,
+    DOEM_SEGMENTOS, DOEM_TIPOS_PUBLICACAO,
+    # Newsletter models
+    NewsletterInscrito as NewsletterInscritoModel, NewsletterInscricaoPublica as NewsletterInscricaoPublicaModel,
+    NewsletterInscricaoManual as NewsletterInscricaoManualModel,
+    # MROSC models
+    ProjetoMROSC as ProjetoMROSCModel, ProjetoMROSCCreate as ProjetoMROSCCreateModel, ProjetoMROSCUpdate as ProjetoMROSCUpdateModel,
+    RecursoHumanoMROSC as RecursoHumanoMROSCModel, RecursoHumanoMROSCCreate as RecursoHumanoMROSCCreateModel,
+    DespesaMROSC as DespesaMROSCModel, DespesaMROSCCreate as DespesaMROSCCreateModel,
+    DocumentoMROSC as DocumentoMROSCModel, DocumentoMROSCCreate as DocumentoMROSCCreateModel,
+    NATUREZAS_DESPESA_MROSC,
+)
+
 # ============ CONFIGURAÇÕES DE EMAIL ============
 SMTP_SERVER = os.environ.get('SMTP_SERVER', 'mail.acaiaca.mg.gov.br')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', '465'))
