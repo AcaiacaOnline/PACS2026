@@ -3089,7 +3089,7 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     # Adicionar assinatura digital ao PDF
     try:
         signed_buffer, validation_code = await add_signature_to_pdf(
-            buffer, user, f"PAC Geral - {pac.get('nome_secretaria', '')}", pac_geral_id
+            buffer, user, f"PAC Geral - {pac.get('nome_secretaria', '')}", pac_geral_id, None, data
         )
         return StreamingResponse(
             signed_buffer, 
