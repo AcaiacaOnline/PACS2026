@@ -4,7 +4,7 @@ Pytest configuration and fixtures for Planejamento Acaiaca tests
 import pytest
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
-from httpx import AsyncClient, ASGITransport
+import httpx
 import os
 from datetime import datetime, timezone
 import sys
@@ -16,46 +16,45 @@ sys.path.insert(0, '/app/backend')
 @pytest.fixture(scope="session")
 def event_loop():
     """Create event loop for async tests"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest.fixture(scope="session")
+def api_url():
+    """Get API URL from environment"""
+    return os.environ.get('API_URL', 'https://acaiaca-gov.preview.emergentagent.com')
+
+
+@pytest.fixture(scope="session")
 async def db():
-    """Database fixture - uses test database"""
+    """Database fixture"""
     mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-    db_name = os.environ.get('DB_NAME', 'pac_acaiaca') + '_test'
+    db_name = os.environ.get('DB_NAME', 'pac_acaiaca')
     
     client = AsyncIOMotorClient(mongo_url)
     database = client[db_name]
     
     yield database
     
-    # Cleanup - drop test collections after tests
-    # await database.drop_collection('test_users')
     client.close()
 
 
 @pytest.fixture(scope="session")
-async def app():
-    """FastAPI application fixture"""
-    from server import app as fastapi_app
-    yield fastapi_app
+def client(api_url):
+    """Sync HTTP client fixture for testing external API"""
+    with httpx.Client(base_url=api_url, timeout=30.0) as c:
+        yield c
 
 
 @pytest.fixture(scope="session")
-async def client(app):
-    """Async HTTP client fixture"""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-
-@pytest.fixture
-async def admin_token(client):
+def admin_token(client):
     """Get admin authentication token"""
-    response = await client.post(
+    response = client.post(
         "/api/auth/login",
         json={
             "email": "cristiano.abdo@acaiaca.mg.gov.br",
