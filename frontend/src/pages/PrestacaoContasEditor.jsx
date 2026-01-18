@@ -86,6 +86,9 @@ const PrestacaoContasEditor = () => {
   const [showDespesaModal, setShowDespesaModal] = useState(false);
   const [showDocumentoModal, setShowDocumentoModal] = useState(false);
   const [showProjetoModal, setShowProjetoModal] = useState(false);
+  const [showAssinaturaModal, setShowAssinaturaModal] = useState(false);
+  const [tipoAssinatura, setTipoAssinatura] = useState('pdf'); // 'pdf' ou 'consolidado'
+  const [dataAssinatura, setDataAssinatura] = useState('');
   const [uploading, setUploading] = useState(false);
   
   // Formulários
