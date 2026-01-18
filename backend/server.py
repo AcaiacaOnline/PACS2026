@@ -5311,28 +5311,6 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         
         return output_buffer, validation_code
 
-async def get_doem_config() -> dict:
-    """Obtém ou cria configuração padrão do DOEM"""
-    config = await db.doem_config.find_one({'config_id': 'doem_config_main'}, {'_id': 0})
-    if not config:
-        config = {
-            'config_id': 'doem_config_main',
-            'nome_municipio': 'Acaiaca',
-            'uf': 'MG',
-            'cnpj': '18.296.673/0001-10',
-            'endereco': 'Praça Antônio Carlos, 10 - Centro',
-            'telefone': '(31) 3554-1222',
-            'email': 'gabinete@acaiaca.mg.gov.br',
-            'prefeito': '',
-            'ano_inicio': 2026,
-            'ultimo_numero_edicao': 0,
-            'segmentos': DOEM_SEGMENTOS,
-            'tipos_publicacao': DOEM_TIPOS_PUBLICACAO,
-            'created_at': datetime.now(timezone.utc)
-        }
-        await db.doem_config.insert_one(config)
-    return config
-
 async def get_next_edicao_number() -> int:
     """Obtém o próximo número de edição"""
     config = await get_doem_config()
