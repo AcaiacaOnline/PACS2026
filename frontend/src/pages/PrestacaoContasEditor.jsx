@@ -3,24 +3,41 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, DollarSign, Users, FileText, Plus, Trash2, Save,
   Calculator, Building2, PieChart, Upload, Download, Eye, CheckCircle, XCircle, File,
-  Lock, AlertTriangle, Send
+  Lock, AlertTriangle, Send, Briefcase, Package, Wrench, Settings, Info, ClipboardList, FileSpreadsheet
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
 import { toast } from 'sonner';
 
-const REGIMES_CONTRATACAO = ['CLT', 'RPA', 'AUTONOMO'];
+const REGIMES_CONTRATACAO = ['CLT', 'RPA', 'AUTONOMO', 'ESTAGIARIO', 'MENOR_APRENDIZ'];
 
-const NATUREZAS_DESPESA = {
-  "319011": "Vencimentos e Vantagens Fixas",
-  "319013": "Obrigações Patronais",
-  "339030": "Material de Consumo",
-  "339035": "Serviços de Consultoria",
-  "339036": "Serviços Terceiros - PF",
-  "339039": "Serviços Terceiros - PJ",
-  "339046": "Auxílio-Alimentação",
-  "339049": "Auxílio-Transporte",
-  "449052": "Equipamentos Permanentes"
+const TIPOS_CONCEDENTE = [
+  { value: 'PARLAMENTAR', label: 'Parlamentar' },
+  { value: 'COMISSAO', label: 'Comissão' },
+  { value: 'BANCADA', label: 'Bancada' },
+  { value: 'ORGAO', label: 'Órgão Público' },
+  { value: 'OUTRO', label: 'Outro' }
+];
+
+const STATUS_PROJETO = {
+  'ELABORACAO': { label: 'Em Elaboração', color: 'bg-blue-100 text-blue-800', icon: FileText },
+  'APROVADO': { label: 'Aprovado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+  'EXECUCAO': { label: 'Em Execução', color: 'bg-purple-100 text-purple-800', icon: Settings },
+  'PRESTACAO_CONTAS': { label: 'Prestação de Contas', color: 'bg-orange-100 text-orange-800', icon: ClipboardList },
+  'CONCLUIDO': { label: 'Concluído', color: 'bg-gray-100 text-gray-800', icon: CheckCircle },
+  'CORRECAO': { label: 'Correção Solicitada', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle },
+  'REPROVADO': { label: 'Reprovado', color: 'bg-red-100 text-red-800', icon: XCircle }
+};
+
+const CATEGORIAS_NATUREZA = {
+  'RH': { label: 'Recursos Humanos', icon: Users, color: 'text-blue-600' },
+  'MATERIAIS': { label: 'Materiais de Consumo', icon: Package, color: 'text-green-600' },
+  'SERVICOS': { label: 'Serviços', icon: Wrench, color: 'text-purple-600' },
+  'BENEFICIOS': { label: 'Benefícios', icon: DollarSign, color: 'text-orange-600' },
+  'TRIBUTOS': { label: 'Tributos', icon: Building2, color: 'text-red-600' },
+  'INVESTIMENTOS': { label: 'Investimentos', icon: Briefcase, color: 'text-indigo-600' },
+  'VIAGENS': { label: 'Viagens', icon: FileText, color: 'text-teal-600' },
+  'PREMIACOES': { label: 'Premiações', icon: FileText, color: 'text-pink-600' }
 };
 
 const TIPOS_DOCUMENTO = {
@@ -38,6 +55,8 @@ const TIPOS_DOCUMENTO = {
   'PLANO_TRABALHO': 'Plano de Trabalho',
   'CERTIDAO_NEGATIVA': 'Certidão Negativa',
   'FOTO_COMPROVACAO': 'Foto de Comprovação',
+  'ORCAMENTO': 'Orçamento/Cotação',
+  'ATA_REGISTRO_PRECO': 'Ata de Registro de Preço',
   'IMAGEM': 'Imagem/Foto',
   'COMPROVANTE': 'Comprovante',
   'OUTRO': 'Outro'
@@ -46,20 +65,30 @@ const TIPOS_DOCUMENTO = {
 const PrestacaoContasEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  
+  // Estado principal
   const [projeto, setProjeto] = useState(null);
   const [user, setUser] = useState(null);
+  const [naturezasDespesa, setNaturezasDespesa] = useState({});
   const [rhs, setRhs] = useState([]);
   const [despesas, setDespesas] = useState([]);
   const [documentos, setDocumentos] = useState([]);
   const [resumo, setResumo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('rh');
+  
+  // Abas: orcamentacao, rh, despesas, documentos, resumo
+  const [activeTab, setActiveTab] = useState('orcamentacao');
+  const [activeCategoria, setActiveCategoria] = useState('MATERIAIS');
+  
+  // Modais
   const [showRHModal, setShowRHModal] = useState(false);
   const [showDespesaModal, setShowDespesaModal] = useState(false);
   const [showDocumentoModal, setShowDocumentoModal] = useState(false);
+  const [showProjetoModal, setShowProjetoModal] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
-
+  
+  // Formulários
   const [rhForm, setRhForm] = useState({
     nome_funcao: '',
     regime_contratacao: 'CLT',
@@ -73,7 +102,7 @@ const PrestacaoContasEditor = () => {
     orcamento_3: 0,
     observacoes: ''
   });
-
+  
   const [despesaForm, setDespesaForm] = useState({
     natureza_despesa: '339030',
     item_despesa: '',
@@ -88,59 +117,84 @@ const PrestacaoContasEditor = () => {
     observacoes: '',
     justificativa: ''
   });
-
-  const [docForm, setDocForm] = useState({
-    tipo_documento: 'COMPROVANTE',
+  
+  const [documentoForm, setDocumentoForm] = useState({
+    tipo_documento: 'NOTA_FISCAL',
     numero_documento: '',
-    data_documento: new Date().toISOString().split('T')[0],
+    data_documento: '',
     valor: 0,
     despesa_id: '',
     observacoes: '',
     file: null
   });
 
+  // Carregar dados
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [projetoRes, naturezasRes, rhsRes, despesasRes, docsRes, resumoRes, userRes] = await Promise.all([
+          api.get(`/mrosc/projetos/${id}`),
+          api.get('/mrosc/naturezas-despesa'),
+          api.get(`/mrosc/projetos/${id}/rh`),
+          api.get(`/mrosc/projetos/${id}/despesas`),
+          api.get(`/mrosc/projetos/${id}/documentos`),
+          api.get(`/mrosc/projetos/${id}/resumo`),
+          api.get('/auth/me')
+        ]);
+        
+        setProjeto(projetoRes.data);
+        setNaturezasDespesa(naturezasRes.data || {});
+        setRhs(rhsRes.data || []);
+        setDespesas(despesasRes.data || []);
+        setDocumentos(docsRes.data || []);
+        setResumo(resumoRes.data);
+        setUser(userRes.data);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        if (error.response?.status === 404) {
+          toast.error('Projeto não encontrado');
+          navigate('/prestacao-contas');
+        } else {
+          toast.error('Erro ao carregar dados do projeto');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchData();
-  }, [id]);
+  }, [id, navigate]);
 
-  const fetchData = async () => {
-    try {
-      const [projetoRes, rhRes, despesasRes, resumoRes, docsRes, userRes] = await Promise.all([
-        api.get(`/mrosc/projetos/${id}`),
-        api.get(`/mrosc/projetos/${id}/rh`),
-        api.get(`/mrosc/projetos/${id}/despesas`),
-        api.get(`/mrosc/projetos/${id}/resumo`),
-        api.get(`/mrosc/projetos/${id}/documentos`),
-        api.get('/auth/me')
-      ]);
-      setProjeto(projetoRes.data);
-      setRhs(rhRes.data);
-      setDespesas(despesasRes.data);
-      setResumo(resumoRes.data);
-      setDocumentos(docsRes.data);
-      setUser(userRes.data);
-    } catch (error) {
-      toast.error('Projeto não encontrado');
-      navigate('/prestacao-contas');
-    } finally {
-      setLoading(false);
-    }
+  // Calcular encargos CLT
+  const calcularEncargosCLT = (salario) => {
+    const ferias = (salario / 12) + (salario / 12 / 3); // salário/12 + 1/3 de férias/12
+    const decimoTerceiro = salario / 12;
+    const fgts = salario * 0.08;
+    const inssPatronal = salario * 0.20;
+    const fgtsDemissao = fgts * 0.50;
+    
+    return {
+      provisao_ferias: ferias,
+      provisao_13_salario: decimoTerceiro,
+      fgts: fgts,
+      inss_patronal: inssPatronal,
+      fgts_demissao: fgtsDemissao,
+      total_encargos: ferias + decimoTerceiro + fgts + inssPatronal
+    };
+  };
+  
+  // Calcular média de orçamentos
+  const calcularMediaOrcamentos = (orc1, orc2, orc3) => {
+    const valores = [orc1, orc2, orc3].filter(v => v > 0);
+    if (valores.length === 0) return 0;
+    return valores.reduce((a, b) => a + b, 0) / valores.length;
   };
 
-  // Verificar permissões de edição
-  const canEdit = projeto?.pode_editar !== false && !projeto?.aprovado;
-  const isAdmin = user?.is_admin;
-  const isExternalUser = user?.tipo_usuario === 'PESSOA_EXTERNA' || user?.permissions?.mrosc_only;
-
-  const handleAddRH = async (e) => {
-    e.preventDefault();
-    if (!canEdit && !isAdmin) {
-      toast.error('Você não pode editar este projeto no momento');
-      return;
-    }
+  // Adicionar RH
+  const handleAddRH = async () => {
     try {
-      await api.post(`/mrosc/projetos/${id}/rh`, rhForm);
-      toast.success('Recurso humano adicionado com cálculos CLT!');
+      const response = await api.post(`/mrosc/projetos/${id}/rh`, rhForm);
+      setRhs([...rhs, response.data]);
       setShowRHModal(false);
       setRhForm({
         nome_funcao: '',
@@ -155,28 +209,47 @@ const PrestacaoContasEditor = () => {
         orcamento_3: 0,
         observacoes: ''
       });
-      fetchData();
+      toast.success('Recurso Humano adicionado com sucesso!');
+      
+      // Atualizar resumo
+      const resumoRes = await api.get(`/mrosc/projetos/${id}/resumo`);
+      setResumo(resumoRes.data);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao adicionar RH');
     }
   };
 
-  const handleDeleteRH = async (rh) => {
-    if (!window.confirm(`Excluir "${rh.nome_funcao}"?`)) return;
+  // Excluir RH
+  const handleDeleteRH = async (rhId) => {
+    if (!window.confirm('Deseja excluir este recurso humano?')) return;
+    
     try {
-      await api.delete(`/mrosc/projetos/${id}/rh/${rh.rh_id}`);
-      toast.success('Recurso humano excluído!');
-      fetchData();
+      await api.delete(`/mrosc/projetos/${id}/rh/${rhId}`);
+      setRhs(rhs.filter(r => r.rh_id !== rhId));
+      toast.success('Recurso Humano removido!');
+      
+      const resumoRes = await api.get(`/mrosc/projetos/${id}/resumo`);
+      setResumo(resumoRes.data);
     } catch (error) {
-      toast.error('Erro ao excluir');
+      toast.error('Erro ao remover RH');
     }
   };
 
-  const handleAddDespesa = async (e) => {
-    e.preventDefault();
+  // Adicionar Despesa
+  const handleAddDespesa = async () => {
     try {
-      await api.post(`/mrosc/projetos/${id}/despesas`, despesaForm);
-      toast.success('Despesa adicionada!');
+      const media = calcularMediaOrcamentos(
+        despesaForm.orcamento_1,
+        despesaForm.orcamento_2,
+        despesaForm.orcamento_3
+      );
+      
+      const response = await api.post(`/mrosc/projetos/${id}/despesas`, {
+        ...despesaForm,
+        valor_unitario: despesaForm.valor_unitario || media
+      });
+      
+      setDespesas([...despesas, response.data]);
       setShowDespesaModal(false);
       setDespesaForm({
         natureza_despesa: '339030',
@@ -192,70 +265,65 @@ const PrestacaoContasEditor = () => {
         observacoes: '',
         justificativa: ''
       });
-      fetchData();
+      toast.success('Despesa adicionada com sucesso!');
+      
+      const resumoRes = await api.get(`/mrosc/projetos/${id}/resumo`);
+      setResumo(resumoRes.data);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao adicionar despesa');
     }
   };
 
-  const handleDeleteDespesa = async (despesa) => {
-    if (!window.confirm(`Excluir despesa "${despesa.descricao}"?`)) return;
+  // Excluir Despesa
+  const handleDeleteDespesa = async (despesaId) => {
+    if (!window.confirm('Deseja excluir esta despesa?')) return;
+    
     try {
-      await api.delete(`/mrosc/projetos/${id}/despesas/${despesa.despesa_id}`);
-      toast.success('Despesa excluída!');
-      fetchData();
+      await api.delete(`/mrosc/projetos/${id}/despesas/${despesaId}`);
+      setDespesas(despesas.filter(d => d.despesa_id !== despesaId));
+      toast.success('Despesa removida!');
+      
+      const resumoRes = await api.get(`/mrosc/projetos/${id}/resumo`);
+      setResumo(resumoRes.data);
     } catch (error) {
-      toast.error('Erro ao excluir');
+      toast.error('Erro ao remover despesa');
     }
   };
 
-  // ===== FUNÇÕES DE DOCUMENTOS =====
-  const handleUploadDocumento = async (e) => {
-    e.preventDefault();
-    if (!docForm.file) {
-      toast.error('Selecione um arquivo (PDF, JPG ou PNG)');
-      return;
-    }
-    
-    // Validar tipo de arquivo
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowedTypes.includes(docForm.file.type)) {
-      toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
+  // Upload Documento
+  const handleUploadDocumento = async () => {
+    if (!documentoForm.file) {
+      toast.error('Selecione um arquivo');
       return;
     }
     
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', docForm.file);
-      formData.append('tipo_documento', docForm.tipo_documento);
-      formData.append('numero_documento', docForm.numero_documento || '');
-      formData.append('data_documento', docForm.data_documento ? new Date(docForm.data_documento).toISOString() : '');
-      formData.append('valor', docForm.valor || 0);
-      formData.append('despesa_id', docForm.despesa_id || '');
-      formData.append('rh_id', docForm.rh_id || '');
-      formData.append('descricao', docForm.descricao || '');
-      formData.append('observacoes', docForm.observacoes || '');
-
-      await api.post(`/mrosc/projetos/${id}/documentos/upload`, formData, {
+      formData.append('file', documentoForm.file);
+      formData.append('tipo_documento', documentoForm.tipo_documento);
+      formData.append('numero_documento', documentoForm.numero_documento);
+      formData.append('data_documento', documentoForm.data_documento);
+      formData.append('valor', documentoForm.valor.toString());
+      formData.append('despesa_id', documentoForm.despesa_id);
+      formData.append('observacoes', documentoForm.observacoes);
+      
+      const response = await api.post(`/mrosc/projetos/${id}/documentos/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Documento enviado com sucesso!');
+      setDocumentos([...documentos, response.data]);
       setShowDocumentoModal(false);
-      setDocForm({
-        tipo_documento: 'COMPROVANTE',
+      setDocumentoForm({
+        tipo_documento: 'NOTA_FISCAL',
         numero_documento: '',
-        data_documento: new Date().toISOString().split('T')[0],
+        data_documento: '',
         valor: 0,
         despesa_id: '',
-        rh_id: '',
-        descricao: '',
         observacoes: '',
         file: null
       });
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      fetchData();
+      toast.success('Documento enviado com sucesso!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao enviar documento');
     } finally {
@@ -263,67 +331,42 @@ const PrestacaoContasEditor = () => {
     }
   };
 
-  const handleDeleteDocumento = async (doc) => {
-    if (!window.confirm(`Excluir documento "${doc.arquivo_nome}"?`)) return;
+  // Excluir Documento
+  const handleDeleteDocumento = async (docId) => {
+    if (!window.confirm('Deseja excluir este documento?')) return;
+    
     try {
-      await api.delete(`/mrosc/projetos/${id}/documentos/${doc.documento_id}`);
-      toast.success('Documento excluído!');
-      fetchData();
+      await api.delete(`/mrosc/projetos/${id}/documentos/${docId}`);
+      setDocumentos(documentos.filter(d => d.documento_id !== docId));
+      toast.success('Documento removido!');
     } catch (error) {
-      toast.error('Erro ao excluir documento');
+      toast.error('Erro ao remover documento');
     }
   };
 
-  const handleValidarDocumento = async (doc) => {
+  // Atualizar projeto
+  const handleUpdateProjeto = async (data) => {
     try {
-      await api.put(`/mrosc/projetos/${id}/documentos/${doc.documento_id}/validar`);
-      toast.success('Documento validado!');
-      fetchData();
+      const response = await api.put(`/mrosc/projetos/${id}`, data);
+      setProjeto(response.data);
+      setShowProjetoModal(false);
+      toast.success('Projeto atualizado!');
     } catch (error) {
-      toast.error('Erro ao validar documento');
+      toast.error('Erro ao atualizar projeto');
     }
   };
 
-  const handleViewDocumento = (doc) => {
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
-    window.open(`${backendUrl}${doc.arquivo_url}`, '_blank');
-  };
-
-  const formatCurrency = (value) => {
-    return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-BR');
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-        </div>
-      </Layout>
-    );
-  }
-
-
-  const handleExportPDF = async () => {
+  // Download PDF
+  const handleDownloadPDF = async () => {
     try {
       const response = await api.get(`/mrosc/projetos/${id}/relatorio/pdf`, {
         responseType: 'blob'
       });
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Prestacao_Contas_${projeto?.nome_projeto?.replace(/\s+/g, '_')}.pdf`);
+      link.setAttribute('download', `Prestacao_Contas_${projeto.nome_projeto.replace(/\s+/g, '_')}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -333,873 +376,1324 @@ const PrestacaoContasEditor = () => {
     }
   };
 
-  const handleSubmeterPrestacao = async () => {
-    if (!window.confirm('Deseja submeter esta prestação de contas para análise? Após submissão, você não poderá editar até que o gestor autorize.')) return;
+  // Download PDF Consolidado
+  const handleDownloadPDFConsolidado = async () => {
     try {
-      await api.post(`/mrosc/projetos/${id}/submeter`);
-      toast.success('Prestação de contas submetida!');
-      fetchData();
+      const response = await api.get(`/mrosc/projetos/${id}/relatorio/consolidado/pdf`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `MROSC_Consolidado_${projeto.nome_projeto.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('PDF Consolidado gerado com sucesso!');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao submeter');
+      toast.error('Erro ao gerar PDF Consolidado');
     }
   };
 
+  // Formatar moeda
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value || 0);
+  };
+
+  // Agrupar despesas por categoria
+  const getDespesasPorCategoria = (categoria) => {
+    return despesas.filter(d => {
+      const nat = naturezasDespesa[d.natureza_despesa];
+      return nat && nat.categoria === categoria;
+    });
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!projeto) {
+    return (
+      <Layout>
+        <div className="p-6 text-center">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Projeto não encontrado</h2>
+          <button 
+            onClick={() => navigate('/prestacao-contas')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Voltar para lista
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const statusConfig = STATUS_PROJETO[projeto.status] || STATUS_PROJETO['ELABORACAO'];
+  const StatusIcon = statusConfig.icon;
+
   return (
     <Layout>
-      <div className="space-y-6">
-        {/* Alerta de bloqueio de edição */}
-        {!canEdit && !isAdmin && (
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
-            <Lock className="text-amber-600" size={24} />
-            <div>
-              <p className="font-medium text-amber-800">Edição Bloqueada</p>
-              <p className="text-sm text-amber-700">
-                {projeto?.aprovado 
-                  ? 'Este projeto já foi aprovado e não pode mais ser editado.'
-                  : 'Este projeto foi submetido e aguarda análise. Você não pode editar no momento.'
-                }
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Alerta de correção solicitada */}
-        {projeto?.correcao_solicitada && canEdit && (
-          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
-            <AlertTriangle className="text-amber-600" size={24} />
-            <div className="flex-1">
-              <p className="font-medium text-amber-800">Correção Solicitada</p>
-              <p className="text-sm text-amber-700">
-                O gestor solicitou correções neste projeto. Motivo: {projeto.motivo_correcao}
-              </p>
-            </div>
-            <button
-              onClick={handleSubmeterPrestacao}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-            >
-              <Send size={16} /> Resubmeter
-            </button>
-          </div>
-        )}
-
+      <div className="p-6 max-w-7xl mx-auto" data-testid="prestacao-contas-editor">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/prestacao-contas')} className="p-2 hover:bg-muted rounded-lg">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <DollarSign className="text-green-600" />
-              {projeto?.nome_projeto}
-              {projeto?.aprovado && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
-                  <CheckCircle size={12} /> Aprovado
-                </span>
-              )}
-            </h1>
-            <p className="text-muted-foreground text-sm">{projeto?.organizacao_parceira}</p>
-          </div>
-          <div className="flex gap-2">
-            {canEdit && !projeto?.submetido && isExternalUser && (
-              <button
-                onClick={handleSubmeterPrestacao}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
-                data-testid="submeter-prestacao-btn"
-              >
-                <Send size={16} /> Submeter
-              </button>
-            )}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
             <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm"
-              data-testid="export-pdf-mrosc-btn"
+              onClick={() => navigate('/prestacao-contas')}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+              data-testid="btn-voltar"
             >
-              <Download size={16} /> PDF
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{projeto.nome_projeto}</h1>
+              <p className="text-sm text-gray-500">{projeto.organizacao_parceira}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${statusConfig.color}`}>
+              <StatusIcon className="h-4 w-4" />
+              {statusConfig.label}
+            </span>
+            
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              data-testid="btn-download-pdf"
+            >
+              <Download className="h-4 w-4" />
+              PDF
+            </button>
+            
+            <button
+              onClick={handleDownloadPDFConsolidado}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              data-testid="btn-download-consolidado"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              PDF + Anexos
             </button>
           </div>
         </div>
 
-        {/* Resumo Orçamentário */}
-        {resumo && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Valor Total Projeto</div>
-              <div className="text-xl font-bold text-foreground">{formatCurrency(projeto?.valor_total)}</div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Total RH</div>
-              <div className="text-xl font-bold text-blue-600">{formatCurrency(resumo.resumo?.total_recursos_humanos)}</div>
-              <div className="text-xs text-muted-foreground">{resumo.resumo?.quantidade_rh} pessoas</div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Total Despesas</div>
-              <div className="text-xl font-bold text-amber-600">{formatCurrency(resumo.resumo?.total_despesas)}</div>
-              <div className="text-xs text-muted-foreground">{resumo.resumo?.quantidade_despesas} itens</div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="text-sm text-muted-foreground">Total Geral</div>
-              <div className="text-xl font-bold text-green-600">{formatCurrency(resumo.resumo?.total_geral)}</div>
-            </div>
-            <div className={`bg-card border rounded-xl p-4 ${resumo.diferenca_orcamento >= 0 ? 'border-green-500' : 'border-red-500'}`}>
-              <div className="text-sm text-muted-foreground">Saldo</div>
-              <div className={`text-xl font-bold ${resumo.diferenca_orcamento >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(resumo.diferenca_orcamento)}
-              </div>
+        {/* Resumo Financeiro Compacto */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div className="bg-white rounded-lg border p-4">
+            <div className="text-sm text-gray-500">Valor Total Projeto</div>
+            <div className="text-xl font-bold text-gray-900">{formatCurrency(projeto.valor_total)}</div>
+          </div>
+          <div className="bg-white rounded-lg border p-4">
+            <div className="text-sm text-gray-500">Total RH</div>
+            <div className="text-xl font-bold text-blue-600">{formatCurrency(resumo?.total_rh || 0)}</div>
+          </div>
+          <div className="bg-white rounded-lg border p-4">
+            <div className="text-sm text-gray-500">Total Despesas</div>
+            <div className="text-xl font-bold text-green-600">{formatCurrency(resumo?.total_despesas || 0)}</div>
+          </div>
+          <div className="bg-white rounded-lg border p-4">
+            <div className="text-sm text-gray-500">Total Geral</div>
+            <div className="text-xl font-bold text-purple-600">{formatCurrency((resumo?.total_rh || 0) + (resumo?.total_despesas || 0))}</div>
+          </div>
+          <div className="bg-white rounded-lg border p-4">
+            <div className="text-sm text-gray-500">Saldo</div>
+            <div className={`text-xl font-bold ${projeto.valor_total - ((resumo?.total_rh || 0) + (resumo?.total_despesas || 0)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(projeto.valor_total - ((resumo?.total_rh || 0) + (resumo?.total_despesas || 0)))}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-border">
-          <button
-            onClick={() => setActiveTab('rh')}
-            className={`px-4 py-2 font-medium text-sm transition-colors ${
-              activeTab === 'rh' 
-                ? 'text-green-600 border-b-2 border-green-600' 
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Users size={16} className="inline mr-2" />
-            Recursos Humanos ({rhs.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('despesas')}
-            className={`px-4 py-2 font-medium text-sm transition-colors ${
-              activeTab === 'despesas' 
-                ? 'text-green-600 border-b-2 border-green-600' 
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <FileText size={16} className="inline mr-2" />
-            Despesas ({despesas.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('documentos')}
-            className={`px-4 py-2 font-medium text-sm transition-colors ${
-              activeTab === 'documentos' 
-                ? 'text-green-600 border-b-2 border-green-600' 
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            data-testid="tab-documentos"
-          >
-            <Upload size={16} className="inline mr-2" />
-            Documentos ({documentos.length})
-          </button>
-        </div>
+        <div className="bg-white rounded-lg border mb-6">
+          <div className="flex border-b overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('orcamentacao')}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                activeTab === 'orcamentacao' 
+                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid="tab-orcamentacao"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Orçamentação
+            </button>
+            <button
+              onClick={() => setActiveTab('rh')}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                activeTab === 'rh' 
+                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid="tab-rh"
+            >
+              <Users className="h-4 w-4" />
+              Recursos Humanos ({rhs.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('despesas')}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                activeTab === 'despesas' 
+                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid="tab-despesas"
+            >
+              <Package className="h-4 w-4" />
+              Despesas ({despesas.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('documentos')}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                activeTab === 'documentos' 
+                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid="tab-documentos"
+            >
+              <FileText className="h-4 w-4" />
+              Documentos ({documentos.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('resumo')}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                activeTab === 'resumo' 
+                  ? 'border-b-2 border-blue-600 text-blue-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid="tab-resumo"
+            >
+              <PieChart className="h-4 w-4" />
+              Resumo
+            </button>
+          </div>
 
-        {/* Tab Content - Recursos Humanos */}
-        {activeTab === 'rh' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Recursos Humanos</h2>
-              <button
-                onClick={() => setShowRHModal(true)}
-                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm"
-              >
-                <Plus size={16} /> Adicionar RH
-              </button>
-            </div>
-
-            {rhs.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <Users size={40} className="mx-auto mb-3 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">Nenhum recurso humano cadastrado</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {rhs.map((rh) => (
-                  <div key={rh.rh_id} className="bg-card border border-border rounded-xl p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{rh.nome_funcao}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          rh.regime_contratacao === 'CLT' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {rh.regime_contratacao} • {rh.carga_horaria_semanal}h/sem • {rh.numero_meses} meses
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteRH(rh)}
-                        className="p-1 text-destructive hover:bg-destructive/10 rounded"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground block">Salário</span>
-                        <span className="font-medium">{formatCurrency(rh.salario_bruto)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">Férias 1/12</span>
-                        <span className="font-medium">{formatCurrency(rh.provisao_ferias)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">13º 1/12</span>
-                        <span className="font-medium">{formatCurrency(rh.provisao_13_salario)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">FGTS 8%</span>
-                        <span className="font-medium">{formatCurrency(rh.fgts)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">INSS 20%</span>
-                        <span className="font-medium">{formatCurrency(rh.inss_patronal)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">Custo/Mês</span>
-                        <span className="font-semibold text-blue-600">{formatCurrency(rh.custo_mensal_total)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground block">Total Projeto</span>
-                        <span className="font-bold text-green-600">{formatCurrency(rh.custo_total_projeto)}</span>
-                      </div>
-                    </div>
+          {/* Tab Content - Orçamentação */}
+          {activeTab === 'orcamentacao' && (
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Dados do Projeto */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                      Dados do Projeto
+                    </h3>
+                    <button
+                      onClick={() => setShowProjetoModal(true)}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Editar
+                    </button>
                   </div>
-                ))}
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-500">OSC:</span> <span className="font-medium">{projeto.organizacao_parceira}</span></div>
+                    <div><span className="text-gray-500">CNPJ:</span> <span className="font-medium">{projeto.cnpj_parceira}</span></div>
+                    <div><span className="text-gray-500">Responsável:</span> <span className="font-medium">{projeto.responsavel_osc}</span></div>
+                    <div><span className="text-gray-500">Objeto:</span> <span className="font-medium">{projeto.objeto}</span></div>
+                    <div><span className="text-gray-500">Período:</span> <span className="font-medium">
+                      {new Date(projeto.data_inicio).toLocaleDateString('pt-BR')} a {new Date(projeto.data_conclusao).toLocaleDateString('pt-BR')} ({projeto.prazo_meses} meses)
+                    </span></div>
+                  </div>
+                </div>
+
+                {/* Dados do Concedente (MPC 01/2025) */}
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <Info className="h-5 w-5 text-blue-600" />
+                    Dados do Concedente (Rec. MPC 01/2025)
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-500">Tipo:</span> <span className="font-medium">{projeto.tipo_concedente || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">Concedente:</span> <span className="font-medium">{projeto.nome_concedente || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">Nº Emenda:</span> <span className="font-medium">{projeto.numero_emenda || 'N/A'}</span></div>
+                    <div><span className="text-gray-500">Nº Termo:</span> <span className="font-medium">{projeto.numero_termo || 'N/A'}</span></div>
+                  </div>
+                </div>
+
+                {/* Gestor Responsável */}
+                <div className="bg-green-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <Users className="h-5 w-5 text-green-600" />
+                    Gestor Responsável
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-500">Nome:</span> <span className="font-medium">{projeto.gestor_responsavel_nome || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">CPF:</span> <span className="font-medium">{projeto.gestor_responsavel_cpf || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">Cargo:</span> <span className="font-medium">{projeto.gestor_responsavel_cargo || 'Não informado'}</span></div>
+                  </div>
+                </div>
+
+                {/* Conta Bancária */}
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <DollarSign className="h-5 w-5 text-yellow-600" />
+                    Conta Bancária Específica
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="text-gray-500">Banco:</span> <span className="font-medium">{projeto.banco_nome || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">Agência:</span> <span className="font-medium">{projeto.banco_agencia || 'Não informado'}</span></div>
+                    <div><span className="text-gray-500">Conta:</span> <span className="font-medium">{projeto.banco_conta || 'Não informado'}</span></div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Tab Content - Despesas */}
-        {activeTab === 'despesas' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Despesas</h2>
-              <button
-                onClick={() => setShowDespesaModal(true)}
-                className="flex items-center gap-2 bg-amber-600 text-white px-3 py-2 rounded-lg hover:bg-amber-700 text-sm"
-              >
-                <Plus size={16} /> Adicionar Despesa
-              </button>
-            </div>
-
-            {despesas.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <FileText size={40} className="mx-auto mb-3 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">Nenhuma despesa cadastrada</p>
+              {/* Valores do Projeto */}
+              <div className="mt-6 bg-purple-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <Calculator className="h-5 w-5 text-purple-600" />
+                  Valores do Projeto
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <div className="text-sm text-gray-500">Repasse Público</div>
+                    <div className="text-lg font-bold text-blue-600">{formatCurrency(projeto.valor_repasse_publico)}</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <div className="text-sm text-gray-500">Contrapartida</div>
+                    <div className="text-lg font-bold text-green-600">{formatCurrency(projeto.valor_contrapartida)}</div>
+                  </div>
+                  <div className="text-center p-3 bg-white rounded-lg">
+                    <div className="text-sm text-gray-500">Valor Total</div>
+                    <div className="text-lg font-bold text-purple-600">{formatCurrency(projeto.valor_total)}</div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-3 py-2 text-left">Natureza</th>
-                      <th className="px-3 py-2 text-left">Descrição</th>
-                      <th className="px-3 py-2 text-center">Qtd</th>
-                      <th className="px-3 py-2 text-right">Orç. 1</th>
-                      <th className="px-3 py-2 text-right">Orç. 2</th>
-                      <th className="px-3 py-2 text-right">Orç. 3</th>
-                      <th className="px-3 py-2 text-right">Média</th>
-                      <th className="px-3 py-2 text-right">Unit.</th>
-                      <th className="px-3 py-2 text-right">Total</th>
-                      <th className="px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {despesas.map((d) => (
-                      <tr key={d.despesa_id} className="border-b border-border hover:bg-muted/50">
-                        <td className="px-3 py-2">
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                            {d.natureza_despesa}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">{d.descricao}</td>
-                        <td className="px-3 py-2 text-center">{d.quantidade} {d.unidade}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(d.orcamento_1)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(d.orcamento_2)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(d.orcamento_3)}</td>
-                        <td className="px-3 py-2 text-right text-blue-600">{formatCurrency(d.media_orcamentos)}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(d.valor_unitario)}</td>
-                        <td className="px-3 py-2 text-right font-semibold text-green-600">{formatCurrency(d.valor_total)}</td>
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() => handleDeleteDespesa(d)}
-                            className="p-1 text-destructive hover:bg-destructive/10 rounded"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+              {/* Instruções */}
+              <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600">
+                <p className="font-medium mb-2">📋 Instruções para Orçamentação (Modelo SUCC/BH):</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Preencha os dados do projeto e concedente conforme Recomendação MPC 01/2025</li>
+                  <li>Na aba <strong>Recursos Humanos</strong>, cadastre cada profissional com regime de contratação</li>
+                  <li>Na aba <strong>Despesas</strong>, cadastre cada item com 3 orçamentos/cotações</li>
+                  <li>Na aba <strong>Documentos</strong>, anexe comprovantes (PDF, JPG, PNG)</li>
+                  <li>Use o botão <strong>PDF + Anexos</strong> para gerar o relatório consolidado final</li>
+                </ul>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab Content - Documentos */}
-        {activeTab === 'documentos' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Comprovantes e Documentos</h2>
-              <button
-                onClick={() => setShowDocumentoModal(true)}
-                className="flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 text-sm"
-                data-testid="upload-documento-btn"
-              >
-                <Upload size={16} /> Enviar Documento
-              </button>
             </div>
+          )}
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm">
-              <p className="text-purple-800">
-                <strong>Lei 13.019/2014 (MROSC):</strong> Todos os comprovantes de despesas devem ser anexados para prestação de contas.
-                Apenas arquivos PDF são aceitos. Limite: 10MB por arquivo.
-              </p>
-            </div>
-
-            {documentos.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <File size={40} className="mx-auto mb-3 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">Nenhum documento anexado</p>
+          {/* Tab Content - Recursos Humanos */}
+          {activeTab === 'rh' && (
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-gray-900">Recursos Humanos (ANEXO I)</h3>
                 <button
-                  onClick={() => setShowDocumentoModal(true)}
-                  className="mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm"
+                  onClick={() => setShowRHModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  data-testid="btn-add-rh"
                 >
-                  Enviar primeiro documento
+                  <Plus className="h-4 w-4" />
+                  Adicionar Profissional
                 </button>
               </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-3 py-2 text-left">Tipo</th>
-                      <th className="px-3 py-2 text-left">Arquivo</th>
-                      <th className="px-3 py-2 text-left">Número</th>
-                      <th className="px-3 py-2 text-center">Data</th>
-                      <th className="px-3 py-2 text-right">Valor</th>
-                      <th className="px-3 py-2 text-center">Tamanho</th>
-                      <th className="px-3 py-2 text-center">Status</th>
-                      <th className="px-3 py-2 text-center">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documentos.map((doc) => (
-                      <tr key={doc.documento_id} className="border-b border-border hover:bg-muted/50">
-                        <td className="px-3 py-2">
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                            {TIPOS_DOCUMENTO[doc.tipo_documento] || doc.tipo_documento}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <FileText size={14} className="text-red-500" />
-                            <span className="truncate max-w-[200px]" title={doc.arquivo_nome}>
-                              {doc.arquivo_nome}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">{doc.numero_documento || '-'}</td>
-                        <td className="px-3 py-2 text-center">{formatDate(doc.data_documento)}</td>
-                        <td className="px-3 py-2 text-right font-medium text-green-600">
-                          {formatCurrency(doc.valor)}
-                        </td>
-                        <td className="px-3 py-2 text-center text-muted-foreground">
-                          {formatFileSize(doc.arquivo_tamanho)}
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          {doc.validado ? (
-                            <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                              <CheckCircle size={12} /> Validado
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                              <XCircle size={12} /> Pendente
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => handleViewDocumento(doc)}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                              title="Visualizar"
-                            >
-                              <Eye size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleViewDocumento(doc)}
-                              className="p-1 text-green-600 hover:bg-green-50 rounded"
-                              title="Download"
-                            >
-                              <Download size={14} />
-                            </button>
-                            {!doc.validado && (
-                              <button
-                                onClick={() => handleValidarDocumento(doc)}
-                                className="p-1 text-amber-600 hover:bg-amber-50 rounded"
-                                title="Validar"
-                              >
-                                <CheckCircle size={14} />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteDocumento(doc)}
-                              className="p-1 text-destructive hover:bg-destructive/10 rounded"
-                              title="Excluir"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
 
-            {/* Resumo de documentos */}
-            {documentos.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="text-sm text-muted-foreground">Total Documentos</div>
-                  <div className="text-2xl font-bold text-foreground">{documentos.length}</div>
+              {rhs.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p>Nenhum recurso humano cadastrado</p>
+                  <p className="text-sm">Clique em "Adicionar Profissional" para começar</p>
                 </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="text-sm text-muted-foreground">Validados</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {documentos.filter(d => d.validado).length}
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cargo/Função</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Regime</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CH/Sem</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Salário</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Férias</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">13º</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">FGTS</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">INSS</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Custo/Mês</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Meses</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {rhs.map((rh) => (
+                        <tr key={rh.rh_id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{rh.nome_funcao}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{rh.regime_contratacao}</td>
+                          <td className="px-4 py-3 text-sm text-right">{rh.carga_horaria_semanal}h</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(rh.salario_bruto)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(rh.provisao_ferias)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(rh.provisao_13_salario)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(rh.fgts)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(rh.inss_patronal)}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-blue-600">{formatCurrency(rh.custo_mensal_total)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{rh.numero_meses}</td>
+                          <td className="px-4 py-3 text-sm text-right font-bold text-green-600">{formatCurrency(rh.custo_total_projeto)}</td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => handleDeleteRH(rh.rh_id)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                              data-testid={`btn-delete-rh-${rh.rh_id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-blue-50">
+                      <tr>
+                        <td colSpan="10" className="px-4 py-3 text-sm font-bold text-right text-gray-700">TOTAL RH:</td>
+                        <td className="px-4 py-3 text-sm font-bold text-right text-blue-700">{formatCurrency(resumo?.total_rh || 0)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+
+              {/* Nota sobre cálculos */}
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-800">
+                <strong>Memória de Cálculo CLT:</strong> Férias = Salário/12 + 1/3 de Férias/12 | 13º = Salário/12 | FGTS = 8% | INSS Patronal = 20%
+              </div>
+            </div>
+          )}
+
+          {/* Tab Content - Despesas */}
+          {activeTab === 'despesas' && (
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-gray-900">Despesas por Natureza (ANEXO II e III)</h3>
+                <button
+                  onClick={() => setShowDespesaModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  data-testid="btn-add-despesa"
+                >
+                  <Plus className="h-4 w-4" />
+                  Adicionar Despesa
+                </button>
+              </div>
+
+              {/* Sub-abas de categorias */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {Object.entries(CATEGORIAS_NATUREZA).filter(([key]) => key !== 'RH').map(([key, cat]) => {
+                  const CatIcon = cat.icon;
+                  const count = getDespesasPorCategoria(key).length;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setActiveCategoria(key)}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+                        activeCategoria === key 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <CatIcon className="h-3 w-3" />
+                      {cat.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Lista de despesas da categoria */}
+              {getDespesasPorCategoria(activeCategoria).length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p>Nenhuma despesa cadastrada nesta categoria</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Natureza</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Orç. 1</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Orç. 2</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Orç. 3</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Média</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor Unit.</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getDespesasPorCategoria(activeCategoria).map((desp) => (
+                        <tr key={desp.despesa_id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">
+                            <div className="font-medium text-gray-900">{desp.item_despesa}</div>
+                            <div className="text-xs text-gray-500">{desp.descricao}</div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{desp.natureza_despesa}</td>
+                          <td className="px-4 py-3 text-sm text-center">{desp.quantidade} {desp.unidade}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(desp.orcamento_1)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(desp.orcamento_2)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(desp.orcamento_3)}</td>
+                          <td className="px-4 py-3 text-sm text-right text-blue-600">{formatCurrency(desp.media_orcamentos)}</td>
+                          <td className="px-4 py-3 text-sm text-right">{formatCurrency(desp.valor_unitario)}</td>
+                          <td className="px-4 py-3 text-sm text-right font-bold text-green-600">{formatCurrency(desp.valor_total)}</td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => handleDeleteDespesa(desp.despesa_id)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Resumo por categoria */}
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(CATEGORIAS_NATUREZA).filter(([key]) => key !== 'RH').map(([key, cat]) => {
+                  const total = getDespesasPorCategoria(key).reduce((sum, d) => sum + (d.valor_total || 0), 0);
+                  const CatIcon = cat.icon;
+                  return (
+                    <div key={key} className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CatIcon className={`h-4 w-4 ${cat.color}`} />
+                        <span className="text-xs text-gray-500">{cat.label}</span>
+                      </div>
+                      <div className="font-bold text-gray-900">{formatCurrency(total)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm">
+                <strong>Total de Despesas:</strong> {formatCurrency(resumo?.total_despesas || 0)}
+              </div>
+            </div>
+          )}
+
+          {/* Tab Content - Documentos */}
+          {activeTab === 'documentos' && (
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-gray-900">Documentos Comprobatórios</h3>
+                <button
+                  onClick={() => setShowDocumentoModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  data-testid="btn-add-documento"
+                >
+                  <Upload className="h-4 w-4" />
+                  Anexar Documento
+                </button>
+              </div>
+
+              {documentos.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p>Nenhum documento anexado</p>
+                  <p className="text-sm">Anexe notas fiscais, recibos, comprovantes, etc.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {documentos.map((doc) => (
+                    <div key={doc.documento_id} className="bg-gray-50 rounded-lg p-4 border">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <File className="h-5 w-5 text-blue-600" />
+                          <span className="font-medium text-sm">{TIPOS_DOCUMENTO[doc.tipo_documento] || doc.tipo_documento}</span>
+                        </div>
+                        {doc.validado && <CheckCircle className="h-4 w-4 text-green-500" />}
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        {doc.numero_documento && <div>Nº: {doc.numero_documento}</div>}
+                        {doc.data_documento && <div>Data: {new Date(doc.data_documento).toLocaleDateString('pt-BR')}</div>}
+                        {doc.valor > 0 && <div>Valor: {formatCurrency(doc.valor)}</div>}
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        {doc.arquivo_url && (
+                          <a
+                            href={doc.arquivo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                          >
+                            <Eye className="h-3 w-3" /> Ver
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleDeleteDocumento(doc.documento_id)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        >
+                          <Trash2 className="h-3 w-3" /> Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <strong>Formatos aceitos:</strong> PDF, JPG, JPEG, PNG (máx. 10MB por arquivo)
+              </div>
+            </div>
+          )}
+
+          {/* Tab Content - Resumo */}
+          {activeTab === 'resumo' && (
+            <div className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Resumo da Prestação de Contas</h3>
+              
+              {/* Gráfico de distribuição */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-4">Distribuição por Categoria</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Recursos Humanos</span>
+                      <span className="font-bold text-blue-600">{formatCurrency(resumo?.total_rh || 0)}</span>
+                    </div>
+                    {Object.entries(CATEGORIAS_NATUREZA).filter(([k]) => k !== 'RH').map(([key, cat]) => {
+                      const total = getDespesasPorCategoria(key).reduce((sum, d) => sum + (d.valor_total || 0), 0);
+                      if (total === 0) return null;
+                      return (
+                        <div key={key} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">{cat.label}</span>
+                          <span className="font-medium">{formatCurrency(total)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="text-sm text-muted-foreground">Valor Total Comprovado</div>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {formatCurrency(documentos.reduce((sum, d) => sum + (d.valor || 0), 0))}
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-4">Totalizadores</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b pb-2">
+                      <span>Receita do Projeto:</span>
+                      <span className="font-bold">{formatCurrency(projeto.valor_total)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total RH:</span>
+                      <span>{formatCurrency(resumo?.total_rh || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Despesas:</span>
+                      <span>{formatCurrency(resumo?.total_despesas || 0)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 font-bold">
+                      <span>Total Geral:</span>
+                      <span className="text-purple-600">{formatCurrency((resumo?.total_rh || 0) + (resumo?.total_despesas || 0))}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span>Saldo:</span>
+                      <span className={projeto.valor_total - ((resumo?.total_rh || 0) + (resumo?.total_despesas || 0)) >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                        {formatCurrency(projeto.valor_total - ((resumo?.total_rh || 0) + (resumo?.total_despesas || 0)))}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* Status dos documentos */}
+              <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium mb-4">Status dos Documentos</h4>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{documentos.length}</div>
+                    <div className="text-sm text-gray-500">Total</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">{documentos.filter(d => d.validado).length}</div>
+                    <div className="text-sm text-gray-500">Validados</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-yellow-600">{documentos.filter(d => !d.validado).length}</div>
+                    <div className="text-sm text-gray-500">Pendentes</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Modal RH */}
         {showRHModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
-                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <Calculator className="text-blue-600" />
-                  Adicionar Recurso Humano
-                </h3>
-                <p className="text-sm text-muted-foreground">Encargos CLT calculados automaticamente</p>
-              </div>
-
-              <form onSubmit={handleAddRH} className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Função *</label>
-                    <input
-                      type="text"
-                      value={rhForm.nome_funcao}
-                      onChange={(e) => setRhForm({...rhForm, nome_funcao: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      placeholder="Ex: Coordenador de Projeto"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Regime de Contratação *</label>
-                    <select
-                      value={rhForm.regime_contratacao}
-                      onChange={(e) => setRhForm({...rhForm, regime_contratacao: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      {REGIMES_CONTRATACAO.map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </div>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Adicionar Recurso Humano</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium mb-1">Cargo ou Função *</label>
+                  <input
+                    type="text"
+                    value={rhForm.nome_funcao}
+                    onChange={(e) => setRhForm({...rhForm, nome_funcao: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="Ex: Coordenador de Projeto"
+                  />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Carga Horária Semanal *</label>
-                    <input
-                      type="number"
-                      value={rhForm.carga_horaria_semanal}
-                      onChange={(e) => setRhForm({...rhForm, carga_horaria_semanal: parseInt(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Salário Bruto (R$) *</label>
-                    <input
-                      type="number"
-                      value={rhForm.salario_bruto}
-                      onChange={(e) => setRhForm({...rhForm, salario_bruto: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Número de Meses *</label>
-                    <input
-                      type="number"
-                      value={rhForm.numero_meses}
-                      onChange={(e) => setRhForm({...rhForm, numero_meses: parseInt(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="1"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Vale Transporte (R$)</label>
-                    <input
-                      type="number"
-                      value={rhForm.vale_transporte}
-                      onChange={(e) => setRhForm({...rhForm, vale_transporte: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Vale Alimentação (R$)</label>
-                    <input
-                      type="number"
-                      value={rhForm.vale_alimentacao}
-                      onChange={(e) => setRhForm({...rhForm, vale_alimentacao: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-
+                
                 <div>
+                  <label className="block text-sm font-medium mb-1">Regime de Contratação *</label>
+                  <select
+                    value={rhForm.regime_contratacao}
+                    onChange={(e) => setRhForm({...rhForm, regime_contratacao: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    {REGIMES_CONTRATACAO.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Carga Horária Semanal *</label>
+                  <input
+                    type="number"
+                    value={rhForm.carga_horaria_semanal}
+                    onChange={(e) => setRhForm({...rhForm, carga_horaria_semanal: parseInt(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Salário Bruto Mensal *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rhForm.salario_bruto}
+                    onChange={(e) => setRhForm({...rhForm, salario_bruto: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Número de Meses *</label>
+                  <input
+                    type="number"
+                    value={rhForm.numero_meses}
+                    onChange={(e) => setRhForm({...rhForm, numero_meses: parseInt(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vale Transporte (mensal)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rhForm.vale_transporte}
+                    onChange={(e) => setRhForm({...rhForm, vale_transporte: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vale Alimentação (mensal)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rhForm.vale_alimentacao}
+                    onChange={(e) => setRhForm({...rhForm, vale_alimentacao: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1">Observações</label>
                   <textarea
                     value={rhForm.observacoes}
                     onChange={(e) => setRhForm({...rhForm, observacoes: e.target.value})}
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    className="w-full border rounded-lg px-3 py-2"
                     rows={2}
+                    placeholder="Nota técnica sobre este profissional..."
                   />
                 </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <button type="button" onClick={() => setShowRHModal(false)} className="px-4 py-2 border border-input rounded-lg hover:bg-muted">
-                    Cancelar
-                  </button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                    <Save size={16} /> Adicionar com Cálculos CLT
-                  </button>
+              </div>
+              
+              {/* Preview de cálculos */}
+              {rhForm.regime_contratacao === 'CLT' && rhForm.salario_bruto > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
+                  <strong>Cálculo CLT (automático):</strong>
+                  {(() => {
+                    const calc = calcularEncargosCLT(rhForm.salario_bruto);
+                    const custoMensal = rhForm.salario_bruto + calc.total_encargos + rhForm.vale_transporte + rhForm.vale_alimentacao;
+                    return (
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <span>Provisão Férias: {formatCurrency(calc.provisao_ferias)}</span>
+                        <span>Provisão 13º: {formatCurrency(calc.provisao_13_salario)}</span>
+                        <span>FGTS (8%): {formatCurrency(calc.fgts)}</span>
+                        <span>INSS Patronal (20%): {formatCurrency(calc.inss_patronal)}</span>
+                        <span className="col-span-2 font-bold">Custo Mensal Total: {formatCurrency(custoMensal)}</span>
+                        <span className="col-span-2 font-bold text-green-600">Custo Total ({rhForm.numero_meses} meses): {formatCurrency(custoMensal * rhForm.numero_meses)}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
-              </form>
+              )}
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowRHModal(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddRH}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Modal Despesa */}
         {showDespesaModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
-                <h3 className="text-xl font-bold text-foreground">Adicionar Despesa</h3>
-                <p className="text-sm text-muted-foreground">Informe 3 orçamentos para cálculo da média</p>
-              </div>
-
-              <form onSubmit={handleAddDespesa} className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Natureza de Despesa *</label>
-                    <select
-                      value={despesaForm.natureza_despesa}
-                      onChange={(e) => setDespesaForm({...despesaForm, natureza_despesa: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      {Object.entries(NATUREZAS_DESPESA).map(([codigo, nome]) => (
-                        <option key={codigo} value={codigo}>{codigo} - {nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Item de Despesa *</label>
-                    <input
-                      type="text"
-                      value={despesaForm.item_despesa}
-                      onChange={(e) => setDespesaForm({...despesaForm, item_despesa: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      placeholder="Ex: Material de Escritório"
-                      required
-                    />
-                  </div>
-                </div>
-
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Adicionar Despesa</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium mb-1">Natureza de Despesa *</label>
+                  <select
+                    value={despesaForm.natureza_despesa}
+                    onChange={(e) => setDespesaForm({...despesaForm, natureza_despesa: e.target.value, item_despesa: ''})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    {Object.entries(naturezasDespesa).map(([cod, nat]) => (
+                      <option key={cod} value={cod}>{cod} - {nat.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Item de Despesa *</label>
+                  <select
+                    value={despesaForm.item_despesa}
+                    onChange={(e) => setDespesaForm({...despesaForm, item_despesa: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Selecione...</option>
+                    {(naturezasDespesa[despesaForm.natureza_despesa]?.itens || []).map(item => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                    <option value="OUTRO">Outro (especificar)</option>
+                  </select>
+                </div>
+                
+                <div className="col-span-2">
                   <label className="block text-sm font-medium mb-1">Descrição *</label>
-                  <textarea
+                  <input
+                    type="text"
                     value={despesaForm.descricao}
                     onChange={(e) => setDespesaForm({...despesaForm, descricao: e.target.value})}
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    rows={2}
-                    required
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="Descreva o item detalhadamente"
                   />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Unidade *</label>
-                    <select
-                      value={despesaForm.unidade}
-                      onChange={(e) => setDespesaForm({...despesaForm, unidade: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      <option value="UN">Unidade</option>
-                      <option value="CX">Caixa</option>
-                      <option value="PCT">Pacote</option>
-                      <option value="KG">Quilograma</option>
-                      <option value="L">Litro</option>
-                      <option value="M">Metro</option>
-                      <option value="SERV">Serviço</option>
-                      <option value="MÊS">Mês</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Quantidade *</label>
-                    <input
-                      type="number"
-                      value={despesaForm.quantidade}
-                      onChange={(e) => setDespesaForm({...despesaForm, quantidade: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0.01"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Valor Unitário (R$) *</label>
-                    <input
-                      type="number"
-                      value={despesaForm.valor_unitario}
-                      onChange={(e) => setDespesaForm({...despesaForm, valor_unitario: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-amber-800 mb-3">Orçamentos (mínimo 3 cotações)</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Orçamento 1 (R$) *</label>
-                      <input
-                        type="number"
-                        value={despesaForm.orcamento_1}
-                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_1: parseFloat(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Orçamento 2 (R$) *</label>
-                      <input
-                        type="number"
-                        value={despesaForm.orcamento_2}
-                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_2: parseFloat(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Orçamento 3 (R$) *</label>
-                      <input
-                        type="number"
-                        value={despesaForm.orcamento_3}
-                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_3: parseFloat(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
+                
                 <div>
-                  <label className="block text-sm font-medium mb-1">Justificativa *</label>
-                  <textarea
-                    value={despesaForm.justificativa}
-                    onChange={(e) => setDespesaForm({...despesaForm, justificativa: e.target.value})}
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    rows={2}
-                    required
+                  <label className="block text-sm font-medium mb-1">Quantidade *</label>
+                  <input
+                    type="number"
+                    value={despesaForm.quantidade}
+                    onChange={(e) => setDespesaForm({...despesaForm, quantidade: parseInt(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
                   />
                 </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <button type="button" onClick={() => setShowDespesaModal(false)} className="px-4 py-2 border border-input rounded-lg hover:bg-muted">
-                    Cancelar
-                  </button>
-                  <button type="submit" className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2">
-                    <Save size={16} /> Adicionar Despesa
-                  </button>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Unidade *</label>
+                  <select
+                    value={despesaForm.unidade}
+                    onChange={(e) => setDespesaForm({...despesaForm, unidade: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="UN">Unidade</option>
+                    <option value="MES">Mês</option>
+                    <option value="HORA">Hora</option>
+                    <option value="DIA">Dia</option>
+                    <option value="KG">Quilograma</option>
+                    <option value="LT">Litro</option>
+                    <option value="M2">Metro Quadrado</option>
+                    <option value="PCT">Pacote</option>
+                    <option value="CX">Caixa</option>
+                    <option value="GLOBAL">Global</option>
+                  </select>
                 </div>
-              </form>
+                
+                <div className="col-span-2 p-3 bg-yellow-50 rounded-lg">
+                  <label className="block text-sm font-medium mb-2">Cotações (mínimo 3 orçamentos) *</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500">Orçamento 1</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={despesaForm.orcamento_1}
+                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_1: parseFloat(e.target.value)})}
+                        className="w-full border rounded-lg px-3 py-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500">Orçamento 2</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={despesaForm.orcamento_2}
+                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_2: parseFloat(e.target.value)})}
+                        className="w-full border rounded-lg px-3 py-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500">Orçamento 3</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={despesaForm.orcamento_3}
+                        onChange={(e) => setDespesaForm({...despesaForm, orcamento_3: parseFloat(e.target.value)})}
+                        className="w-full border rounded-lg px-3 py-2"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-sm font-medium">
+                    Média: {formatCurrency(calcularMediaOrcamentos(despesaForm.orcamento_1, despesaForm.orcamento_2, despesaForm.orcamento_3))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Valor Unitário Previsto *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={despesaForm.valor_unitario || calcularMediaOrcamentos(despesaForm.orcamento_1, despesaForm.orcamento_2, despesaForm.orcamento_3)}
+                    onChange={(e) => setDespesaForm({...despesaForm, valor_unitario: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Ref. Preço Municipal</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={despesaForm.referencia_preco_municipal}
+                    onChange={(e) => setDespesaForm({...despesaForm, referencia_preco_municipal: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    placeholder="Ata de Registro de Preço"
+                  />
+                </div>
+                
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium mb-1">Observações</label>
+                  <textarea
+                    value={despesaForm.observacoes}
+                    onChange={(e) => setDespesaForm({...despesaForm, observacoes: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              
+              {/* Preview do total */}
+              <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm">
+                <strong>Total previsto:</strong> {despesaForm.quantidade} x {formatCurrency(despesaForm.valor_unitario || calcularMediaOrcamentos(despesaForm.orcamento_1, despesaForm.orcamento_2, despesaForm.orcamento_3))} = 
+                <span className="font-bold text-green-600 ml-2">
+                  {formatCurrency(despesaForm.quantidade * (despesaForm.valor_unitario || calcularMediaOrcamentos(despesaForm.orcamento_1, despesaForm.orcamento_2, despesaForm.orcamento_3)))}
+                </span>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowDespesaModal(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddDespesa}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Adicionar
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Modal Upload Documento */}
+        {/* Modal Documento */}
         {showDocumentoModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-card rounded-xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
-                <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                  <Upload className="text-purple-600" />
-                  Enviar Documento/Comprovante
-                </h3>
-                <p className="text-sm text-muted-foreground">Anexe comprovantes de despesas (PDF, JPG ou PNG)</p>
-              </div>
-
-              <form onSubmit={handleUploadDocumento} className="p-6 space-y-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+              <h3 className="text-lg font-semibold mb-4">Anexar Documento</h3>
+              
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Arquivo (PDF, JPG ou PNG) *</label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => setDocForm({...docForm, file: e.target.files[0]})}
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-purple-100 file:text-purple-700 file:text-sm hover:file:bg-purple-200"
-                    required
-                    data-testid="documento-file-input"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Máximo 10MB. Formatos: PDF, JPG, JPEG, PNG</p>
+                  <label className="block text-sm font-medium mb-1">Tipo de Documento *</label>
+                  <select
+                    value={documentoForm.tipo_documento}
+                    onChange={(e) => setDocumentoForm({...documentoForm, tipo_documento: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    {Object.entries(TIPOS_DOCUMENTO).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Tipo de Documento *</label>
-                    <select
-                      value={docForm.tipo_documento}
-                      onChange={(e) => setDocForm({...docForm, tipo_documento: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      {Object.entries(TIPOS_DOCUMENTO).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </div>
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Número do Documento</label>
                     <input
                       type="text"
-                      value={docForm.numero_documento}
-                      onChange={(e) => setDocForm({...docForm, numero_documento: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                      value={documentoForm.numero_documento}
+                      onChange={(e) => setDocumentoForm({...documentoForm, numero_documento: e.target.value})}
+                      className="w-full border rounded-lg px-3 py-2"
                       placeholder="Ex: NF 12345"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Data do Documento *</label>
+                    <label className="block text-sm font-medium mb-1">Data</label>
                     <input
                       type="date"
-                      value={docForm.data_documento}
-                      onChange={(e) => setDocForm({...docForm, data_documento: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Valor (R$) *</label>
-                    <input
-                      type="number"
-                      value={docForm.valor}
-                      onChange={(e) => setDocForm({...docForm, valor: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                      min="0"
-                      step="0.01"
-                      required
+                      value={documentoForm.data_documento}
+                      onChange={(e) => setDocumentoForm({...documentoForm, data_documento: e.target.value})}
+                      className="w-full border rounded-lg px-3 py-2"
                     />
                   </div>
                 </div>
-
-                {despesas.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Vincular a Despesa (opcional)</label>
-                    <select
-                      value={docForm.despesa_id}
-                      onChange={(e) => setDocForm({...docForm, despesa_id: e.target.value})}
-                      className="w-full px-3 py-2 border border-input rounded-lg bg-background"
-                    >
-                      <option value="">-- Sem vínculo --</option>
-                      {despesas.map(d => (
-                        <option key={d.despesa_id} value={d.despesa_id}>
-                          {d.natureza_despesa} - {d.descricao} ({formatCurrency(d.valor_total)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Valor (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={documentoForm.valor}
+                    onChange={(e) => setDocumentoForm({...documentoForm, valor: parseFloat(e.target.value)})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Vincular a Despesa</label>
+                  <select
+                    value={documentoForm.despesa_id}
+                    onChange={(e) => setDocumentoForm({...documentoForm, despesa_id: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  >
+                    <option value="">Nenhuma (geral)</option>
+                    {despesas.map(d => (
+                      <option key={d.despesa_id} value={d.despesa_id}>{d.item_despesa} - {formatCurrency(d.valor_total)}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Arquivo * (PDF, JPG, PNG)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setDocumentoForm({...documentoForm, file: e.target.files[0]})}
+                    className="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Observações</label>
                   <textarea
-                    value={docForm.observacoes}
-                    onChange={(e) => setDocForm({...docForm, observacoes: e.target.value})}
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background"
+                    value={documentoForm.observacoes}
+                    onChange={(e) => setDocumentoForm({...documentoForm, observacoes: e.target.value})}
+                    className="w-full border rounded-lg px-3 py-2"
                     rows={2}
-                    placeholder="Observações sobre o documento..."
                   />
                 </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowDocumentoModal(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUploadDocumento}
+                  disabled={uploading || !documentoForm.file}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {uploading ? 'Enviando...' : 'Anexar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setShowDocumentoModal(false);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }} 
-                    className="px-4 py-2 border border-input rounded-lg hover:bg-muted"
-                    disabled={uploading}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2 disabled:opacity-50"
-                    disabled={uploading}
-                    data-testid="submit-documento-btn"
-                  >
-                    {uploading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={16} /> Enviar Documento
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+        {/* Modal Editar Projeto */}
+        {showProjetoModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Editar Dados do Projeto</h3>
+              
+              <ProjetoForm 
+                projeto={projeto} 
+                onSave={handleUpdateProjeto}
+                onCancel={() => setShowProjetoModal(false)}
+              />
             </div>
           </div>
         )}
       </div>
     </Layout>
+  );
+};
+
+// Componente de Formulário do Projeto
+const ProjetoForm = ({ projeto, onSave, onCancel }) => {
+  const [form, setForm] = useState({
+    nome_projeto: projeto.nome_projeto || '',
+    objeto: projeto.objeto || '',
+    organizacao_parceira: projeto.organizacao_parceira || '',
+    cnpj_parceira: projeto.cnpj_parceira || '',
+    responsavel_osc: projeto.responsavel_osc || '',
+    valor_total: projeto.valor_total || 0,
+    valor_repasse_publico: projeto.valor_repasse_publico || 0,
+    valor_contrapartida: projeto.valor_contrapartida || 0,
+    tipo_concedente: projeto.tipo_concedente || '',
+    nome_concedente: projeto.nome_concedente || '',
+    numero_emenda: projeto.numero_emenda || '',
+    numero_termo: projeto.numero_termo || '',
+    gestor_responsavel_nome: projeto.gestor_responsavel_nome || '',
+    gestor_responsavel_cpf: projeto.gestor_responsavel_cpf || '',
+    gestor_responsavel_cargo: projeto.gestor_responsavel_cargo || '',
+    banco_nome: projeto.banco_nome || '',
+    banco_agencia: projeto.banco_agencia || '',
+    banco_conta: projeto.banco_conta || '',
+    plano_trabalho_finalidade: projeto.plano_trabalho_finalidade || '',
+    plano_trabalho_cronograma: projeto.plano_trabalho_cronograma || ''
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Dados básicos */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="col-span-2">
+          <label className="block text-sm font-medium mb-1">Nome do Projeto *</label>
+          <input
+            type="text"
+            value={form.nome_projeto}
+            onChange={(e) => setForm({...form, nome_projeto: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-sm font-medium mb-1">Objeto *</label>
+          <textarea
+            value={form.objeto}
+            onChange={(e) => setForm({...form, objeto: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+            rows={2}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">OSC *</label>
+          <input
+            type="text"
+            value={form.organizacao_parceira}
+            onChange={(e) => setForm({...form, organizacao_parceira: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">CNPJ *</label>
+          <input
+            type="text"
+            value={form.cnpj_parceira}
+            onChange={(e) => setForm({...form, cnpj_parceira: e.target.value})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+      </div>
+
+      {/* Concedente (MPC 01/2025) */}
+      <div className="p-4 bg-blue-50 rounded-lg">
+        <h4 className="font-medium text-blue-900 mb-3">Dados do Concedente (Rec. MPC 01/2025)</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Tipo do Concedente</label>
+            <select
+              value={form.tipo_concedente}
+              onChange={(e) => setForm({...form, tipo_concedente: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Selecione...</option>
+              {TIPOS_CONCEDENTE.map(t => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nome do Concedente</label>
+            <input
+              type="text"
+              value={form.nome_concedente}
+              onChange={(e) => setForm({...form, nome_concedente: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Nome do parlamentar/órgão"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nº da Emenda</label>
+            <input
+              type="text"
+              value={form.numero_emenda}
+              onChange={(e) => setForm({...form, numero_emenda: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nº do Termo</label>
+            <input
+              type="text"
+              value={form.numero_termo}
+              onChange={(e) => setForm({...form, numero_termo: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Gestor Responsável */}
+      <div className="p-4 bg-green-50 rounded-lg">
+        <h4 className="font-medium text-green-900 mb-3">Gestor Responsável</h4>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Nome Completo</label>
+            <input
+              type="text"
+              value={form.gestor_responsavel_nome}
+              onChange={(e) => setForm({...form, gestor_responsavel_nome: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">CPF</label>
+            <input
+              type="text"
+              value={form.gestor_responsavel_cpf}
+              onChange={(e) => setForm({...form, gestor_responsavel_cpf: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Cargo</label>
+            <input
+              type="text"
+              value={form.gestor_responsavel_cargo}
+              onChange={(e) => setForm({...form, gestor_responsavel_cargo: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Conta Bancária */}
+      <div className="p-4 bg-yellow-50 rounded-lg">
+        <h4 className="font-medium text-yellow-900 mb-3">Conta Bancária Específica</h4>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Banco</label>
+            <input
+              type="text"
+              value={form.banco_nome}
+              onChange={(e) => setForm({...form, banco_nome: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Ex: Banco do Brasil"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Agência</label>
+            <input
+              type="text"
+              value={form.banco_agencia}
+              onChange={(e) => setForm({...form, banco_agencia: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Conta</label>
+            <input
+              type="text"
+              value={form.banco_conta}
+              onChange={(e) => setForm({...form, banco_conta: e.target.value})}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Valores */}
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Repasse Público (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={form.valor_repasse_publico}
+            onChange={(e) => setForm({...form, valor_repasse_publico: parseFloat(e.target.value)})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Contrapartida (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={form.valor_contrapartida}
+            onChange={(e) => setForm({...form, valor_contrapartida: parseFloat(e.target.value)})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Valor Total (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={form.valor_total}
+            onChange={(e) => setForm({...form, valor_total: parseFloat(e.target.value)})}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={onCancel}
+          className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+        >
+          Cancelar
+        </button>
+        <button
+          onClick={() => onSave(form)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
   );
 };
 
