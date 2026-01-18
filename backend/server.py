@@ -5997,11 +5997,19 @@ async def get_doem_config() -> dict:
         await db.doem_config.insert_one(config)
     return config
 
-async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str, doc_info: dict = None) -> tuple:
+async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str, doc_info: dict = None, signature_date: str = None) -> tuple:
     """
     Adiciona assinatura digital a qualquer PDF gerado pelo sistema.
     Para documentos MROSC, adiciona uma página de assinaturas no estilo da Lei 14.063.
     Retorna o buffer modificado e o código de validação.
+    
+    Args:
+        pdf_buffer: Buffer do PDF original
+        user: Usuário que está assinando
+        doc_type: Tipo do documento
+        doc_id: ID do documento
+        doc_info: Informações adicionais do documento
+        signature_date: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - se não informada, usa data atual
     
     IMPORTANTE: Requer que o usuário tenha CPF e Cargo preenchidos.
     """
