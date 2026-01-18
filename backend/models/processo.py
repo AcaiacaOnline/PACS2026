@@ -10,45 +10,45 @@ class Processo(BaseModel):
     model_config = ConfigDict(extra="ignore")
     processo_id: str
     user_id: str
-    numero_processo: str
-    status: str
-    modalidade: str
-    objeto: str
-    situacao: Optional[str] = None
+    numero_processo: str  # Ex: PRC - 0006/2025 (OBRIGATÓRIO)
+    modalidade_contratacao: Optional[str] = None  # Pregão Eletrônico, Dispensa, Inexigibilidade, etc.
+    status: Optional[str] = None  # Em Elaboração, Aprovado, Em Licitação, Homologado, Contratado, Concluído
+    objeto: str  # Descrição do processo
     responsavel: str
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
     data_contrato: Optional[datetime] = None
     secretaria: str
     secretario: str
-    ano: int = 2025
+    ano: int = 2025  # Ano do processo
     observacoes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    # Campos legados para compatibilidade (serão removidos em versão futura)
+    modalidade: Optional[str] = None  # DEPRECATED: usar modalidade_contratacao
+    situacao: Optional[str] = None  # DEPRECATED: usar status
 
 class ProcessoCreate(BaseModel):
     """Process creation model"""
-    numero_processo: str
+    numero_processo: str  # OBRIGATÓRIO *
+    modalidade_contratacao: str
     status: str
-    modalidade: str
     objeto: str
-    situacao: Optional[str] = None
     responsavel: str
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
     data_contrato: Optional[datetime] = None
     secretaria: str
     secretario: str
-    ano: int = None
+    ano: int = None  # Será extraído do numero_processo se não fornecido
     observacoes: Optional[str] = None
 
 class ProcessoUpdate(BaseModel):
     """Process update model"""
     numero_processo: Optional[str] = None
+    modalidade_contratacao: Optional[str] = None
     status: Optional[str] = None
-    modalidade: Optional[str] = None
     objeto: Optional[str] = None
-    situacao: Optional[str] = None
     responsavel: Optional[str] = None
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
