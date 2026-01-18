@@ -198,6 +198,18 @@ const Layout = ({ children }) => {
                 <BarChart3 size={16} />
                 <span className="hidden lg:inline">Analítico</span>
               </Link>
+
+              <Link
+                to="/analytics"
+                data-testid="nav-analytics-realtime-btn"
+                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
+                  isActive('/analytics') ? 'bg-green-600/80' : 'hover:bg-green-600/80'
+                }`}
+                title="Métricas em Tempo Real"
+              >
+                <Bell size={16} />
+                <span className="hidden lg:inline">Tempo Real</span>
+              </Link>
               
               {/* Menu PACS */}
               <DropdownMenu
