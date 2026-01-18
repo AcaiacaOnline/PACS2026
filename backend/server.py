@@ -51,7 +51,79 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'pac-acaiaca-secret-key-2026')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_DAYS = 7
 
-app = FastAPI(title="Planejamento Acaiaca - Sistema de Gestão Municipal")
+# ===== CONFIGURAÇÃO DO FASTAPI COM SWAGGER =====
+app = FastAPI(
+    title="Planejamento Acaiaca - Sistema de Gestão Municipal",
+    description="""
+## Sistema de Gestão Municipal - Prefeitura de Acaiaca/MG
+
+API REST completa para gestão municipal incluindo:
+
+### 📋 Módulos Disponíveis
+- **PAC Individual** - Planos Anuais de Contratação por Secretaria
+- **PAC Geral** - Visão Consolidada de todas as Secretarias
+- **PAC Obras** - Obras e Serviços de Engenharia
+- **Gestão Processual** - Controle de Processos Licitatórios
+- **MROSC** - Prestação de Contas de OSCs (Lei 13.019/2014)
+- **DOEM** - Diário Oficial Eletrônico Municipal
+- **Portal de Transparência** - Acesso Público aos Dados
+
+### 🔐 Autenticação
+Utilize o endpoint `/api/auth/login` para obter um token JWT.
+Inclua o token no header `Authorization: Bearer {token}` em todas as requisições autenticadas.
+
+### 📊 WebSocket
+Notificações em tempo real disponíveis em `/api/ws/notifications/{user_id}`
+
+### 📧 Contato
+- Email: planejamento@acaiaca.mg.gov.br
+- CNPJ: 18.295.287/0001-90
+    """,
+    version="2.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    openapi_tags=[
+        {"name": "Autenticação", "description": "Login, registro e gerenciamento de sessão"},
+        {"name": "Usuários", "description": "Gerenciamento de usuários do sistema"},
+        {"name": "PAC Individual", "description": "Planos Anuais de Contratação por Secretaria"},
+        {"name": "PAC Geral", "description": "PAC consolidado de todas as secretarias"},
+        {"name": "PAC Obras", "description": "Obras e serviços de engenharia"},
+        {"name": "Gestão Processual", "description": "Processos licitatórios"},
+        {"name": "MROSC", "description": "Prestação de Contas - Lei 13.019/2014"},
+        {"name": "DOEM", "description": "Diário Oficial Eletrônico Municipal"},
+        {"name": "Portal da Transparência", "description": "Endpoints públicos"},
+        {"name": "Dashboard Analítico", "description": "Estatísticas e métricas"},
+        {"name": "Sistema de Alertas", "description": "Alertas e notificações"},
+        {"name": "Relatórios Gerenciais", "description": "Geração de relatórios PDF/XLSX"},
+        {"name": "Backup", "description": "Backup e restauração de dados"},
+        {"name": "WebSocket Notifications", "description": "Notificações em tempo real"},
+        {"name": "Assinaturas Digitais", "description": "Assinatura e validação de documentos"},
+    ],
+    contact={
+        "name": "Prefeitura Municipal de Acaiaca",
+        "url": "https://acaiaca.mg.gov.br",
+        "email": "planejamento@acaiaca.mg.gov.br"
+    },
+    license_info={
+        "name": "Uso Restrito - Prefeitura de Acaiaca/MG",
+        "url": "https://acaiaca.mg.gov.br"
+    }
+)
+
+# Importar e registrar WebSocket router
+from utils.websocket import router as ws_router, manager as ws_manager
+from utils.websocket import (
+    notify_processo_created, notify_mrosc_submitted, notify_mrosc_approved,
+    notify_mrosc_correction, notify_system_alert, notify_backup_completed,
+    Notification, NotificationType
+)
+
+# Importar logging
+from utils.logging_config import get_logger, log_info, log_error, request_logger
+
+logger = get_logger("server")
+
 api_router = APIRouter(prefix="/api")
 
 # Models
