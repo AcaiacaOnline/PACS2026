@@ -8327,6 +8327,22 @@ async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request):
     merger.close()
     final_buffer.seek(0)
     
+    # Adicionar assinatura digital ao PDF consolidado
+    try:
+        signed_buffer, validation_code = await add_signature_to_pdf(
+            final_buffer, 
+            user, 
+            'MROSC_CONSOLIDADO', 
+            projeto_id
+        )
+        final_buffer = signed_buffer
+        logging.info(f"PDF consolidado MROSC assinado com código: {validation_code}")
+    except HTTPException as e:
+        # Se falhar por falta de dados de assinatura, retorna PDF sem assinatura
+        logging.warning(f"PDF consolidado sem assinatura digital: {e.detail}")
+    except Exception as e:
+        logging.error(f"Erro ao adicionar assinatura ao PDF consolidado MROSC: {e}")
+    
     filename = f"MROSC_Consolidado_{projeto.get('nome_projeto', 'projeto')[:15].replace(' ', '_')}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.pdf"
     return StreamingResponse(
         final_buffer,
