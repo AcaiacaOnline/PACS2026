@@ -5487,6 +5487,179 @@ def gerar_assinatura_simulada(pdf_bytes: bytes, user_info: dict = None) -> DOEMA
         email=user_info.get('email', '') if user_info else ''
     )
 
+def create_signature_page_mrosc(signers: list, validation_code: str, doc_info: dict = None) -> BytesIO:
+    """
+    Cria uma página de assinaturas no estilo do documento de referência (Lei 14.063).
+    Formato: blocos de assinatura individuais com QR Code, código de autenticidade,
+    nome, cargo, data/hora e fundamento legal.
+    
+    Args:
+        signers: Lista de dicts com {nome, cpf, cargo, email, data_hora}
+        validation_code: Código de validação do documento
+        doc_info: Dict com informações do documento {tipo, id, titulo}
+    
+    Returns:
+        BytesIO com a página PDF de assinaturas
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from reportlab.lib.utils import ImageReader
+    import qrcode
+    
+    buffer = BytesIO()
+    c = pdf_canvas.Canvas(buffer, pagesize=A4)
+    page_width, page_height = A4
+    
+    # Cores
+    azul_escuro = colors.HexColor("#1a365d")
+    azul_medio = colors.HexColor("#2563eb")
+    verde = colors.HexColor("#059669")
+    cinza = colors.HexColor("#6b7280")
+    cinza_claro = colors.HexColor("#e5e7eb")
+    
+    # Cabeçalho
+    c.setFillColor(azul_escuro)
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(page_width/2, page_height - 40, "ASSINATURAS ELETRÔNICAS")
+    
+    c.setFillColor(cinza)
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(page_width/2, page_height - 55, "Com fundamento na Lei Nº 14.063, de 23 de Setembro de 2020")
+    
+    # Linha separadora
+    c.setStrokeColor(cinza_claro)
+    c.setLineWidth(1)
+    c.line(50, page_height - 65, page_width - 50, page_height - 65)
+    
+    # Blocos de assinatura
+    current_y = page_height - 100
+    block_width = 230
+    block_height = 130
+    margin = 30
+    blocks_per_row = 2
+    start_x = (page_width - (blocks_per_row * block_width + (blocks_per_row - 1) * margin)) / 2
+    
+    for i, signer in enumerate(signers):
+        col = i % blocks_per_row
+        row = i // blocks_per_row
+        
+        x = start_x + col * (block_width + margin)
+        y = current_y - row * (block_height + 20)
+        
+        if y < 150:  # Nova página se necessário
+            c.showPage()
+            c.setFont("Helvetica-Bold", 12)
+            c.setFillColor(azul_escuro)
+            c.drawCentredString(page_width/2, page_height - 40, "ASSINATURAS ELETRÔNICAS (continuação)")
+            current_y = page_height - 80
+            y = current_y - row * (block_height + 20)
+        
+        # Borda do bloco
+        c.setStrokeColor(cinza_claro)
+        c.setLineWidth(0.5)
+        c.roundRect(x, y - block_height + 20, block_width, block_height, 5, stroke=1, fill=0)
+        
+        # Selo circular
+        seal_x = x + 15
+        seal_y = y - 25
+        c.setStrokeColor(azul_medio)
+        c.setLineWidth(1.5)
+        c.circle(seal_x, seal_y, 18, stroke=1, fill=0)
+        c.circle(seal_x, seal_y, 14, stroke=1, fill=0)
+        
+        c.setFillColor(azul_medio)
+        c.setFont("Helvetica-Bold", 4)
+        c.drawCentredString(seal_x, seal_y + 5, "Lei Federal")
+        c.drawCentredString(seal_x, seal_y + 1, "14.063")
+        c.setFont("Helvetica", 3.5)
+        c.drawCentredString(seal_x, seal_y - 4, "ASSINATURA")
+        c.drawCentredString(seal_x, seal_y - 7.5, "ELETRÔNICA")
+        
+        # QR Code
+        try:
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
+            qr = qrcode.QRCode(version=1, box_size=2, border=1)
+            qr.add_data(qr_url)
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="#1a365d", back_color="#ffffff")
+            
+            qr_buffer = BytesIO()
+            qr_img.save(qr_buffer, format='PNG')
+            qr_buffer.seek(0)
+            
+            qr_size = 35
+            c.drawImage(ImageReader(qr_buffer), x + block_width - qr_size - 15, y - qr_size - 5, 
+                       width=qr_size, height=qr_size)
+        except Exception as e:
+            logging.error(f"Erro ao gerar QR Code: {e}")
+        
+        # Nome do assinante
+        c.setFillColor(azul_escuro)
+        c.setFont("Helvetica-Bold", 9)
+        nome = signer.get('nome', 'N/A')
+        if len(nome) > 30:
+            nome = nome[:27] + "..."
+        c.drawString(x + 45, y - 15, nome.upper())
+        
+        # Cargo
+        c.setFillColor(cinza)
+        c.setFont("Helvetica", 7)
+        cargo = signer.get('cargo', '')
+        if len(cargo) > 35:
+            cargo = cargo[:32] + "..."
+        c.drawString(x + 45, y - 28, cargo)
+        
+        # Data/hora da assinatura
+        c.setFillColor(colors.black)
+        c.setFont("Helvetica", 7)
+        data_hora = signer.get('data_hora', datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S'))
+        c.drawString(x + 10, y - 55, f"em {data_hora}")
+        
+        # Código de autenticidade
+        c.setFillColor(verde)
+        c.setFont("Helvetica", 6)
+        signer_code = f"{validation_code[:4]}.{uuid.uuid4().hex[:4].upper()}.{uuid.uuid4().hex[:4].upper()}"
+        c.drawString(x + 10, y - 70, f"Cód. Autenticidade da Assinatura: {signer_code}")
+        
+        # Fundamento legal
+        c.setFillColor(cinza)
+        c.setFont("Helvetica-Oblique", 6)
+        c.drawString(x + 10, y - 85, "Com fundamento na Lei Nº 14.063,")
+        c.drawString(x + 10, y - 93, "de 23 de Setembro de 2020.")
+    
+    # Informações do documento no rodapé
+    c.setStrokeColor(cinza_claro)
+    c.line(50, 120, page_width - 50, 120)
+    
+    c.setFillColor(azul_escuro)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, 100, "Informações do Documento")
+    
+    c.setFillColor(colors.black)
+    c.setFont("Helvetica", 8)
+    
+    doc_tipo = doc_info.get('tipo', 'PRESTAÇÃO DE CONTAS') if doc_info else 'PRESTAÇÃO DE CONTAS'
+    doc_id = doc_info.get('id', validation_code) if doc_info else validation_code
+    doc_titulo = doc_info.get('titulo', 'Relatório de Prestação de Contas MROSC') if doc_info else 'Relatório de Prestação de Contas MROSC'
+    
+    c.drawString(50, 85, f"ID do Documento: {doc_id}")
+    c.drawString(50, 73, f"Tipo: {doc_tipo}")
+    c.drawString(50, 61, f"Título: {doc_titulo[:60]}{'...' if len(doc_titulo) > 60 else ''}")
+    c.drawString(50, 49, f"Data de Elaboração: {datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M:%S')}")
+    
+    # Código de autenticidade do documento
+    c.setFillColor(verde)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(50, 33, f"Código de Autenticidade deste Documento: {validation_code}")
+    
+    c.setFillColor(azul_medio)
+    c.setFont("Helvetica", 7)
+    c.drawString(50, 20, "Verifique a autenticidade em: https://pac.acaiaca.mg.gov.br/validar")
+    
+    c.save()
+    buffer.seek(0)
+    return buffer
+
 # ===== Sistema de Assinatura Digital Avançada =====
 
 def mask_cpf(cpf: str) -> str:
