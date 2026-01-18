@@ -298,20 +298,7 @@ async def get_current_user(request: Request) -> User:
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-# ============ STARTUP EVENT ============
-@app.on_event("startup")
-async def create_admin_user():
-    data_assinatura: Optional[datetime] = None
-    hash_documento: Optional[str] = None
-    tipo_certificado: str = "ICP-Brasil (Simulado)"
-    titular: str = "Prefeitura Municipal de Acaiaca"
-    validation_code: Optional[str] = None
-    cpf: Optional[str] = None
-    cargo: Optional[str] = None
-    email: Optional[str] = None
-    # Suporte para múltiplos assinantes
-    assinantes: Optional[List[DOEMAssinante]] = None
-    assinatura_em_lote: bool = False
+# ============ FUNÇÕES DE AUTENTICAÇÃO ============
 
 class DOEMEdicao(BaseModel):
     """Edição do Diário Oficial"""
