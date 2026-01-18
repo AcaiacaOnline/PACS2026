@@ -1053,24 +1053,24 @@ const PrestacaoContasEditor = () => {
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <Upload className="text-purple-600" />
-                  Enviar Documento
+                  Enviar Documento/Comprovante
                 </h3>
-                <p className="text-sm text-muted-foreground">Anexe comprovantes de despesas (PDF)</p>
+                <p className="text-sm text-muted-foreground">Anexe comprovantes de despesas (PDF, JPG ou PNG)</p>
               </div>
 
               <form onSubmit={handleUploadDocumento} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Arquivo PDF *</label>
+                  <label className="block text-sm font-medium mb-1">Arquivo (PDF, JPG ou PNG) *</label>
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => setDocForm({...docForm, file: e.target.files[0]})}
                     className="w-full px-3 py-2 border border-input rounded-lg bg-background file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-purple-100 file:text-purple-700 file:text-sm hover:file:bg-purple-200"
                     required
                     data-testid="documento-file-input"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Máximo 10MB. Apenas arquivos PDF.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Máximo 10MB. Formatos: PDF, JPG, JPEG, PNG</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
