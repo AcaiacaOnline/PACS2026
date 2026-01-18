@@ -3866,6 +3866,30 @@ async def export_processos_xlsx(request: Request):
 
 import json
 
+# ============ FUNÇÃO HELPER PARA SERIALIZAÇÃO JSON ============
+def serialize_for_json(obj):
+    """Converte objetos para tipos serializáveis em JSON"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: serialize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [serialize_for_json(item) for item in obj]
+    elif hasattr(obj, '__dict__'):
+        return serialize_for_json(obj.__dict__)
+    return obj
+
+def serialize_document(doc):
+    """Serializa um documento MongoDB removendo _id e convertendo datetime"""
+    if doc is None:
+        return None
+    serialized = {}
+    for key, value in doc.items():
+        if key == '_id':
+            continue
+        serialized[key] = serialize_for_json(value)
+    return serialized
+
 @api_router.get("/backup/export")
 async def export_backup(request: Request):
     """
