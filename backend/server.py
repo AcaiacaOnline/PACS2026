@@ -8267,11 +8267,17 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
     
     # Adicionar assinatura digital ao PDF
     try:
+        doc_info = {
+            'tipo': 'PRESTAÇÃO DE CONTAS MROSC',
+            'id': projeto_id,
+            'titulo': f"Prestação de Contas - {projeto.get('nome_projeto', 'N/A')}"
+        }
         signed_buffer, validation_code = await add_signature_to_pdf(
             buffer, 
             user, 
             'MROSC_PRESTACAO_CONTAS', 
-            projeto_id
+            projeto_id,
+            doc_info
         )
         buffer = signed_buffer
         logging.info(f"PDF de prestação de contas MROSC assinado com código: {validation_code}")
