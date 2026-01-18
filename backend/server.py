@@ -5041,17 +5041,6 @@ def create_signature_page_mrosc(signers: list, validation_code: str, doc_info: d
 
 # ===== Sistema de Assinatura Digital Avançada =====
 
-def mask_cpf(cpf: str) -> str:
-    """Mascara o CPF para exibição pública (LGPD compliance)"""
-    if not cpf:
-        return "***.***.***-**"
-    # Remove formatação existente
-    cpf_digits = re.sub(r'\D', '', cpf)
-    if len(cpf_digits) != 11:
-        return "***.***.***-**"
-    # Mascara: XXX.XXX.XXX-XX -> ***.XXX.XXX-**
-    return f"***.{cpf_digits[3:6]}.{cpf_digits[6:9]}-**"
-
 def generate_validation_code() -> str:
     """Gera código único para validação de documento"""
     return f"DOC-{uuid.uuid4().hex[:8].upper()}-{datetime.now().strftime('%Y%m%d')}"
