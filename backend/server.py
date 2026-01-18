@@ -8477,6 +8477,7 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
     )
 
 
+@mrosc_router.get("/projetos/{projeto_id}/relatorio/consolidado/pdf")
 @mrosc_router.get("/projetos/{projeto_id}/relatorio/consolidado")
 async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request):
     """
