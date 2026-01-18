@@ -2963,11 +2963,13 @@ async def import_pac_geral_items(
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
 @api_router.get("/pacs-geral/{pac_geral_id}/export/pdf")
-async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation: str = "landscape"):
+async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation: str = "landscape", assinar: bool = True, data: str = None):
     """
     Exporta o PAC Geral para PDF com design profissional e paginação de 15 itens por página.
     Args:
         orientation: 'landscape' (paisagem) ou 'portrait' (retrato)
+        assinar: Se True, adiciona assinatura digital
+        data: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - retroativa se necessário
     """
     user = await get_current_user(request)
     pac = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
