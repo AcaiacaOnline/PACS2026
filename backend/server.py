@@ -254,29 +254,49 @@ class SignaturePayload(BaseModel):
 
 # ============ FUNÇÕES DE AUTENTICAÇÃO ============
 def hash_password(password: str) -> str:
-    "Portarias",
-    "Leis",
-    "Decretos",
-    "Resoluções",
-    "Editais",
-    "Prestações de Contas",
-    "Processos Administrativos",
-    "Publicações do Legislativo",
-    "Publicações do Terceiro Setor"
-]
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-# Tipos de publicação por segmento
-DOEM_TIPOS_PUBLICACAO = {
-    "Portarias": ["Portaria", "Portaria Conjunta"],
-    "Leis": ["Lei Ordinária", "Lei Complementar", "Emenda à Lei Orgânica"],
-    "Decretos": ["Decreto", "Decreto Regulamentar"],
-    "Resoluções": ["Resolução", "Resolução Conjunta"],
-    "Editais": ["Edital de Licitação", "Edital de Convocação", "Edital de Seleção", "Aviso de Licitação"],
-    "Prestações de Contas": ["Prestação de Contas", "Relatório de Gestão", "Balanço"],
-    "Processos Administrativos": ["Extrato de Contrato", "Termo Aditivo", "Ata de Registro de Preços", "Homologação", "Ratificação"],
-    "Publicações do Legislativo": ["Projeto de Lei", "Ata de Sessão", "Parecer", "Moção", "Requerimento"],
-    "Publicações do Terceiro Setor": ["Termo de Parceria", "Convênio", "Prestação de Contas OSC", "Chamamento Público"]
-}
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def create_jwt_token(user_id: str) -> str:
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRATION_DAYS)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def mask_cpf(cpf: str) -> str:
+    """Mascara o CPF para exibição (LGPD): ***456.789-**"""
+    if not cpf:
+        return "***.***.***-**"
+    # Remove formatação
+    cpf_clean = re.sub(r'[^\d]', '', cpf)
+    if len(cpf_clean) != 11:
+        return "***.***.***-**"
+    # Exibe apenas os dígitos centrais: ***456.789-**
+    return f"***{cpf_clean[3:6]}.{cpf_clean[6:9]}-**"
+
+async def get_current_user(request: Request) -> User:
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = auth_header.split(' ')[1]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get('user_id')
+        user_data = await db.users.find_one({'user_id': user_id}, {'_id': 0, 'password_hash': 0})
+        if not user_data:
+            raise HTTPException(status_code=401, detail="User not found")
+        if not user_data.get('is_active', True):
+            raise HTTPException(status_code=403, detail="User account is disabled")
+        return User(**user_data)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
 
 class DOEMPublicacao(BaseModel):
     """Publicação individual dentro de uma edição do DOEM"""
