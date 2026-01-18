@@ -144,6 +144,12 @@ class UserSignatureData(BaseModel):
     cep: Optional[str] = None           # CEP
     telefone: Optional[str] = None      # Telefone para contato
 
+class SignatureRequest(BaseModel):
+    """Solicitação de assinatura digital com data opcional"""
+    confirmar_assinatura: bool = False  # Deve ser True para confirmar
+    data_assinatura: Optional[str] = None  # Formato: DD/MM/YYYY HH:MM:SS (retroativa ou futura)
+    observacoes: Optional[str] = None  # Observações opcionais
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
