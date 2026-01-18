@@ -201,7 +201,14 @@ const PrestacaoContasEditor = () => {
   const handleUploadDocumento = async (e) => {
     e.preventDefault();
     if (!docForm.file) {
-      toast.error('Selecione um arquivo PDF');
+      toast.error('Selecione um arquivo (PDF, JPG ou PNG)');
+      return;
+    }
+    
+    // Validar tipo de arquivo
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(docForm.file.type)) {
+      toast.error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.');
       return;
     }
     
@@ -210,10 +217,12 @@ const PrestacaoContasEditor = () => {
       const formData = new FormData();
       formData.append('file', docForm.file);
       formData.append('tipo_documento', docForm.tipo_documento);
-      formData.append('numero_documento', docForm.numero_documento);
-      formData.append('data_documento', new Date(docForm.data_documento).toISOString());
-      formData.append('valor', docForm.valor);
+      formData.append('numero_documento', docForm.numero_documento || '');
+      formData.append('data_documento', docForm.data_documento ? new Date(docForm.data_documento).toISOString() : '');
+      formData.append('valor', docForm.valor || 0);
       formData.append('despesa_id', docForm.despesa_id || '');
+      formData.append('rh_id', docForm.rh_id || '');
+      formData.append('descricao', docForm.descricao || '');
       formData.append('observacoes', docForm.observacoes || '');
 
       await api.post(`/mrosc/projetos/${id}/documentos/upload`, formData, {
@@ -228,6 +237,8 @@ const PrestacaoContasEditor = () => {
         data_documento: new Date().toISOString().split('T')[0],
         valor: 0,
         despesa_id: '',
+        rh_id: '',
+        descricao: '',
         observacoes: '',
         file: null
       });
