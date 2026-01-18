@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardAnalitico from './pages/DashboardAnalitico';
+import AnalyticsRealtime from './pages/AnalyticsRealtime';
 import PACList from './pages/PACList';
 import PACEditor from './pages/PACEditor';
 import PACGeralList from './pages/PACGeralList';
