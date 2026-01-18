@@ -6036,7 +6036,12 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
             detail="Cargo é obrigatório para assinar documentos. Por favor, atualize seu perfil com seu cargo."
         )
     
-    data_hora = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
+    # Usar a data fornecida ou a atual
+    if signature_date:
+        data_hora = signature_date
+    else:
+        data_hora = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
+    
     signer = {
         'nome': user.name,
         'cpf': cpf,
@@ -6070,7 +6075,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         reader = PdfReader(pdf_buffer)
         writer = PdfWriter()
         
-        # Copiar todas as páginas originais com selo lateral
+        # Copiar todas as páginas originais com selo no rodapé
         for page in reader.pages:
             overlay_buffer = BytesIO()
             page_width = float(page.mediabox.width)
@@ -6078,7 +6083,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
             
             overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
             qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
-            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url, data_hora)
             overlay_canvas.save()
             overlay_buffer.seek(0)
             
