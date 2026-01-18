@@ -5980,10 +5980,6 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     # Salvar estado do canvas
     canvas.saveState()
     
-    # Configurar fonte e cor
-    canvas.setFillColor(cor_vermelho)
-    canvas.setFont("Helvetica-Bold", 5.5)
-    
     # Rotacionar 90 graus (texto vertical, de cima para baixo)
     # Posicionar abaixo do QR Code
     start_y = qr_y - 5 * mm
@@ -5991,6 +5987,11 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     # Mover para posição e rotacionar
     canvas.translate(text_x, start_y)
     canvas.rotate(-90)  # Rotação para texto vertical (cabeçalho -> rodapé)
+    
+    # IMPORTANTE: Definir cor e fonte APÓS as transformações
+    # para garantir que sejam aplicadas corretamente ao texto
+    canvas.setFillColor(cor_vermelho)
+    canvas.setFont("Helvetica-Bold", 5.5)
     
     # Desenhar texto (agora na horizontal após rotação)
     canvas.drawString(0, 0, texto_assinatura)
