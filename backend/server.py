@@ -2303,7 +2303,7 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     # Adicionar assinatura digital ao PDF
     try:
         signed_buffer, validation_code = await add_signature_to_pdf(
-            buffer, user, f"PAC - {pac['secretaria']}", pac_id
+            buffer, user, f"PAC - {pac['secretaria']}", pac_id, None, data
         )
         return StreamingResponse(
             signed_buffer, 
