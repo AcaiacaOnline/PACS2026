@@ -1490,6 +1490,95 @@ const PrestacaoContasEditor = () => {
             </div>
           </div>
         )}
+
+        {/* Modal de Confirmação de Assinatura */}
+        {showAssinaturaModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 rounded-full">
+                  <FileText className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirmar Assinatura Digital</h3>
+                  <p className="text-sm text-gray-500">Esta ação é irreversível</p>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                <p className="text-sm text-red-800 font-medium mb-2">
+                  ⚠️ Você está prestes a assinar digitalmente este documento.
+                </p>
+                <p className="text-sm text-red-700">
+                  A assinatura será registrada com seus dados (nome, CPF, cargo) e não poderá ser desfeita.
+                </p>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Documento
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{projeto?.nome_projeto}</div>
+                  <div className="text-sm text-gray-500">{projeto?.organizacao_parceira}</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Tipo: {tipoAssinatura === 'pdf' ? 'Relatório PDF' : 'Relatório Consolidado (com anexos)'}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data e Hora da Assinatura *
+                </label>
+                <input
+                  type="text"
+                  value={dataAssinatura}
+                  onChange={(e) => setDataAssinatura(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="DD/MM/YYYY HH:MM:SS"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formato: DD/MM/YYYY HH:MM:SS (ex: 15/01/2026 14:30:00). 
+                  Você pode usar data retroativa se necessário.
+                </p>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Assinante:</strong> {user?.name || 'Carregando...'}
+                </p>
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowAssinaturaModal(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (tipoAssinatura === 'pdf') {
+                      handleDownloadPDF(false, null);
+                    } else {
+                      handleDownloadPDFConsolidado(false, null);
+                    }
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Gerar sem Assinar
+                </button>
+                <button
+                  onClick={confirmarAssinatura}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Confirmar e Assinar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
