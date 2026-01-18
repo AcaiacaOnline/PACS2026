@@ -7310,9 +7310,11 @@ async def upload_documento_mrosc(
     data_documento: str = Form(""),
     valor: float = Form(0.0),
     despesa_id: str = Form(None),
+    rh_id: str = Form(None),
+    descricao: str = Form(""),
     observacoes: str = Form("")
 ):
-    """Faz upload de um documento/comprovante PDF para o projeto MROSC"""
+    """Faz upload de um documento/comprovante (PDF, JPG, PNG) para o projeto MROSC"""
     user = await get_current_user(request)
     
     # Verifica se o projeto existe
@@ -7320,9 +7322,24 @@ async def upload_documento_mrosc(
     if not projeto:
         raise HTTPException(status_code=404, detail="Projeto não encontrado")
     
-    # Valida o arquivo
-    if not file.filename.lower().endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são permitidos")
+    # Tipos de arquivo permitidos
+    extensoes_permitidas = {'.pdf', '.jpg', '.jpeg', '.png'}
+    extensao = Path(file.filename).suffix.lower()
+    
+    if extensao not in extensoes_permitidas:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Tipo de arquivo não permitido. Permitidos: PDF, JPG, JPEG, PNG"
+        )
+    
+    # Define o content-type baseado na extensão
+    content_types = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png'
+    }
+    content_type = content_types.get(extensao, 'application/octet-stream')
     
     # Limite de 10MB
     contents = await file.read()
@@ -7352,18 +7369,21 @@ async def upload_documento_mrosc(
     documento_doc = {
         'documento_id': documento_id,
         'projeto_id': projeto_id,
-        'despesa_id': despesa_id if despesa_id and despesa_id != "null" else None,
+        'despesa_id': despesa_id if despesa_id and despesa_id != "null" and despesa_id != "" else None,
+        'rh_id': rh_id if rh_id and rh_id != "null" and rh_id != "" else None,
         'tipo_documento': tipo_documento,
         'numero_documento': numero_documento,
         'data_documento': dt_documento,
-        'valor': valor,
+        'valor': valor if valor else 0.0,
         'arquivo_url': f"/api/mrosc/documentos/{documento_id}/download",
         'arquivo_nome': file.filename,
+        'arquivo_tipo': content_type,
         'arquivo_tamanho': len(contents),
+        'descricao': descricao,
         'validado': False,
         'validado_por': None,
         'data_validacao': None,
-        'observacoes_validacao': observacoes,
+        'observacoes': observacoes,
         'created_at': datetime.now(timezone.utc)
     }
     
@@ -7372,21 +7392,24 @@ async def upload_documento_mrosc(
     # Remove _id para retorno
     documento_doc.pop('_id', None)
     
-    return DocumentoMROSC(**documento_doc)
+    return documento_doc
 
 @mrosc_router.get("/documentos/{documento_id}/download")
 async def download_documento_mrosc(documento_id: str):
-    """Faz download de um documento"""
+    """Faz download de um documento (PDF ou imagem)"""
     documento = await db.mrosc_documentos.find_one({'documento_id': documento_id}, {'_id': 0})
     if not documento:
         raise HTTPException(status_code=404, detail="Documento não encontrado")
+    
+    # Define o content-type
+    content_type = documento.get('arquivo_tipo', 'application/pdf')
     
     # Procura o arquivo
     for file in UPLOAD_DIR.iterdir():
         if file.name.startswith(documento_id):
             return StreamingResponse(
                 open(file, "rb"),
-                media_type="application/pdf",
+                media_type=content_type,
                 headers={
                     "Content-Disposition": f"inline; filename=\"{documento['arquivo_nome']}\""
                 }
