@@ -8507,7 +8507,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
             user, 
             'MROSC_PRESTACAO_CONTAS', 
             projeto_id,
-            doc_info
+            doc_info,
+            data  # Data da assinatura (pode ser retroativa)
         )
         buffer = signed_buffer
         logging.info(f"PDF de prestação de contas MROSC assinado com código: {validation_code}")
