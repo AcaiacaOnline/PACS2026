@@ -3943,8 +3943,13 @@ async def import_processos(file: UploadFile = File(...), request: Request = None
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
 @api_router.get("/processos/export/pdf")
-async def export_processos_pdf(request: Request, orientation: str = "landscape"):
-    """Exporta todos os processos para PDF com margens padronizadas"""
+async def export_processos_pdf(request: Request, orientation: str = "landscape", assinar: bool = True, data: str = None):
+    """
+    Exporta todos os processos para PDF com margens padronizadas
+    Args:
+        assinar: Se True, adiciona assinatura digital
+        data: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - retroativa se necessário
+    """
     user = await get_current_user(request)
     processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
     
