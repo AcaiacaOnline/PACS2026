@@ -8551,11 +8551,17 @@ async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request):
     
     # Adicionar assinatura digital ao PDF consolidado
     try:
+        doc_info = {
+            'tipo': 'RELATÓRIO CONSOLIDADO MROSC',
+            'id': projeto_id,
+            'titulo': f"Relatório Consolidado - {projeto.get('nome_projeto', 'N/A')}"
+        }
         signed_buffer, validation_code = await add_signature_to_pdf(
             final_buffer, 
             user, 
             'MROSC_CONSOLIDADO', 
-            projeto_id
+            projeto_id,
+            doc_info
         )
         final_buffer = signed_buffer
         logging.info(f"PDF consolidado MROSC assinado com código: {validation_code}")
