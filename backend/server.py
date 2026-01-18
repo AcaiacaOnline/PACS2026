@@ -6114,7 +6114,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         
         return output_buffer, validation_code
     else:
-        # Para outros documentos: apenas selo lateral em todas as páginas
+        # Para outros documentos: selo no rodapé em todas as páginas
         reader = PdfReader(pdf_buffer)
         writer = PdfWriter()
         
@@ -6125,7 +6125,7 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
             
             overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
             qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
-            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url, data_hora)
             overlay_canvas.save()
             overlay_buffer.seek(0)
             
