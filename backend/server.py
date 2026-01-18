@@ -8114,6 +8114,197 @@ async def get_dashboard_analytics(request: Request):
     }
 
 
+@analytics_router.get("/realtime")
+async def get_realtime_metrics(request: Request):
+    """
+    Métricas em tempo real para monitoramento do sistema
+    Inclui: uso por secretaria, horários de pico, tendências de gastos
+    """
+    user = await get_current_user(request)
+    
+    from datetime import timedelta
+    from collections import defaultdict
+    
+    hoje = datetime.now(timezone.utc)
+    inicio_mes = hoje.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    inicio_semana = hoje - timedelta(days=hoje.weekday())
+    
+    # ===== USO POR SECRETARIA =====
+    pacs = await db.pacs.find({}, {'_id': 0}).to_list(1000)
+    processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
+    
+    uso_secretaria = defaultdict(lambda: {'pacs': 0, 'processos': 0, 'valor_total': 0, 'ultimo_acesso': None})
+    
+    for pac in pacs:
+        sec = pac.get('secretaria', 'Não Definida')
+        uso_secretaria[sec]['pacs'] += 1
+        created = pac.get('created_at') or pac.get('updated_at')
+        if created and (not uso_secretaria[sec]['ultimo_acesso'] or created > uso_secretaria[sec]['ultimo_acesso']):
+            uso_secretaria[sec]['ultimo_acesso'] = created
+    
+    for proc in processos:
+        sec = proc.get('secretaria', 'Não Definida')
+        uso_secretaria[sec]['processos'] += 1
+    
+    # Calcular valores por secretaria
+    pac_items = await db.pac_items.find({}, {'_id': 0}).to_list(10000)
+    pac_lookup = {p['pac_id']: p.get('secretaria', 'Não Definida') for p in pacs}
+    
+    for item in pac_items:
+        sec = pac_lookup.get(item.get('pac_id'), 'Não Definida')
+        uso_secretaria[sec]['valor_total'] += item.get('valorTotal', 0)
+    
+    uso_secretaria_list = []
+    for sec, data in uso_secretaria.items():
+        ultimo = data['ultimo_acesso']
+        if isinstance(ultimo, datetime):
+            ultimo = ultimo.isoformat()
+        uso_secretaria_list.append({
+            'secretaria': sec,
+            'pacs': data['pacs'],
+            'processos': data['processos'],
+            'valor_total': data['valor_total'],
+            'ultimo_acesso': ultimo
+        })
+    uso_secretaria_list.sort(key=lambda x: x['valor_total'], reverse=True)
+    
+    # ===== ATIVIDADE POR HORÁRIO (últimos 7 dias) =====
+    atividade_horario = [0] * 24
+    
+    # Buscar documentos criados nos últimos 7 dias
+    sete_dias_atras = hoje - timedelta(days=7)
+    
+    async def count_by_hour(collection, date_field='created_at'):
+        docs = await collection.find({
+            date_field: {'$gte': sete_dias_atras}
+        }, {'_id': 0, date_field: 1}).to_list(10000)
+        
+        for doc in docs:
+            dt = doc.get(date_field)
+            if isinstance(dt, datetime):
+                atividade_horario[dt.hour] += 1
+    
+    await count_by_hour(db.pacs)
+    await count_by_hour(db.processos)
+    await count_by_hour(db.mrosc_projetos)
+    await count_by_hour(db.pac_items)
+    
+    atividade_horario_data = [
+        {'hora': f'{h:02d}:00', 'atividade': atividade_horario[h]}
+        for h in range(24)
+    ]
+    
+    # ===== TENDÊNCIA DE GASTOS (últimos 6 meses) =====
+    tendencia_gastos = []
+    
+    for i in range(6, 0, -1):
+        mes = hoje - timedelta(days=i*30)
+        mes_inicio = mes.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        mes_fim = (mes_inicio + timedelta(days=32)).replace(day=1)
+        
+        # PAC items criados nesse mês
+        items_mes = await db.pac_items.find({
+            'created_at': {'$gte': mes_inicio, '$lt': mes_fim}
+        }, {'valorTotal': 1, '_id': 0}).to_list(10000)
+        
+        valor_mes = sum(i.get('valorTotal', 0) for i in items_mes)
+        
+        tendencia_gastos.append({
+            'mes': mes_inicio.strftime('%b/%Y'),
+            'valor': valor_mes,
+            'quantidade': len(items_mes)
+        })
+    
+    # ===== MÉTRICAS DE DESEMPENHO =====
+    total_usuarios = await db.users.count_documents({})
+    usuarios_ativos = await db.users.count_documents({'is_active': True})
+    
+    # Documentos criados hoje
+    inicio_hoje = hoje.replace(hour=0, minute=0, second=0, microsecond=0)
+    docs_hoje = {
+        'pacs': await db.pacs.count_documents({'created_at': {'$gte': inicio_hoje}}),
+        'processos': await db.processos.count_documents({'created_at': {'$gte': inicio_hoje}}),
+        'pac_items': await db.pac_items.count_documents({'created_at': {'$gte': inicio_hoje}}),
+        'mrosc': await db.mrosc_projetos.count_documents({'created_at': {'$gte': inicio_hoje}})
+    }
+    
+    # Documentos criados esta semana
+    docs_semana = {
+        'pacs': await db.pacs.count_documents({'created_at': {'$gte': inicio_semana}}),
+        'processos': await db.processos.count_documents({'created_at': {'$gte': inicio_semana}}),
+        'pac_items': await db.pac_items.count_documents({'created_at': {'$gte': inicio_semana}}),
+        'mrosc': await db.mrosc_projetos.count_documents({'created_at': {'$gte': inicio_semana}})
+    }
+    
+    # ===== STATUS DOS MÓDULOS =====
+    status_modulos = {
+        'PAC Individual': {
+            'total': len(pacs),
+            'itens': len(pac_items),
+            'status': 'online'
+        },
+        'PAC Geral': {
+            'total': await db.pacs_geral.count_documents({}),
+            'itens': await db.pac_geral_items.count_documents({}),
+            'status': 'online'
+        },
+        'PAC Obras': {
+            'total': await db.pacs_geral_obras.count_documents({}),
+            'itens': await db.pac_obras_items.count_documents({}),
+            'status': 'online'
+        },
+        'Processos': {
+            'total': len(processos),
+            'status': 'online'
+        },
+        'MROSC': {
+            'total': await db.mrosc_projetos.count_documents({}),
+            'documentos': await db.mrosc_documentos.count_documents({}),
+            'status': 'online'
+        },
+        'DOEM': {
+            'total': await db.doem_edicoes.count_documents({}),
+            'status': 'online'
+        }
+    }
+    
+    # ===== TOP USUÁRIOS ATIVOS (por documentos criados) =====
+    top_usuarios = []
+    users = await db.users.find({'is_active': True}, {'_id': 0, 'user_id': 1, 'name': 1, 'email': 1}).to_list(100)
+    
+    for usr in users:
+        uid = usr.get('user_id')
+        count = await db.pacs.count_documents({'user_id': uid})
+        count += await db.processos.count_documents({'user_id': uid})
+        count += await db.mrosc_projetos.count_documents({'user_id': uid})
+        if count > 0:
+            top_usuarios.append({
+                'user_id': uid,
+                'name': usr.get('name', 'N/A'),
+                'email': usr.get('email', ''),
+                'documentos': count
+            })
+    
+    top_usuarios.sort(key=lambda x: x['documentos'], reverse=True)
+    top_usuarios = top_usuarios[:10]
+    
+    return {
+        'timestamp': hoje.isoformat(),
+        'uso_por_secretaria': uso_secretaria_list,
+        'atividade_por_horario': atividade_horario_data,
+        'tendencia_gastos': tendencia_gastos,
+        'metricas_desempenho': {
+            'usuarios_totais': total_usuarios,
+            'usuarios_ativos': usuarios_ativos,
+            'documentos_hoje': docs_hoje,
+            'documentos_semana': docs_semana
+        },
+        'status_modulos': status_modulos,
+        'top_usuarios': top_usuarios,
+        'horario_pico': max(atividade_horario_data, key=lambda x: x['atividade']) if any(a['atividade'] for a in atividade_horario_data) else {'hora': '09:00', 'atividade': 0}
+    }
+
+
 # ===== SISTEMA DE ALERTAS =====
 alertas_router = APIRouter(prefix="/api/alertas", tags=["Sistema de Alertas"])
 
