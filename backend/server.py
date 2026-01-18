@@ -4065,7 +4065,7 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     # Adicionar assinatura digital ao PDF
     try:
         signed_buffer, validation_code = await add_signature_to_pdf(
-            buffer, user, "Relatório de Gestão Processual", f"processos_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            buffer, user, "Relatório de Gestão Processual", f"processos_{datetime.now().strftime('%Y%m%d%H%M%S')}", None, data
         )
         return StreamingResponse(
             signed_buffer,
