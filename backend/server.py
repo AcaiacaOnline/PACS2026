@@ -7985,6 +7985,268 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
         headers={'Content-Disposition': f'attachment; filename="{filename}"'}
     )
 
+
+@mrosc_router.get("/projetos/{projeto_id}/relatorio/consolidado")
+async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request):
+    """
+    Gera relatório PDF consolidado com todos os anexos incorporados
+    Inclui: dados do projeto, concedente, RH, despesas, histórico e documentos
+    """
+    from PyPDF2 import PdfMerger
+    from PIL import Image as PILImage
+    from reportlab.platypus import PageBreak
+    
+    user = await get_current_user(request)
+    
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    rhs = await db.mrosc_rh.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    despesas = await db.mrosc_despesas.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    documentos = await db.mrosc_documentos.find({'projeto_id': projeto_id}, {'_id': 0}).to_list(100)
+    historico = await db.mrosc_historico.find({'projeto_id': projeto_id}, {'_id': 0}).sort('data', 1).to_list(100)
+    
+    total_rh = sum(rh.get('custo_total_projeto', 0) for rh in rhs)
+    total_despesas = sum(d.get('valor_total', 0) for d in despesas)
+    total_geral = total_rh + total_despesas
+    
+    # Create main PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=15*mm, rightMargin=15*mm, topMargin=15*mm, bottomMargin=15*mm)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#1F4E78'), alignment=TA_CENTER, spaceAfter=5)
+    section_style = ParagraphStyle('Section', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'), spaceBefore=12, spaceAfter=6)
+    
+    # ===== CAPA =====
+    elements.append(Spacer(1, 30*mm))
+    elements.append(Paragraph("PREFEITURA MUNICIPAL DE ACAIACA", title_style))
+    elements.append(Paragraph("Estado de Minas Gerais", ParagraphStyle('Estado', fontSize=10, alignment=TA_CENTER)))
+    elements.append(Spacer(1, 20*mm))
+    elements.append(Paragraph("PRESTAÇÃO DE CONTAS CONSOLIDADA", ParagraphStyle('TitDoc', fontSize=18, alignment=TA_CENTER, textColor=colors.HexColor('#2E7D32'))))
+    elements.append(Paragraph("MROSC - Lei 13.019/2014", ParagraphStyle('Lei', fontSize=12, alignment=TA_CENTER, textColor=colors.gray)))
+    elements.append(Spacer(1, 15*mm))
+    elements.append(Paragraph(f"<b>{projeto.get('nome_projeto', 'N/A')}</b>", ParagraphStyle('NomeProjeto', fontSize=14, alignment=TA_CENTER)))
+    elements.append(Spacer(1, 10*mm))
+    elements.append(Paragraph(f"Organização: {projeto.get('organizacao_parceira', 'N/A')}", ParagraphStyle('Org', fontSize=11, alignment=TA_CENTER)))
+    elements.append(Paragraph(f"CNPJ: {projeto.get('cnpj_parceira', 'N/A')}", ParagraphStyle('CNPJ', fontSize=10, alignment=TA_CENTER)))
+    elements.append(Spacer(1, 30*mm))
+    elements.append(Paragraph(f"VALOR TOTAL: R$ {total_geral:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), ParagraphStyle('Valor', fontSize=14, alignment=TA_CENTER, textColor=colors.HexColor('#1F4E78'))))
+    elements.append(Spacer(1, 20*mm))
+    elements.append(Paragraph(f"Acaiaca - MG, {datetime.now(timezone.utc).strftime('%d/%m/%Y')}", ParagraphStyle('Data', fontSize=10, alignment=TA_CENTER)))
+    elements.append(PageBreak())
+    
+    # ===== 1. DADOS DO PROJETO =====
+    elements.append(Paragraph("1. DADOS DO PROJETO", section_style))
+    
+    projeto_data = [
+        ['Campo', 'Valor'],
+        ['Nome do Projeto', projeto.get('nome_projeto', 'N/A')],
+        ['Objeto', str(projeto.get('objeto', projeto.get('objeto_detalhado', 'N/A')))[:100]],
+        ['Organização Parceira', projeto.get('organizacao_parceira', 'N/A')],
+        ['CNPJ da Parceira', projeto.get('cnpj_parceira', 'N/A')],
+        ['Responsável OSC', projeto.get('responsavel_osc', 'N/A')],
+        ['Valor Repasse Público', f"R$ {projeto.get('valor_repasse_publico', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Valor Contrapartida', f"R$ {projeto.get('valor_contrapartida', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Status', projeto.get('status', 'ELABORACAO')]
+    ]
+    
+    projeto_table = Table(projeto_data, colWidths=[120, 340])
+    projeto_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(projeto_table)
+    
+    # ===== 2. RECURSOS HUMANOS =====
+    elements.append(Paragraph("2. RECURSOS HUMANOS", section_style))
+    
+    if rhs:
+        rh_table_data = [['#', 'Função', 'Regime', 'Salário Bruto', 'Custo Mensal', 'Meses', 'Custo Total']]
+        
+        for i, rh in enumerate(rhs, 1):
+            rh_table_data.append([
+                str(i),
+                rh.get('nome_funcao', '')[:25],
+                rh.get('regime_contratacao', '')[:10],
+                f"R$ {rh.get('salario_bruto', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {rh.get('custo_mensal_total', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                str(rh.get('numero_meses', '')),
+                f"R$ {rh.get('custo_total_projeto', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            ])
+        
+        rh_table_data.append(['', '', '', '', '', 'TOTAL:', f"R$ {total_rh:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')])
+        
+        rh_table = Table(rh_table_data, colWidths=[20, 90, 50, 70, 70, 35, 80])
+        rh_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+            ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E3F2FD')),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        elements.append(rh_table)
+    else:
+        elements.append(Paragraph("Nenhum recurso humano cadastrado.", ParagraphStyle('Empty', fontSize=10, textColor=colors.gray)))
+    
+    # ===== 3. DESPESAS =====
+    elements.append(Paragraph("3. DESPESAS", section_style))
+    
+    if despesas:
+        desp_table_data = [['#', 'Item', 'Natureza', 'Qtd', 'V.Unit', 'V.Total']]
+        
+        for i, d in enumerate(despesas, 1):
+            desp_table_data.append([
+                str(i),
+                d.get('item_despesa', '')[:30],
+                d.get('natureza_despesa', '')[:8],
+                str(d.get('quantidade', 0)),
+                f"R$ {d.get('valor_unitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {d.get('valor_total', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+            ])
+        
+        desp_table_data.append(['', '', '', '', 'TOTAL:', f"R$ {total_despesas:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')])
+        
+        desp_table = Table(desp_table_data, colWidths=[20, 150, 50, 40, 70, 80])
+        desp_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E7D32')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+            ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E8F5E9')),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        elements.append(desp_table)
+    else:
+        elements.append(Paragraph("Nenhuma despesa cadastrada.", ParagraphStyle('Empty', fontSize=10, textColor=colors.gray)))
+    
+    # ===== 4. RESUMO FINANCEIRO =====
+    elements.append(Paragraph("4. RESUMO FINANCEIRO", section_style))
+    
+    resumo_data = [
+        ['Categoria', 'Valor'],
+        ['Total Recursos Humanos', f"R$ {total_rh:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['Total Despesas', f"R$ {total_despesas:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+        ['TOTAL GERAL', f"R$ {total_geral:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')],
+    ]
+    
+    resumo_table = Table(resumo_data, colWidths=[200, 150])
+    resumo_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#FF6F00')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFF3E0')),
+        ('FONTSIZE', (0, -1), (-1, -1), 12),
+        ('PADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(resumo_table)
+    
+    # ===== 5. DOCUMENTOS ANEXADOS =====
+    elements.append(Paragraph("5. DOCUMENTOS ANEXADOS", section_style))
+    
+    if documentos:
+        doc_table_data = [['#', 'Tipo', 'Número', 'Valor', 'Validado']]
+        
+        for i, documento in enumerate(documentos, 1):
+            doc_table_data.append([
+                str(i),
+                documento.get('tipo_documento', '')[:20],
+                documento.get('numero_documento', '')[:20],
+                f"R$ {documento.get('valor', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if documento.get('valor') else '-',
+                '✓' if documento.get('validado') else '✗'
+            ])
+        
+        doc_list_table = Table(doc_table_data, colWidths=[25, 100, 100, 70, 45])
+        doc_list_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#7B1FA2')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ]))
+        elements.append(doc_list_table)
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph("<i>Os documentos originais estão anexados nas páginas seguintes.</i>", ParagraphStyle('Nota', fontSize=8, textColor=colors.gray)))
+    else:
+        elements.append(Paragraph("Nenhum documento anexado.", ParagraphStyle('Empty', fontSize=10, textColor=colors.gray)))
+    
+    # ===== FOOTER =====
+    elements.append(Spacer(1, 15))
+    elements.append(Paragraph("_" * 60, ParagraphStyle('Linha', alignment=TA_CENTER)))
+    elements.append(Paragraph("Documento gerado automaticamente pelo Sistema Planejamento Acaiaca", ParagraphStyle('Footer', fontSize=8, alignment=TA_CENTER, textColor=colors.gray)))
+    elements.append(Paragraph(f"Data: {datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M:%S')}", ParagraphStyle('Footer2', fontSize=8, alignment=TA_CENTER, textColor=colors.gray)))
+    
+    # Build main PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    # Merge with attachments
+    merger = PdfMerger()
+    merger.append(buffer)
+    
+    upload_dir = Path('/app/backend/uploads/mrosc')
+    
+    for documento in documentos:
+        doc_id = documento.get('documento_id')
+        arquivo_nome = documento.get('arquivo_nome', '')
+        ext = arquivo_nome.split('.')[-1].lower() if '.' in arquivo_nome else ''
+        
+        filepath = upload_dir / projeto_id / f"{doc_id}.{ext}"
+        
+        if filepath.exists():
+            try:
+                if ext == 'pdf':
+                    merger.append(str(filepath))
+                elif ext in ['jpg', 'jpeg', 'png']:
+                    # Convert image to PDF
+                    img = PILImage.open(filepath)
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        img = img.convert('RGB')
+                    
+                    max_width = 1800
+                    if img.width > max_width:
+                        ratio = max_width / img.width
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, PILImage.Resampling.LANCZOS)
+                    
+                    img_pdf = BytesIO()
+                    img.save(img_pdf, format='PDF', resolution=100.0)
+                    img_pdf.seek(0)
+                    merger.append(img_pdf)
+            except Exception as e:
+                logging.error(f"Erro ao processar anexo {doc_id}: {e}")
+                continue
+    
+    final_buffer = BytesIO()
+    merger.write(final_buffer)
+    merger.close()
+    final_buffer.seek(0)
+    
+    filename = f"MROSC_Consolidado_{projeto.get('nome_projeto', 'projeto')[:15].replace(' ', '_')}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        final_buffer,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+    )
+
+
 # Registrar router MROSC
 app.include_router(mrosc_router)
 
