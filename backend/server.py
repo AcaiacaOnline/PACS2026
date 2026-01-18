@@ -5922,6 +5922,12 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     qr_x = margin_x
     qr_y = footer_y + 2 * mm
     
+    # Desenhar fundo e borda do rodapé
+    canvas.setFillColor(cor_fundo)
+    canvas.setStrokeColor(cor_vermelho)
+    canvas.setLineWidth(0.8)
+    canvas.roundRect(margin_x - 3*mm, footer_y - 1*mm, footer_width + 6*mm, footer_height + 4*mm, 3, stroke=1, fill=1)
+    
     if qr_code_url:
         try:
             qr = qrcode.QRCode(version=1, box_size=2, border=1)
