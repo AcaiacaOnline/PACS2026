@@ -3250,10 +3250,13 @@ async def delete_pac_geral_obras_item(pac_obras_id: str, item_id: str, request: 
 
 # ===== EXPORTAÇÃO PDF DO PAC GERAL OBRAS =====
 @api_router.get("/pacs-geral-obras/{pac_obras_id}/export/pdf")
-async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orientation: str = "landscape"):
+async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orientation: str = "landscape", assinar: bool = True, data: str = None):
     """
     Exporta PAC Geral Obras e Serviços para PDF
     Classificação conforme Lei 14.133/2021 e Portaria 448/ME
+    Args:
+        assinar: Se True, adiciona assinatura digital
+        data: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - retroativa se necessário
     """
     user = await get_current_user(request)
     
