@@ -6894,7 +6894,8 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                         'nome': assinante.get('nome', ''),
                         'cargo': assinante.get('cargo', ''),
                         'cpf': assinante.get('cpf', ''),
-                        'email': assinante.get('email', '')
+                        'email': assinante.get('email', ''),
+                        'data_hora': assinante.get('data_hora', datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S'))
                     })
             else:
                 # Assinante único (compatibilidade com versão anterior)
@@ -6902,12 +6903,15 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                     'nome': assinatura.get('titular', 'Prefeitura Municipal de Acaiaca'),
                     'cargo': assinatura.get('cargo', 'Órgão Publicador'),
                     'cpf': assinatura.get('cpf', ''),
-                    'email': assinatura.get('email', 'contato@acaiaca.mg.gov.br')
+                    'email': assinatura.get('email', 'contato@acaiaca.mg.gov.br'),
+                    'data_hora': assinatura.get('data_assinatura', datetime.now(timezone.utc)).strftime('%d/%m/%Y %H:%M:%S') if isinstance(assinatura.get('data_assinatura'), datetime) else datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
                 }]
             
             # URL para validação
             qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
-            draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url)
+            # Pegar data da assinatura do primeiro assinante
+            signature_date = signers[0].get('data_hora') if signers else None
+            draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url, signature_date)
         
         # === RODAPÉ ===
         if rodape_path.exists():
