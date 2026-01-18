@@ -26,7 +26,44 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 18/01/2026 (Sessão 9)
+## Última Atualização: 18/01/2026 (Sessão 10)
+
+### Changelog - Sessão 10 (18/01/2026)
+
+#### ✅ 1. CORREÇÃO DA COR DA ASSINATURA DIGITAL
+- **Problema:** Texto da assinatura vertical estava preto em vez de vermelho (#DC2626)
+- **Causa:** `setFillColor()` era chamado ANTES das transformações `translate`/`rotate`
+- **Solução:** Movido `setFillColor()` e `setFont()` para DEPOIS das transformações
+- **Arquivo:** `/app/backend/server.py` - função `draw_signature_seal()`
+- **Resultado:** Assinatura vertical na margem direita agora aparece em VERMELHO
+
+#### ✅ 2. INÍCIO DA REFATORAÇÃO DO SERVER.PY (P0 - CRÍTICO)
+- **server.py reduzido de 9.581 para 8.710 linhas (-871 linhas, -9%)**
+- Implementado sistema de aliases que apontam para modelos no pacote `models/`
+- Removidas ~800 linhas de definições de modelos duplicados
+- Modelos agora são importados de `/app/backend/models/`:
+  - User, UserCreate, UserUpdate, UserLogin, UserListItem
+  - PAC, PACCreate, PACUpdate, PACItem, PACItemCreate, PACItemUpdate
+  - PACGeral, PACGeralItem e variantes
+  - PACGeralObras, PACGeralObrasItem e variantes
+  - Processo, ProcessoCreate, ProcessoUpdate
+  - DOEM* modelos
+  - Newsletter* modelos
+  - ProjetoMROSC*, RecursoHumanoMROSC*, DespesaMROSC*, DocumentoMROSC*
+
+#### ✅ 3. CORREÇÃO DE MODELOS PARA COMPATIBILIDADE
+- **Processo:** Campo `modalidade` tornado opcional, adicionado `modalidade_contratacao`
+- **ProjetoMROSC:** Adicionados campos alternativos para compatibilidade:
+  - `organizacao_parceira` ↔ `nome_osc`
+  - `cnpj_parceira` ↔ `cnpj_osc`
+  - `data_conclusao` ↔ `data_fim`
+  - Campos legados do banco de dados agora são aceitos
+
+#### ✅ 4. TODOS OS TESTES PASSANDO (34/34)
+- Todos os 34 testes unitários passando após refatoração
+- Nenhuma regressão identificada
+
+---
 
 ### Changelog - Sessão 9 (18/01/2026)
 
