@@ -3905,7 +3905,7 @@ async def export_backup(request: Request):
         # Coletar todos os dados das coleções
         backup_data = {
             'metadata': {
-                'version': '2.0',
+                'version': '2.1',
                 'exported_at': datetime.now(timezone.utc).isoformat(),
                 'exported_by': user.email,
                 'system': 'Planejamento Acaiaca'
@@ -3929,128 +3929,37 @@ async def export_backup(request: Request):
             'user_sessions': []
         }
         
-        # Exportar usuários (sem password_hash por segurança - serão recriados)
-        users = await db.users.find({}, {'_id': 0}).to_list(10000)
-        for u in users:
-            # Manter password_hash para restauração completa
-            if 'created_at' in u and isinstance(u['created_at'], datetime):
-                u['created_at'] = u['created_at'].isoformat()
-            backup_data['users'].append(u)
+        # Exportar todas as coleções usando a função helper
+        collections_map = [
+            ('users', 'users'),
+            ('pacs', 'pacs'),
+            ('pac_items', 'pac_items'),
+            ('pacs_geral', 'pacs_geral'),
+            ('pac_geral_items', 'pac_geral_items'),
+            ('pacs_geral_obras', 'pacs_geral_obras'),
+            ('pac_geral_obras_items', 'pac_geral_obras_items'),
+            ('processos', 'processos'),
+            ('mrosc_projetos', 'mrosc_projetos'),
+            ('mrosc_rh', 'mrosc_rh'),
+            ('mrosc_despesas', 'mrosc_despesas'),
+            ('mrosc_documentos', 'mrosc_documentos'),
+            ('doem_edicoes', 'doem_edicoes'),
+            ('doem_config', 'doem_config'),
+            ('doem_newsletter', 'doem_newsletter'),
+            ('document_signatures', 'document_signatures'),
+        ]
         
-        # Exportar PACs
-        pacs = await db.pacs.find({}, {'_id': 0}).to_list(10000)
-        for p in pacs:
-            if 'created_at' in p and isinstance(p['created_at'], datetime):
-                p['created_at'] = p['created_at'].isoformat()
-            if 'updated_at' in p and isinstance(p['updated_at'], datetime):
-                p['updated_at'] = p['updated_at'].isoformat()
-            backup_data['pacs'].append(p)
-        
-        # Exportar PAC Items
-        pac_items = await db.pac_items.find({}, {'_id': 0}).to_list(100000)
-        for item in pac_items:
-            if 'created_at' in item and isinstance(item['created_at'], datetime):
-                item['created_at'] = item['created_at'].isoformat()
-            backup_data['pac_items'].append(item)
-        
-        # Exportar PACs Geral
-        pacs_geral = await db.pacs_geral.find({}, {'_id': 0}).to_list(10000)
-        for pg in pacs_geral:
-            if 'created_at' in pg and isinstance(pg['created_at'], datetime):
-                pg['created_at'] = pg['created_at'].isoformat()
-            if 'updated_at' in pg and isinstance(pg['updated_at'], datetime):
-                pg['updated_at'] = pg['updated_at'].isoformat()
-            backup_data['pacs_geral'].append(pg)
-        
-        # Exportar PAC Geral Items
-        pac_geral_items = await db.pac_geral_items.find({}, {'_id': 0}).to_list(100000)
-        for item in pac_geral_items:
-            if 'created_at' in item and isinstance(item['created_at'], datetime):
-                item['created_at'] = item['created_at'].isoformat()
-            backup_data['pac_geral_items'].append(item)
-        
-        # Exportar PACs Geral Obras
-        pacs_geral_obras = await db.pacs_geral_obras.find({}, {'_id': 0}).to_list(10000)
-        for pgo in pacs_geral_obras:
-            for field in ['created_at', 'updated_at']:
-                if field in pgo and isinstance(pgo[field], datetime):
-                    pgo[field] = pgo[field].isoformat()
-            backup_data['pacs_geral_obras'].append(pgo)
-        
-        # Exportar PAC Geral Obras Items
-        pac_geral_obras_items = await db.pac_geral_obras_items.find({}, {'_id': 0}).to_list(100000)
-        for item in pac_geral_obras_items:
-            if 'created_at' in item and isinstance(item['created_at'], datetime):
-                item['created_at'] = item['created_at'].isoformat()
-            backup_data['pac_geral_obras_items'].append(item)
-        
-        # Exportar Processos
-        processos = await db.processos.find({}, {'_id': 0}).to_list(100000)
-        for proc in processos:
-            for field in ['created_at', 'updated_at', 'data_inicio', 'data_autuacao', 'data_contrato']:
-                if field in proc and isinstance(proc[field], datetime):
-                    proc[field] = proc[field].isoformat()
-            backup_data['processos'].append(proc)
-        
-        # Exportar MROSC Projetos
-        mrosc_projetos = await db.mrosc_projetos.find({}, {'_id': 0}).to_list(10000)
-        for proj in mrosc_projetos:
-            for field in ['created_at', 'updated_at', 'data_inicio', 'data_fim']:
-                if field in proj and isinstance(proj[field], datetime):
-                    proj[field] = proj[field].isoformat()
-            backup_data['mrosc_projetos'].append(proj)
-        
-        # Exportar MROSC RH
-        mrosc_rh = await db.mrosc_rh.find({}, {'_id': 0}).to_list(100000)
-        for rh in mrosc_rh:
-            if 'created_at' in rh and isinstance(rh['created_at'], datetime):
-                rh['created_at'] = rh['created_at'].isoformat()
-            backup_data['mrosc_rh'].append(rh)
-        
-        # Exportar MROSC Despesas
-        mrosc_despesas = await db.mrosc_despesas.find({}, {'_id': 0}).to_list(100000)
-        for desp in mrosc_despesas:
-            if 'created_at' in desp and isinstance(desp['created_at'], datetime):
-                desp['created_at'] = desp['created_at'].isoformat()
-            backup_data['mrosc_despesas'].append(desp)
-        
-        # Exportar MROSC Documentos
-        mrosc_documentos = await db.mrosc_documentos.find({}, {'_id': 0}).to_list(100000)
-        for doc in mrosc_documentos:
-            for field in ['created_at', 'data_documento', 'validated_at']:
-                if field in doc and isinstance(doc[field], datetime):
-                    doc[field] = doc[field].isoformat()
-            backup_data['mrosc_documentos'].append(doc)
-        
-        # Exportar DOEM Edições
-        doem_edicoes = await db.doem_edicoes.find({}, {'_id': 0}).to_list(10000)
-        for edicao in doem_edicoes:
-            for field in ['created_at', 'updated_at', 'data_publicacao']:
-                if field in edicao and isinstance(edicao[field], datetime):
-                    edicao[field] = edicao[field].isoformat()
-            backup_data['doem_edicoes'].append(edicao)
-        
-        # Exportar DOEM Config
-        doem_config = await db.doem_config.find({}, {'_id': 0}).to_list(100)
-        backup_data['doem_config'] = doem_config
-        
-        # Exportar DOEM Newsletter
-        doem_newsletter = await db.doem_newsletter.find({}, {'_id': 0}).to_list(10000)
-        for news in doem_newsletter:
-            for field in ['created_at', 'confirmed_at']:
-                if field in news and isinstance(news[field], datetime):
-                    news[field] = news[field].isoformat()
-            backup_data['doem_newsletter'].append(news)
-        
-        # Exportar Assinaturas de Documentos
-        document_signatures = await db.document_signatures.find({}, {'_id': 0}).to_list(100000)
-        for sig in document_signatures:
-            if 'created_at' in sig and isinstance(sig['created_at'], datetime):
-                sig['created_at'] = sig['created_at'].isoformat()
-            backup_data['document_signatures'].append(sig)
+        for collection_name, backup_key in collections_map:
+            try:
+                collection = db[collection_name]
+                docs = await collection.find({}).to_list(100000)
+                backup_data[backup_key] = [serialize_document(doc) for doc in docs]
+            except Exception as e:
+                logging.warning(f"Erro ao exportar {collection_name}: {str(e)}")
+                backup_data[backup_key] = []
         
         # Gerar JSON
-        json_content = json.dumps(backup_data, ensure_ascii=False, indent=2)
+        json_content = json.dumps(backup_data, ensure_ascii=False, indent=2, default=str)
         
         # Criar resposta como download
         buffer = BytesIO(json_content.encode('utf-8'))
@@ -4065,6 +3974,7 @@ async def export_backup(request: Request):
         )
     
     except Exception as e:
+        logging.error(f"Erro ao gerar backup: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao gerar backup: {str(e)}")
 
 
