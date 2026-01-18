@@ -8146,9 +8146,116 @@ async def get_historico_prestacao(projeto_id: str, request: Request):
     }
 
 
+# ===== ASSINATURA DE DOCUMENTOS MROSC =====
+@mrosc_router.post("/projetos/{projeto_id}/assinar")
+async def assinar_documento_mrosc(projeto_id: str, signature_request: SignatureRequest, request: Request):
+    """
+    Endpoint para assinar documento MROSC com confirmação.
+    
+    Requer confirmação explícita e permite data retroativa/futura.
+    
+    Args:
+        projeto_id: ID do projeto
+        signature_request: Dados da assinatura (confirmar_assinatura, data_assinatura, observacoes)
+    
+    Returns:
+        PDF assinado com a data especificada
+    """
+    user = await get_current_user(request)
+    
+    # Verificar se a confirmação foi dada
+    if not signature_request.confirmar_assinatura:
+        # Retornar informações para confirmação
+        projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+        if not projeto:
+            raise HTTPException(status_code=404, detail="Projeto não encontrado")
+        
+        # Buscar dados de assinatura do usuário
+        user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+        user_signature = user_doc.get('signature_data') or {} if user_doc else {}
+        
+        cpf = user_signature.get('cpf', '').strip()
+        cargo = user_signature.get('cargo', '').strip()
+        
+        if not cpf or not cargo:
+            return {
+                "status": "DADOS_INCOMPLETOS",
+                "message": "Para assinar documentos, você precisa preencher seu CPF e Cargo no perfil.",
+                "cpf_preenchido": bool(cpf),
+                "cargo_preenchido": bool(cargo),
+                "redirect_to": "/perfil"
+            }
+        
+        return {
+            "status": "AGUARDANDO_CONFIRMACAO",
+            "message": "Você está prestes a assinar digitalmente este documento. Esta ação é irreversível.",
+            "projeto": {
+                "id": projeto_id,
+                "nome": projeto.get('nome_projeto'),
+                "organizacao": projeto.get('organizacao_parceira'),
+                "valor_total": projeto.get('valor_total')
+            },
+            "assinante": {
+                "nome": user.name,
+                "cpf_mascarado": mask_cpf(cpf),
+                "cargo": cargo,
+                "email": user.email
+            },
+            "data_sugerida": datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S'),
+            "instrucoes": "Envie novamente com 'confirmar_assinatura': true e opcionalmente 'data_assinatura': 'DD/MM/YYYY HH:MM:SS' para assinar."
+        }
+    
+    # Confirmar assinatura
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Buscar dados de assinatura do usuário
+    user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+    user_signature = user_doc.get('signature_data') or {} if user_doc else {}
+    
+    cpf = user_signature.get('cpf', '').strip()
+    cargo = user_signature.get('cargo', '').strip()
+    
+    if not cpf:
+        raise HTTPException(
+            status_code=400, 
+            detail="CPF é obrigatório para assinar documentos. Por favor, atualize seu perfil."
+        )
+    
+    if not cargo:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cargo é obrigatório para assinar documentos. Por favor, atualize seu perfil."
+        )
+    
+    # Validar formato da data se fornecida
+    signature_date = signature_request.data_assinatura
+    if signature_date:
+        try:
+            # Validar formato DD/MM/YYYY HH:MM:SS
+            datetime.strptime(signature_date, '%d/%m/%Y %H:%M:%S')
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Formato de data inválido. Use: DD/MM/YYYY HH:MM:SS"
+            )
+    
+    return {
+        "status": "ASSINATURA_CONFIRMADA",
+        "message": "Use os endpoints de PDF para gerar o documento assinado.",
+        "projeto_id": projeto_id,
+        "data_assinatura": signature_date or datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S'),
+        "assinante": user.name,
+        "endpoints": {
+            "pdf_simples": f"/api/mrosc/projetos/{projeto_id}/relatorio/pdf?assinar=true&data={signature_date or ''}",
+            "pdf_consolidado": f"/api/mrosc/projetos/{projeto_id}/relatorio/consolidado/pdf?assinar=true&data={signature_date or ''}"
+        }
+    }
+
 # ===== RELATÓRIO PDF DE PRESTAÇÃO DE CONTAS MROSC =====
 @mrosc_router.get("/projetos/{projeto_id}/relatorio/pdf")
-async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
+async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar: bool = False, data: str = None):
     """
     Gera relatório PDF consolidado de prestação de contas conforme MROSC (Lei 13.019/2014)
     Inclui: dados do projeto, recursos humanos, despesas e documentos anexados
