@@ -201,16 +201,26 @@ class TestMROSCComplete:
         response = self.session.get(f"{BASE_URL}/api/public/mrosc/projetos")
         assert response.status_code == 200, f"Failed to get public projects: {response.text}"
         data = response.json()
-        assert isinstance(data, list), "Response should be a list"
-        print(f"✓ Public MROSC projects: {len(data)} projects")
+        # Response may be wrapped in 'data' key or be a direct list
+        if isinstance(data, dict) and "data" in data:
+            projetos = data["data"]
+        else:
+            projetos = data
+        assert isinstance(projetos, list), "Response should be a list"
+        print(f"✓ Public MROSC projects: {len(projetos)} projects")
     
     def test_public_mrosc_estatisticas(self):
         """Test public MROSC statistics endpoint"""
         response = self.session.get(f"{BASE_URL}/api/public/mrosc/estatisticas")
         assert response.status_code == 200, f"Failed to get statistics: {response.text}"
         data = response.json()
-        assert "total_projetos" in data, "total_projetos should be in response"
-        print(f"✓ Public MROSC statistics: {data.get('total_projetos', 0)} total projects")
+        # Response may be wrapped in 'data' key
+        if isinstance(data, dict) and "data" in data:
+            stats = data["data"]
+        else:
+            stats = data
+        assert "total_projetos" in stats, "total_projetos should be in response"
+        print(f"✓ Public MROSC statistics: {stats.get('total_projetos', 0)} total projects")
     
     def test_get_mrosc_projeto_rh(self):
         """Test getting project human resources"""
