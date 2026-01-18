@@ -194,9 +194,11 @@ class ProjetoMROSC(BaseModel):
     nome_projeto: str
     objeto: str
     
-    # Dados da OSC
-    nome_osc: str  # Renomeado de organizacao_parceira
-    cnpj_osc: str  # Renomeado de cnpj_parceira
+    # Dados da OSC - Suporte para ambos formatos (legado e novo)
+    organizacao_parceira: Optional[str] = None  # Campo legado
+    cnpj_parceira: Optional[str] = None  # Campo legado
+    nome_osc: Optional[str] = None  # Campo novo
+    cnpj_osc: Optional[str] = None  # Campo novo
     responsavel_osc: str
     email_osc: Optional[str] = None
     telefone_osc: Optional[str] = None
@@ -212,18 +214,25 @@ class ProjetoMROSC(BaseModel):
     
     # Conta bancária específica (Recomendação MPC)
     banco: Optional[str] = None
+    banco_nome: Optional[str] = None  # Campo legado
     agencia: Optional[str] = None
+    banco_agencia: Optional[str] = None  # Campo legado
     conta_bancaria: Optional[str] = None
+    banco_conta: Optional[str] = None  # Campo legado
     tipo_conta: Optional[str] = None
     
     # Gestor responsável (Recomendação MPC)
     gestor_responsavel: Optional[str] = None
+    gestor_responsavel_nome: Optional[str] = None  # Campo legado
     cpf_gestor: Optional[str] = None
+    gestor_responsavel_cpf: Optional[str] = None  # Campo legado
     cargo_gestor: Optional[str] = None
+    gestor_responsavel_cargo: Optional[str] = None  # Campo legado
     
-    # Datas e prazos
+    # Datas e prazos - Suporte para ambos formatos
     data_inicio: datetime
-    data_fim: datetime  # Renomeado de data_conclusao
+    data_fim: Optional[datetime] = None  # Campo novo
+    data_conclusao: Optional[datetime] = None  # Campo legado
     prazo_meses: int
     
     # Valores financeiros
@@ -238,6 +247,9 @@ class ProjetoMROSC(BaseModel):
     quantidade_beneficiarios: Optional[int] = None
     metodologia: Optional[str] = None
     resultados_esperados: Optional[str] = None
+    plano_trabalho_arquivo: Optional[str] = None
+    plano_trabalho_finalidade: Optional[str] = None
+    plano_trabalho_cronograma: Optional[str] = None
     
     # Status e workflow
     status: str = "ELABORACAO"
