@@ -739,19 +739,158 @@ class NewsletterInscricaoManual(BaseModel):
 
 # Naturezas de Despesa conforme Lei 13.019/2014 e classificação orçamentária
 NATUREZAS_DESPESA_MROSC = {
-    "319011": {"nome": "Vencimentos e Vantagens Fixas - Pessoal Civil", "categoria": "RH"},
-    "319013": {"nome": "Obrigações Patronais", "categoria": "RH"},
-    "319094": {"nome": "Indenizações e Restituições Trabalhistas", "categoria": "RH"},
-    "339030": {"nome": "Material de Consumo", "categoria": "MATERIAIS"},
-    "339031": {"nome": "Premiações Culturais, Artísticas e Científicas", "categoria": "PREMIACOES"},
-    "339035": {"nome": "Serviços de Consultoria", "categoria": "SERVICOS"},
-    "339036": {"nome": "Outros Serviços de Terceiros - Pessoa Física", "categoria": "SERVICOS"},
-    "339039": {"nome": "Outros Serviços de Terceiros - Pessoa Jurídica", "categoria": "SERVICOS"},
-    "339046": {"nome": "Auxílio-Alimentação", "categoria": "BENEFICIOS"},
-    "339049": {"nome": "Auxílio-Transporte", "categoria": "BENEFICIOS"},
-    "339047": {"nome": "Obrigações Tributárias e Contributivas", "categoria": "TRIBUTOS"},
-    "449051": {"nome": "Obras e Instalações", "categoria": "INVESTIMENTOS"},
-    "449052": {"nome": "Equipamentos e Material Permanente", "categoria": "INVESTIMENTOS"}
+    # RECURSOS HUMANOS
+    "319011": {"nome": "Vencimentos e Vantagens Fixas - Pessoal Civil", "categoria": "RH", "itens": [
+        "VENCIMENTOS E SALÁRIOS",
+        "GRATIFICAÇÕES E VANTAGENS",
+        "1/3 DE FÉRIAS CONSTITUCIONAIS",
+        "HORAS-EXTRAS",
+        "DÉCIMO TERCEIRO SALÁRIO"
+    ]},
+    "319013": {"nome": "Obrigações Patronais", "categoria": "RH", "itens": [
+        "INSS PATRONAL",
+        "FGTS",
+        "OUTROS ENCARGOS PATRONAIS (PIS/PASEP)"
+    ]},
+    "319094": {"nome": "Indenizações e Restituições Trabalhistas", "categoria": "RH", "itens": [
+        "INDENIZAÇÕES POR DEMISSÃO"
+    ]},
+    
+    # MATERIAL DE CONSUMO
+    "339030": {"nome": "Material de Consumo", "categoria": "MATERIAIS", "itens": [
+        "MATERIAL PARA ESCRITÓRIO",
+        "MATERIAL DE LIMPEZA E HIGIENIZAÇÃO",
+        "GÊNEROS DE ALIMENTAÇÃO",
+        "MATERIAL DE COPA E COZINHA",
+        "MATERIAL DIDÁTICO E PEDAGÓGICO",
+        "MATERIAL PARA ESPORTE E LAZER",
+        "MATERIAL ELÉTRICO E ELETRÔNICO",
+        "MATERIAL DE ÁUDIO, VÍDEO E FOTO",
+        "MATERIAL E ACESSÓRIOS DE TI",
+        "UNIFORMES, TECIDOS E AVIAMENTOS",
+        "MATERIAL DE CAMA, MESA E BANHO",
+        "MATERIAL DE PROTEÇÃO E SEGURANÇA",
+        "COMBUSTÍVEIS E LUBRIFICANTES",
+        "MATERIAL DE MANUTENÇÃO DE IMÓVEIS",
+        "MATERIAL DE MANUTENÇÃO DE VEÍCULOS",
+        "MEDICAMENTOS",
+        "OUTROS MATERIAIS DE CONSUMO"
+    ]},
+    
+    # PREMIAÇÕES
+    "339031": {"nome": "Premiações Culturais, Artísticas e Científicas", "categoria": "PREMIACOES", "itens": [
+        "PRÊMIOS E CONDECORAÇÕES",
+        "MEDALHAS E TROFÉUS"
+    ]},
+    
+    # DIÁRIAS E PASSAGENS
+    "339014": {"nome": "Diárias", "categoria": "VIAGENS", "itens": [
+        "DIÁRIAS NO PAÍS",
+        "DIÁRIAS NO EXTERIOR"
+    ]},
+    "339033": {"nome": "Passagens e Locomoção", "categoria": "VIAGENS", "itens": [
+        "PASSAGENS AÉREAS",
+        "PASSAGENS TERRESTRES",
+        "LOCAÇÃO DE VEÍCULOS"
+    ]},
+    
+    # SERVIÇOS - CONSULTORIA
+    "339035": {"nome": "Serviços de Consultoria", "categoria": "SERVICOS", "itens": [
+        "CONSULTORIA EM GERAL",
+        "CONSULTORIA EM TECNOLOGIA DA INFORMAÇÃO",
+        "CONSULTORIA CONTÁBIL",
+        "CONSULTORIA JURÍDICA"
+    ]},
+    
+    # SERVIÇOS - PESSOA FÍSICA
+    "339036": {"nome": "Outros Serviços de Terceiros - Pessoa Física", "categoria": "SERVICOS", "itens": [
+        "SERVIÇOS TÉCNICOS ESPECIALIZADOS",
+        "ESTAGIÁRIOS",
+        "LOCAÇÃO DE IMÓVEIS (PF)",
+        "LOCAÇÃO DE BENS MÓVEIS (PF)",
+        "MANUTENÇÃO DE EQUIPAMENTOS",
+        "MANUTENÇÃO DE VEÍCULOS",
+        "MANUTENÇÃO DE IMÓVEIS",
+        "SERVIÇOS DE LIMPEZA E CONSERVAÇÃO",
+        "FORNECIMENTO DE ALIMENTAÇÃO",
+        "SERVIÇOS DE COMUNICAÇÃO",
+        "SERVIÇOS DE ÁUDIO, VÍDEO E FOTO",
+        "SERVIÇOS DE SELEÇÃO E TREINAMENTO",
+        "SERVIÇOS MÉDICOS E ODONTOLÓGICOS",
+        "OUTROS SERVIÇOS - PF"
+    ]},
+    
+    # SERVIÇOS - PESSOA JURÍDICA
+    "339039": {"nome": "Outros Serviços de Terceiros - Pessoa Jurídica", "categoria": "SERVICOS", "itens": [
+        "SERVIÇOS DE ENERGIA ELÉTRICA",
+        "SERVIÇOS DE ÁGUA E ESGOTO",
+        "SERVIÇOS DE GÁS",
+        "SERVIÇOS DE TELECOMUNICAÇÕES",
+        "SERVIÇOS BANCÁRIOS",
+        "SERVIÇOS GRÁFICOS",
+        "SERVIÇOS DE CÓPIAS E REPRODUÇÃO",
+        "LOCAÇÃO DE IMÓVEIS (PJ)",
+        "CONDOMÍNIOS",
+        "LOCAÇÃO DE MÁQUINAS E EQUIPAMENTOS",
+        "LOCAÇÃO DE VEÍCULOS",
+        "SEGUROS EM GERAL",
+        "HOSPEDAGEM E TRANSPORTE",
+        "MANUTENÇÃO DE IMÓVEIS",
+        "MANUTENÇÃO DE EQUIPAMENTOS",
+        "MANUTENÇÃO DE VEÍCULOS",
+        "LOCAÇÃO DE SOFTWARES",
+        "SERVIÇOS DE TI",
+        "AQUISIÇÃO E ATUALIZAÇÃO DE SOFTWARE",
+        "VIGILÂNCIA OSTENSIVA",
+        "LIMPEZA E CONSERVAÇÃO",
+        "FORNECIMENTO DE ALIMENTAÇÃO (PJ)",
+        "SERVIÇOS DE ÁUDIO, VÍDEO E FOTO (PJ)",
+        "SERVIÇOS MÉDICO-HOSPITALARES",
+        "OUTROS SERVIÇOS - PJ"
+    ]},
+    
+    # AUXÍLIOS
+    "339046": {"nome": "Auxílio-Alimentação", "categoria": "BENEFICIOS", "itens": [
+        "VALE REFEIÇÃO",
+        "AUXÍLIO ALIMENTAÇÃO EM PECÚNIA"
+    ]},
+    "339049": {"nome": "Auxílio-Transporte", "categoria": "BENEFICIOS", "itens": [
+        "VALE TRANSPORTE"
+    ]},
+    
+    # OBRIGAÇÕES TRIBUTÁRIAS
+    "339047": {"nome": "Obrigações Tributárias e Contributivas", "categoria": "TRIBUTOS", "itens": [
+        "INSS SOBRE FOLHA",
+        "ISS",
+        "IPTU/TLP",
+        "CONTRIBUIÇÃO SINDICAL",
+        "OUTRAS OBRIGAÇÕES"
+    ]},
+    
+    # INVESTIMENTOS - OBRAS
+    "449051": {"nome": "Obras e Instalações", "categoria": "INVESTIMENTOS", "itens": [
+        "ESTUDOS E PROJETOS",
+        "EXECUÇÃO DE OBRAS POR CONTRATO"
+    ]},
+    
+    # INVESTIMENTOS - EQUIPAMENTOS
+    "449052": {"nome": "Equipamentos e Material Permanente", "categoria": "INVESTIMENTOS", "itens": [
+        "APARELHOS E EQUIPAMENTOS DE COMUNICAÇÃO",
+        "APARELHOS DE MEDIÇÃO E ORIENTAÇÃO",
+        "EQUIPAMENTOS MÉDICOS E HOSPITALARES",
+        "EQUIPAMENTOS PARA ESPORTES",
+        "APARELHOS E UTENSÍLIOS DOMÉSTICOS",
+        "COLEÇÕES E MATERIAIS BIBLIOGRÁFICOS",
+        "EQUIPAMENTOS DE PROTEÇÃO E SEGURANÇA",
+        "INSTRUMENTOS MUSICAIS",
+        "MÁQUINAS E EQUIPAMENTOS INDUSTRIAIS",
+        "EQUIPAMENTOS DE ÁUDIO, VÍDEO E FOTO",
+        "EQUIPAMENTOS DE TI",
+        "MÁQUINAS E UTENSÍLIOS DE ESCRITÓRIO",
+        "MOBILIÁRIO EM GERAL",
+        "VEÍCULOS",
+        "OUTROS MATERIAIS PERMANENTES"
+    ]}
 }
 
 class ProjetoMROSC(BaseModel):
