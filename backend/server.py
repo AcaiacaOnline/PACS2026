@@ -250,38 +250,6 @@ class SignaturePayload(BaseModel):
     data_assinatura: Optional[str] = None  # Data customizada de assinatura
 
 # ============ CONSTANTES ============
-    quantidade: float
-    valorUnitario: float
-    valorTotal: float
-    prioridade: str
-    justificativa: str
-    codigo_classificacao: Optional[str] = None
-    subitem_classificacao: Optional[str] = None
-    created_at: datetime
-
-class PACItemCreate(BaseModel):
-    tipo: str
-    catmat: str
-    descricao: str
-    unidade: str
-    quantidade: float
-    valorUnitario: float
-    prioridade: str
-    justificativa: str
-    codigo_classificacao: Optional[str] = None
-    subitem_classificacao: Optional[str] = None
-
-class PACItemUpdate(BaseModel):
-    tipo: Optional[str] = None
-    catmat: Optional[str] = None
-    descricao: Optional[str] = None
-    unidade: Optional[str] = None
-    quantidade: Optional[float] = None
-    valorUnitario: Optional[float] = None
-    prioridade: Optional[str] = None
-    justificativa: Optional[str] = None
-    codigo_classificacao: Optional[str] = None
-    subitem_classificacao: Optional[str] = None
 
 # ===== MODELOS PAC GERAL =====
 class PACGeral(BaseModel):
