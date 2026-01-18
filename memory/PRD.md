@@ -68,6 +68,52 @@ Implementada nova página de assinaturas para documentos MROSC conforme document
 - **Problema:** Chamava `/export/pdf` que não existia
 - **Solução:** Corrigido para `/relatorio/pdf`
 
+#### ✅ 5. SISTEMA DE PRESTAÇÃO DE CONTAS BASEADO NA PLANILHA SUCC
+Reescrito completamente o editor de Prestação de Contas com base na Planilha Orçamentária SUCC/BH:
+
+**Nova Interface com 5 Abas:**
+1. **Orçamentação** - Dados do projeto, concedente, gestor, conta bancária (Rec. MPC 01/2025)
+2. **Recursos Humanos (ANEXO I)** - Tabela completa com encargos CLT calculados automaticamente
+3. **Despesas (ANEXO II/III)** - 7 categorias: Materiais, Serviços, Benefícios, Tributos, Investimentos, Viagens, Premiações
+4. **Documentos** - Upload de comprovantes (PDF, JPG, PNG) vinculados a despesas
+5. **Resumo** - Totalizadores e gráficos de distribuição
+
+**Novos Campos (Recomendação MPC 01/2025):**
+- Tipo e Nome do Concedente
+- Número da Emenda e Termo
+- Gestor Responsável (Nome, CPF, Cargo)
+- Conta Bancária Específica (Banco, Agência, Conta)
+- Plano de Trabalho (Finalidade, Cronograma)
+
+**Naturezas de Despesa Expandidas:**
+- 319011: Vencimentos e Vantagens Fixas - Pessoal Civil (5 itens)
+- 319013: Obrigações Patronais (3 itens)
+- 319094: Indenizações e Restituições Trabalhistas
+- 339014: Diárias (2 itens)
+- 339030: Material de Consumo (17 itens)
+- 339031: Premiações (2 itens)
+- 339033: Passagens e Locomoção (3 itens)
+- 339035: Serviços de Consultoria (4 itens)
+- 339036: Serviços Terceiros - PF (14 itens)
+- 339039: Serviços Terceiros - PJ (24 itens)
+- 339046: Auxílio-Alimentação (2 itens)
+- 339047: Obrigações Tributárias (5 itens)
+- 339049: Auxílio-Transporte (1 item)
+- 449051: Obras e Instalações (2 itens)
+- 449052: Equipamentos Permanentes (15 itens)
+
+**Cálculos Automáticos (CLT):**
+- Provisão de Férias: Salário/12 + 1/3 de Férias/12
+- Provisão de 13º: Salário/12
+- FGTS: 8%
+- INSS Patronal: 20%
+- FGTS-Demissão: 50% do FGTS mensal
+
+**Sistema de 3 Orçamentos:**
+- Campo para 3 cotações/orçamentos por item
+- Cálculo automático da média
+- Campo para Referência de Preço Municipal (Ata de Registro)
+
 ---
 
 ### Changelog - Sessão 8 (18/01/2026)
