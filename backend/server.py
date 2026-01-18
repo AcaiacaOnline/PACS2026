@@ -2233,11 +2233,13 @@ async def export_xlsx(pac_id: str, request: Request):
     return StreamingResponse(output, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': f'attachment; filename=PAC_{pac["secretaria"].replace(" ", "_")}_2026.xlsx'})
 
 @api_router.get("/pacs/{pac_id}/export/pdf")
-async def export_pdf(pac_id: str, request: Request, orientation: str = "landscape"):
+async def export_pdf(pac_id: str, request: Request, orientation: str = "landscape", assinar: bool = True, data: str = None):
     """
     Exporta PAC Individual para PDF com design profissional e paginação de 15 itens por página.
     Args:
         orientation: 'landscape' (paisagem) ou 'portrait' (retrato)
+        assinar: Se True, adiciona assinatura digital
+        data: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - retroativa se necessário
     """
     user = await get_current_user(request)
     pac = await db.pacs.find_one({'pac_id': pac_id}, {'_id': 0})
