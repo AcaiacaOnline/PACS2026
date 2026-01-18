@@ -5883,13 +5883,14 @@ async def save_document_signature(doc_id: str, doc_type: str, signers: list, has
 
 def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None, signature_date: str = None):
     """
-    Desenha o selo de assinatura digital no RODAPÉ da página.
-    Estilo compacto com texto em VERMELHO para destaque.
+    Desenha o selo de assinatura digital na LATERAL DIREITA da página.
+    Design compacto, sem fundo/borda, seguindo LGPD para dados sensíveis.
     
     Formato baseado no documento de referência:
-    - Linha de rodapé com QR Code pequeno + texto de verificação
-    - Lista de assinantes com data/hora
-    - Código de validação destacado em vermelho
+    - QR Code no topo da lateral direita
+    - Texto vertical acompanhando a margem
+    - CPF mascarado (LGPD)
+    - Sem fundo ou borda
     
     Args:
         canvas: Canvas do reportlab
@@ -5903,65 +5904,53 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     from reportlab.lib.utils import ImageReader
     import qrcode
     
-    # Cores do selo - VERMELHO para destaque
-    cor_vermelho = colors.HexColor("#DC2626")  # Vermelho principal
-    cor_vermelho_escuro = colors.HexColor("#991B1B")  # Vermelho escuro
-    cor_texto = colors.HexColor("#374151")  # Cinza escuro
-    cor_subtexto = colors.HexColor("#6B7280")  # Cinza médio
-    cor_fundo = colors.HexColor("#FEF2F2")  # Fundo vermelho bem claro
-    cor_borda = colors.HexColor("#FECACA")  # Borda rosa claro
+    # Cores do selo - preto para texto conforme documento de referência
+    cor_texto = colors.HexColor("#1F2937")  # Cinza escuro
+    cor_subtexto = colors.HexColor("#4B5563")  # Cinza médio
+    cor_link = colors.HexColor("#2563EB")  # Azul para links
     
-    # Posição do rodapé - parte INFERIOR da página
-    footer_height = 22 * mm  # Altura do rodapé
-    footer_y = 8 * mm  # Margem inferior
-    margin_x = 15 * mm  # Margem lateral
-    footer_width = page_width - (2 * margin_x)
+    # Posição da lateral direita - SEM fundo/borda
+    seal_width = 28 * mm  # Largura ~30mm como no documento
+    seal_x = page_width - seal_width - 5 * mm  # Margem da borda direita
     
-    # QR Code pequeno à esquerda
-    qr_size = 15 * mm
-    qr_x = margin_x
-    qr_y = footer_y + 2 * mm
+    # Calcular altura baseada no número de assinantes
+    base_height = 35 * mm
+    signer_height = 18 * mm * min(len(signers), 3)
+    qr_height = 22 * mm if qr_code_url else 0
+    seal_height = base_height + signer_height + qr_height
     
-    # Desenhar fundo e borda do rodapé
-    canvas.setFillColor(cor_fundo)
-    canvas.setStrokeColor(cor_vermelho)
-    canvas.setLineWidth(0.8)
-    canvas.roundRect(margin_x - 3*mm, footer_y - 1*mm, footer_width + 6*mm, footer_height + 4*mm, 3, stroke=1, fill=1)
+    # Posicionar no topo da página
+    seal_y = page_height - seal_height - 15 * mm
     
+    current_y = seal_y + seal_height - 5 * mm
+    
+    # QR Code no topo
     if qr_code_url:
         try:
             qr = qrcode.QRCode(version=1, box_size=2, border=1)
             qr.add_data(qr_code_url)
             qr.make(fit=True)
-            qr_img = qr.make_image(fill_color="#DC2626", back_color="#ffffff")
+            qr_img = qr.make_image(fill_color="#1F2937", back_color="#ffffff")
             
             qr_buffer = BytesIO()
             qr_img.save(qr_buffer, format='PNG')
             qr_buffer.seek(0)
             
-            canvas.drawImage(ImageReader(qr_buffer), qr_x, qr_y, width=qr_size, height=qr_size)
+            qr_size = 18 * mm
+            qr_x = seal_x + (seal_width - qr_size) / 2
+            canvas.drawImage(ImageReader(qr_buffer), qr_x, current_y - qr_size, 
+                           width=qr_size, height=qr_size)
+            current_y -= qr_size + 3 * mm
         except Exception as e:
             logging.error(f"Erro ao gerar QR Code: {e}")
     
-    # Texto à direita do QR Code
-    text_x = margin_x + qr_size + 5 * mm
-    text_y = footer_y + footer_height - 4 * mm
-    
-    # Linha 1: Título em vermelho
-    canvas.setFillColor(cor_vermelho)
-    canvas.setFont("Helvetica-Bold", 7)
-    canvas.drawString(text_x, text_y, "DOCUMENTO ASSINADO DIGITALMENTE")
-    text_y -= 3.5 * mm
-    
-    # Linha 2: Informações de verificação em vermelho
-    canvas.setFillColor(cor_vermelho_escuro)
-    canvas.setFont("Helvetica", 6)
-    canvas.drawString(text_x, text_y, f"Para verificar a validade das assinaturas, acesse https://pac.acaiaca.mg.gov.br/validar e informe o código {validation_code}")
-    text_y -= 3.5 * mm
-    
-    # Linha 3: Lista de assinantes
-    canvas.setFillColor(cor_vermelho)
-    canvas.setFont("Helvetica-Bold", 6)
+    # Título
+    canvas.setFillColor(cor_texto)
+    canvas.setFont("Helvetica-Bold", 5)
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, "DOCUMENTO ASSINADO")
+    current_y -= 2.5 * mm
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, "DIGITALMENTE")
+    current_y -= 4 * mm
     
     # Usar a data da assinatura fornecida ou a atual
     if signature_date:
@@ -5969,28 +5958,76 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     else:
         data_assinatura = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
     
-    if len(signers) == 1:
-        nome = signers[0].get('nome', 'N/A')
-        cpf_masked = mask_cpf(signers[0].get('cpf', ''))
-        cargo = signers[0].get('cargo', '')
-        canvas.drawString(text_x, text_y, f"Assinado por: {nome.upper()} ({cpf_masked}){f' - {cargo}' if cargo else ''}")
-    else:
-        nomes = " e ".join([s.get('nome', 'N/A').upper() for s in signers[:3]])
-        if len(signers) > 3:
-            nomes += f" e mais {len(signers) - 3}"
-        canvas.drawString(text_x, text_y, f"Assinado por {len(signers)} pessoa(s): {nomes}")
+    # Lista de assinantes
+    for i, signer in enumerate(signers[:3]):
+        nome = signer.get('nome', 'N/A')
+        cpf = signer.get('cpf', '')
+        cargo = signer.get('cargo', '')
+        data_hora = signer.get('data_hora', data_assinatura)
+        
+        # Nome do assinante (quebrar se necessário)
+        canvas.setFont("Helvetica-Bold", 5.5)
+        canvas.setFillColor(cor_texto)
+        
+        nome_parts = nome.upper().split()
+        if len(nome_parts) > 2:
+            linha1 = " ".join(nome_parts[:2])
+            linha2 = " ".join(nome_parts[2:4])
+            if len(linha1) > 18:
+                linha1 = linha1[:17] + "."
+            if len(linha2) > 18:
+                linha2 = linha2[:17] + "."
+            canvas.drawCentredString(seal_x + seal_width/2, current_y, linha1)
+            current_y -= 2.5 * mm
+            canvas.drawCentredString(seal_x + seal_width/2, current_y, linha2)
+            current_y -= 2.5 * mm
+        else:
+            nome_display = nome.upper()[:18] + ("." if len(nome) > 18 else "")
+            canvas.drawCentredString(seal_x + seal_width/2, current_y, nome_display)
+            current_y -= 2.5 * mm
+        
+        # Cargo (se houver)
+        if cargo:
+            canvas.setFont("Helvetica", 4.5)
+            canvas.setFillColor(cor_subtexto)
+            cargo_display = cargo[:20] + ("." if len(cargo) > 20 else "")
+            canvas.drawCentredString(seal_x + seal_width/2, current_y, cargo_display)
+            current_y -= 2.5 * mm
+        
+        # CPF mascarado (LGPD)
+        cpf_masked = mask_cpf(cpf)
+        canvas.setFont("Helvetica", 4)
+        canvas.setFillColor(cor_subtexto)
+        canvas.drawCentredString(seal_x + seal_width/2, current_y, f"CPF: {cpf_masked}")
+        current_y -= 2.5 * mm
+        
+        # Data/hora da assinatura
+        canvas.setFont("Helvetica", 4)
+        canvas.drawCentredString(seal_x + seal_width/2, current_y, data_hora)
+        current_y -= 4 * mm
     
-    text_y -= 3.5 * mm
+    # Indicador de mais assinantes
+    if len(signers) > 3:
+        canvas.setFont("Helvetica-Oblique", 4)
+        canvas.setFillColor(cor_subtexto)
+        canvas.drawCentredString(seal_x + seal_width/2, current_y, f"+ {len(signers) - 3} outro(s)")
+        current_y -= 3 * mm
     
-    # Linha 4: Data da assinatura
-    canvas.setFillColor(cor_vermelho_escuro)
-    canvas.setFont("Helvetica", 5.5)
-    canvas.drawString(text_x, text_y, f"Data da assinatura: {data_assinatura} | Lei Federal 14.063/2020")
+    # Código de validação
+    canvas.setFont("Helvetica-Bold", 4)
+    canvas.setFillColor(cor_texto)
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, "Código verificação:")
+    current_y -= 2.5 * mm
+    canvas.setFont("Helvetica", 4)
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, validation_code)
+    current_y -= 3 * mm
     
-    # Linha separadora superior
-    canvas.setStrokeColor(cor_vermelho)
-    canvas.setLineWidth(0.5)
-    canvas.line(margin_x, footer_y + footer_height + 2 * mm, page_width - margin_x, footer_y + footer_height + 2 * mm)
+    # URL de verificação
+    canvas.setFont("Helvetica", 3.5)
+    canvas.setFillColor(cor_link)
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, "pac.acaiaca.mg.gov.br")
+    current_y -= 2 * mm
+    canvas.drawCentredString(seal_x + seal_width/2, current_y, "/validar")
 
 async def get_doem_config() -> dict:
     """Obtém ou cria configuração padrão do DOEM"""
