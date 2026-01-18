@@ -35,7 +35,7 @@ class TestBackup:
         assert "metadata" in data
         assert "users" in data
         assert "pacs" in data
-        assert data["metadata"]["system"] == "PAC Acaiaca 2026"
+        assert data["metadata"]["system"] == "Planejamento Acaiaca"
     
     def test_backup_info_unauthenticated(self, client):
         """Test backup info without authentication"""
