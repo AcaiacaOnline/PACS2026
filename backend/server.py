@@ -894,7 +894,7 @@ NATUREZAS_DESPESA_MROSC = {
 }
 
 class ProjetoMROSC(BaseModel):
-    """Projeto de parceria conforme MROSC (Lei 13.019/2014)"""
+    """Projeto de parceria conforme MROSC (Lei 13.019/2014) e Recomendação MPC 01/2025"""
     model_config = ConfigDict(extra="ignore")
     projeto_id: str
     user_id: str
@@ -910,6 +910,22 @@ class ProjetoMROSC(BaseModel):
     valor_repasse_publico: float
     valor_contrapartida: float
     status: str  # ELABORACAO, APROVADO, EXECUCAO, PRESTACAO_CONTAS, CONCLUIDO
+    # Campos da Recomendação MPC 01/2025
+    tipo_concedente: Optional[str] = None  # PARLAMENTAR, COMISSAO, BANCADA, ORGAO, OUTRO
+    nome_concedente: Optional[str] = None
+    numero_emenda: Optional[str] = None
+    numero_termo: Optional[str] = None
+    gestor_responsavel_nome: Optional[str] = None
+    gestor_responsavel_cpf: Optional[str] = None
+    gestor_responsavel_cargo: Optional[str] = None
+    # Conta Bancária Específica
+    banco_nome: Optional[str] = None
+    banco_agencia: Optional[str] = None
+    banco_conta: Optional[str] = None
+    # Plano de Trabalho
+    plano_trabalho_arquivo: Optional[str] = None
+    plano_trabalho_finalidade: Optional[str] = None
+    plano_trabalho_cronograma: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -926,6 +942,19 @@ class ProjetoMROSCCreate(BaseModel):
     valor_repasse_publico: float
     valor_contrapartida: float
     status: str = "ELABORACAO"
+    # Campos da Recomendação MPC 01/2025
+    tipo_concedente: Optional[str] = None
+    nome_concedente: Optional[str] = None
+    numero_emenda: Optional[str] = None
+    numero_termo: Optional[str] = None
+    gestor_responsavel_nome: Optional[str] = None
+    gestor_responsavel_cpf: Optional[str] = None
+    gestor_responsavel_cargo: Optional[str] = None
+    banco_nome: Optional[str] = None
+    banco_agencia: Optional[str] = None
+    banco_conta: Optional[str] = None
+    plano_trabalho_finalidade: Optional[str] = None
+    plano_trabalho_cronograma: Optional[str] = None
 
 class ProjetoMROSCUpdate(BaseModel):
     nome_projeto: Optional[str] = None
@@ -940,6 +969,19 @@ class ProjetoMROSCUpdate(BaseModel):
     valor_repasse_publico: Optional[float] = None
     valor_contrapartida: Optional[float] = None
     status: Optional[str] = None
+    # Campos da Recomendação MPC 01/2025
+    tipo_concedente: Optional[str] = None
+    nome_concedente: Optional[str] = None
+    numero_emenda: Optional[str] = None
+    numero_termo: Optional[str] = None
+    gestor_responsavel_nome: Optional[str] = None
+    gestor_responsavel_cpf: Optional[str] = None
+    gestor_responsavel_cargo: Optional[str] = None
+    banco_nome: Optional[str] = None
+    banco_agencia: Optional[str] = None
+    banco_conta: Optional[str] = None
+    plano_trabalho_finalidade: Optional[str] = None
+    plano_trabalho_cronograma: Optional[str] = None
 
 class RecursoHumanoMROSC(BaseModel):
     """Recurso Humano do projeto MROSC"""
