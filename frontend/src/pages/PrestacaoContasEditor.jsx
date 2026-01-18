@@ -105,7 +105,7 @@ const PrestacaoContasEditor = () => {
 
   const fetchData = async () => {
     try {
-      const [projetoRes, rhRes, despesasRes, resumoRes, docsRes] = await Promise.all([
+      const [projetoRes, rhRes, despesasRes, resumoRes, docsRes, userRes] = await Promise.all([
         api.get(`/mrosc/projetos/${id}`),
         api.get(`/mrosc/projetos/${id}/rh`),
         api.get(`/mrosc/projetos/${id}/despesas`),
