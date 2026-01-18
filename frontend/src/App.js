@@ -111,6 +111,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard-analitico" element={<ProtectedRoute><DashboardAnalitico /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><AnalyticsRealtime /></ProtectedRoute>} />
       <Route path="/pacs" element={<ProtectedRoute><PACList /></ProtectedRoute>} />
       <Route path="/pacs/:id/edit" element={<ProtectedRoute><PACEditor /></ProtectedRoute>} />
       <Route path="/pacs/new" element={<ProtectedRoute><PACEditor /></ProtectedRoute>} />
