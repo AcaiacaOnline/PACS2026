@@ -8793,7 +8793,8 @@ async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request, a
             user, 
             'MROSC_CONSOLIDADO', 
             projeto_id,
-            doc_info
+            doc_info,
+            data  # Data da assinatura (pode ser retroativa)
         )
         final_buffer = signed_buffer
         logging.info(f"PDF consolidado MROSC assinado com código: {validation_code}")
