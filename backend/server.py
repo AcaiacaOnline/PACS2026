@@ -8529,7 +8529,7 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
 
 @mrosc_router.get("/projetos/{projeto_id}/relatorio/consolidado/pdf")
 @mrosc_router.get("/projetos/{projeto_id}/relatorio/consolidado")
-async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request):
+async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request, assinar: bool = False, data: str = None):
     """
     Gera relatório PDF consolidado com todos os anexos incorporados
     Inclui: dados do projeto, concedente, RH, despesas, histórico e documentos
