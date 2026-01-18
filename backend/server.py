@@ -5893,15 +5893,16 @@ async def get_doem_config() -> dict:
         await db.doem_config.insert_one(config)
     return config
 
-async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str) -> tuple:
+async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str, doc_info: dict = None) -> tuple:
     """
     Adiciona assinatura digital a qualquer PDF gerado pelo sistema.
+    Para documentos MROSC, adiciona uma página de assinaturas no estilo da Lei 14.063.
     Retorna o buffer modificado e o código de validação.
     
     IMPORTANTE: Requer que o usuário tenha CPF e Cargo preenchidos.
     """
     from reportlab.pdfgen import canvas as pdf_canvas
-    from PyPDF2 import PdfReader, PdfWriter
+    from PyPDF2 import PdfReader, PdfWriter, PdfMerger
     
     # Buscar dados de assinatura do usuário
     user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
@@ -5923,11 +5924,13 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
             detail="Cargo é obrigatório para assinar documentos. Por favor, atualize seu perfil com seu cargo."
         )
     
+    data_hora = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
     signer = {
         'nome': user.name,
         'cpf': cpf,
         'cargo': cargo,
-        'email': user.email
+        'email': user.email,
+        'data_hora': data_hora
     }
     
     # Gerar código de validação
@@ -5947,39 +5950,79 @@ async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, d
         validation_code=validation_code
     )
     
-    # Ler o PDF original
-    reader = PdfReader(pdf_buffer)
-    writer = PdfWriter()
+    # Verificar se é documento MROSC para usar página de assinaturas estilo Lei 14.063
+    is_mrosc = 'MROSC' in doc_type.upper()
     
-    # Para cada página, adicionar o selo de assinatura
-    for page_num, page in enumerate(reader.pages):
-        # Criar overlay com a assinatura
-        overlay_buffer = BytesIO()
-        page_width = float(page.mediabox.width)
-        page_height = float(page.mediabox.height)
+    if is_mrosc:
+        # Para MROSC: adicionar página de assinaturas no final
+        reader = PdfReader(pdf_buffer)
+        writer = PdfWriter()
         
-        overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+        # Copiar todas as páginas originais com selo lateral
+        for page in reader.pages:
+            overlay_buffer = BytesIO()
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+            
+            overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
+            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+            overlay_canvas.save()
+            overlay_buffer.seek(0)
+            
+            overlay_reader = PdfReader(overlay_buffer)
+            if len(overlay_reader.pages) > 0:
+                page.merge_page(overlay_reader.pages[0])
+            
+            writer.add_page(page)
         
-        # Desenhar selo de assinatura
-        qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
-        draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+        # Criar e adicionar página de assinaturas estilo Lei 14.063
+        signature_page_buffer = create_signature_page_mrosc(
+            signers=[signer],
+            validation_code=validation_code,
+            doc_info=doc_info or {
+                'tipo': doc_type,
+                'id': doc_id,
+                'titulo': f'Documento {doc_type}'
+            }
+        )
         
-        overlay_canvas.save()
-        overlay_buffer.seek(0)
+        sig_reader = PdfReader(signature_page_buffer)
+        for sig_page in sig_reader.pages:
+            writer.add_page(sig_page)
         
-        # Mesclar overlay com a página original
-        overlay_reader = PdfReader(overlay_buffer)
-        if len(overlay_reader.pages) > 0:
-            page.merge_page(overlay_reader.pages[0])
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
         
-        writer.add_page(page)
-    
-    # Gerar novo PDF
-    output_buffer = BytesIO()
-    writer.write(output_buffer)
-    output_buffer.seek(0)
-    
-    return output_buffer, validation_code
+        return output_buffer, validation_code
+    else:
+        # Para outros documentos: apenas selo lateral em todas as páginas
+        reader = PdfReader(pdf_buffer)
+        writer = PdfWriter()
+        
+        for page in reader.pages:
+            overlay_buffer = BytesIO()
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+            
+            overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
+            draw_signature_seal(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url)
+            overlay_canvas.save()
+            overlay_buffer.seek(0)
+            
+            overlay_reader = PdfReader(overlay_buffer)
+            if len(overlay_reader.pages) > 0:
+                page.merge_page(overlay_reader.pages[0])
+            
+            writer.add_page(page)
+        
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+        
+        return output_buffer, validation_code
 
 async def get_doem_config() -> dict:
     """Obtém ou cria configuração padrão do DOEM"""
