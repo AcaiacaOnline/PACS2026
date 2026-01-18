@@ -9,21 +9,105 @@ Sistema completo de gestão municipal que inclui:
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
 - **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
 - **Portal de Transparência** - Acesso público com menus dropdown ✅
-- **Prestação de Contas MROSC** - Sistema completo com workflow de aprovação ✅ ATUALIZADO
+- **Prestação de Contas MROSC** - Sistema completo com workflow de aprovação ✅ ATUALIZADO v2.0
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
 - **Workflow de Prestação de Contas** - Submissão, análise, correção e aprovação ✅
 - **Tipos de Usuário** - Servidor e Pessoa Externa (OSC) ✅
 - **Notificações por Email** - Alertas automáticos sobre mudanças de status ✅
 - **Relatórios Gerenciais Consolidados** - PDF com todos os módulos ✅
-- **Backup Completo** - Inclui TODOS os módulos do sistema ✅
-- **Menu Configurações** - Dropdown com Assinaturas, Usuários, Backup ✅ NOVO
+- **Backup Completo v2.1** - Corrigido e funcional ✅ CORRIGIDO
+- **Menu Configurações** - Dropdown com Assinaturas, Usuários, Backup ✅
+- **Sistema de Instalação** - Similar ao WordPress ✅ NOVO
+- **Upload de Imagens** - Suporte a PDF, JPG, PNG no MROSC ✅ NOVO
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 
 ---
 
-## Última Atualização: 10/01/2026 (Sessão 5)
+## Última Atualização: 18/01/2026 (Sessão 6)
+
+### Changelog - Sessão 6 (18/01/2026)
+
+#### ✅ 1. CORREÇÃO DO BACKUP - ERRO CRÍTICO RESOLVIDO
+- **Problema:** `Object of type datetime is not JSON serializable`
+- **Causa:** Campos datetime não estavam sendo convertidos corretamente
+- **Solução:** 
+  - Criada função `serialize_for_json()` para conversão recursiva
+  - Criada função `serialize_document()` para documentos MongoDB
+  - Adicionado `default=str` no json.dumps como fallback
+- **Versão:** Backup atualizado para v2.1
+- **Testado:** ✅ Funcionando (HTTP 200, JSON válido)
+
+#### ✅ 2. MODELO DE DADOS MROSC APRIMORADO
+Baseado na planilha orçamentária SUCC/BH e Recomendação MPC 01/2025:
+
+**Novas Naturezas de Despesa:**
+- 319011 - Vencimentos e Vantagens Fixas
+- 319013 - Obrigações Patronais
+- 319092 - Despesas de Exercícios Anteriores
+- 339014 - Diárias
+- 339030 - Material de Consumo
+- 339031 - Premiações Culturais
+- 339032 - Material de Distribuição Gratuita
+- 339033 - Passagens e Locomoção
+- 339035 - Serviços de Consultoria
+- 339036 - Serviços Terceiros PF
+- 339039 - Serviços Terceiros PJ
+- 339046 - Auxílio-Alimentação
+- 339049 - Auxílio-Transporte
+- 449051 - Obras e Instalações
+- 449052 - Equipamentos Permanentes
+
+**Novos Campos (Recomendação MPC):**
+- Dados do Concedente (tipo, nome, emenda, termo)
+- Conta Bancária Específica (banco, agência, conta)
+- Gestor Responsável (nome, CPF, cargo)
+- Plano de Trabalho Estruturado
+- 3 Orçamentos com Fornecedores/CNPJ
+- Referência de Preços Municipal
+
+#### ✅ 3. UPLOAD DE IMAGENS (PDF + JPG + PNG)
+- **Endpoint atualizado:** `/api/mrosc/projetos/{id}/documentos/upload`
+- **Formatos aceitos:** PDF, JPG, JPEG, PNG
+- **Limite:** 10MB por arquivo
+- **Content-Type dinâmico** baseado na extensão
+- **Tipos de documento expandidos:** 17 tipos disponíveis
+
+#### ✅ 4. SISTEMA DE INSTALAÇÃO (WordPress-like)
+- **Arquivo:** `/app/backend/install.py`
+- **Funcionalidades:**
+  - Configuração interativa via terminal
+  - Teste de conexão MongoDB
+  - Criação automática de índices
+  - Criação de usuário administrador
+  - Geração de arquivo .env
+  - Criação de diretório uploads
+- **Uso:** `python install.py`
+
+#### ✅ 5. PORTAL DE TRANSPARÊNCIA ATUALIZADO
+- Campos obrigatórios conforme Recomendação MPC 01/2025
+- Dados não sensíveis expostos publicamente
+- APIs públicas para MROSC funcionando
+
+---
+
+### Requisitos Implementados - Recomendação MPC 01/2025
+
+| Item | Requisito | Status |
+|------|-----------|--------|
+| 1 | Concedente (parlamentar/órgão) | ✅ |
+| 2 | Número da Emenda/Termo | ✅ |
+| 3 | Beneficiário e CNPJ | ✅ |
+| 4 | Gestor Responsável | ✅ |
+| 5 | Objeto Detalhado | ✅ |
+| 6 | Natureza da Despesa (GND) | ✅ |
+| 7 | Valores e Datas | ✅ |
+| 8 | Conta Bancária | ✅ |
+| 9 | Data Disponibilização | ✅ |
+| 10 | Rastreabilidade | ✅ |
+
+---
 
 ### Changelog - Sessão 5 (10/01/2026)
 
