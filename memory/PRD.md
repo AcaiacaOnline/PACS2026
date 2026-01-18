@@ -25,7 +25,43 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 18/01/2026 (Sessão 7)
+## Última Atualização: 18/01/2026 (Sessão 8)
+
+### Changelog - Sessão 8 (18/01/2026)
+
+#### ✅ 1. RELATÓRIO PDF CONSOLIDADO MROSC
+Implementado endpoint `/api/mrosc/projetos/{id}/relatorio/consolidado` que gera PDF completo com:
+- Capa com dados do projeto e valor total
+- Dados do projeto e concedente
+- Tabela de Recursos Humanos com custos
+- Tabela de Despesas com valores
+- Resumo Financeiro
+- Lista de documentos anexados
+- **Anexos incorporados** - PDFs e imagens convertidas para PDF são mesclados no documento final
+
+#### ✅ 2. PAINEL DE ANALYTICS EM TEMPO REAL
+Nova página `/analytics` com métricas em tempo real:
+- **Uso por Secretaria**: Gráfico de barras com valor total por secretaria
+- **Atividade por Horário**: Gráfico de área mostrando picos de uso nos últimos 7 dias
+- **Tendência de Gastos**: Gráfico de linha com evolução dos últimos 6 meses
+- **Top 10 Usuários Ativos**: Ranking de usuários por documentos criados
+- **Status dos Módulos**: Cards com status de cada módulo (PAC, Processos, MROSC, etc.)
+- **Métricas de Desempenho**: Usuários ativos, documentos criados hoje/semana
+- **Auto-refresh**: Atualização automática a cada 30 segundos
+
+#### ✅ 3. TESTES CORRIGIDOS
+Arquivos de teste atualizados para corresponder à estrutura real da API:
+- `test_auth.py` - Testes de autenticação
+- `test_backup.py` - Testes de backup
+- `test_pac.py` - Testes de PAC (ajustados para estrutura de resposta)
+- `test_processos.py` - Testes de processos
+- `test_public.py` - Testes públicos
+- `test_mrosc.py` - Testes MROSC
+- Configuração do pytest com httpx síncrono
+
+**Testes passando:** 21 de 25 (4 falhas são rotas não implementadas no server.py original)
+
+---
 
 ### Changelog - Sessão 7 (18/01/2026)
 
