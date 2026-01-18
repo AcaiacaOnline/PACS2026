@@ -9004,12 +9004,68 @@ app.include_router(validation_router)
 # Registrar router DOEM
 app.include_router(doem_router)
 
+# Registrar router WebSocket
+app.include_router(ws_router, prefix="/api")
+
 app.include_router(api_router)
 app.include_router(public_router)  # Rotas públicas para transparência
+
+# CORS Middleware
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
+
+# Configuração de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+
+# Middleware de logging de requisições
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
+
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        start_time = time.time()
+        
+        # Extrair user_id do token se presente
+        user_id = None
+        auth_header = request.headers.get('authorization', '')
+        if auth_header.startswith('Bearer '):
+            try:
+                token = auth_header.split(' ')[1]
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+                user_id = payload.get('user_id')
+            except:
+                pass
+        
+        response = await call_next(request)
+        
+        duration_ms = (time.time() - start_time) * 1000
+        
+        # Logar apenas se não for health check ou assets estáticos
+        path = request.url.path
+        if not path.startswith('/api/docs') and not path.startswith('/api/openapi') and not path.startswith('/api/redoc'):
+            request_logger.log_request(
+                method=request.method,
+                path=path,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+                user_id=user_id
+            )
+        
+        return response
+
+app.add_middleware(LoggingMiddleware)
+
+log_info("🚀 Planejamento Acaiaca API iniciada com sucesso!")
+
+@app.on_event("startup")
+async def startup_event():
+    """Evento executado na inicialização do servidor"""
+    log_info("Conectando ao MongoDB...")
+    log_info(f"Banco de dados: {os.environ.get('DB_NAME', 'pac_acaiaca')}")
+    log_info("Sistema pronto para receber requisições")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    """Evento executado no encerramento do servidor"""
+    log_info("Encerrando conexões...")
     client.close()
+    log_info("Sistema encerrado com sucesso")
