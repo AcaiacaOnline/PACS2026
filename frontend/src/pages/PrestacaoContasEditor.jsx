@@ -25,8 +25,20 @@ const NATUREZAS_DESPESA = {
 
 const TIPOS_DOCUMENTO = {
   'NOTA_FISCAL': 'Nota Fiscal',
+  'CUPOM_FISCAL': 'Cupom Fiscal',
   'RECIBO': 'Recibo',
   'CONTRATO': 'Contrato',
+  'FOLHA_PAGAMENTO': 'Folha de Pagamento',
+  'GUIA_INSS': 'Guia INSS',
+  'GUIA_FGTS': 'Guia FGTS',
+  'COMPROVANTE_TRANSFERENCIA': 'Comprovante de Transferência',
+  'EXTRATO_BANCARIO': 'Extrato Bancário',
+  'RELATORIO_EXECUCAO': 'Relatório de Execução',
+  'TERMO_ACEITE': 'Termo de Aceite',
+  'PLANO_TRABALHO': 'Plano de Trabalho',
+  'CERTIDAO_NEGATIVA': 'Certidão Negativa',
+  'FOTO_COMPROVACAO': 'Foto de Comprovação',
+  'IMAGEM': 'Imagem/Foto',
   'COMPROVANTE': 'Comprovante',
   'OUTRO': 'Outro'
 };
