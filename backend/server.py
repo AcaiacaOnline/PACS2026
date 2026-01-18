@@ -8049,6 +8049,22 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request):
     doc.build(elements)
     buffer.seek(0)
     
+    # Adicionar assinatura digital ao PDF
+    try:
+        signed_buffer, validation_code = await add_signature_to_pdf(
+            buffer, 
+            user, 
+            'MROSC_PRESTACAO_CONTAS', 
+            projeto_id
+        )
+        buffer = signed_buffer
+        logging.info(f"PDF de prestação de contas MROSC assinado com código: {validation_code}")
+    except HTTPException as e:
+        # Se falhar por falta de dados de assinatura, retorna PDF sem assinatura
+        logging.warning(f"PDF sem assinatura digital: {e.detail}")
+    except Exception as e:
+        logging.error(f"Erro ao adicionar assinatura ao PDF MROSC: {e}")
+    
     filename = f"Prestacao_Contas_{projeto['nome_projeto'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
     
     return StreamingResponse(
