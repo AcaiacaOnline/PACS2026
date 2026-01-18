@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://acaiaca-portal-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://acaiaca-gov-1.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "cristiano.abdo@acaiaca.mg.gov.br"
