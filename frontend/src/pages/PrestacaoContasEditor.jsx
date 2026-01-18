@@ -429,23 +429,6 @@ const PrestacaoContasEditor = () => {
       handleDownloadPDFConsolidado(true, dataAssinatura);
     }
   };
-    try {
-      const response = await api.get(`/mrosc/projetos/${id}/relatorio/consolidado/pdf`, {
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `MROSC_Consolidado_${projeto.nome_projeto.replace(/\s+/g, '_')}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('PDF Consolidado gerado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao gerar PDF Consolidado');
-    }
-  };
 
   // Formatar moeda
   const formatCurrency = (value) => {
