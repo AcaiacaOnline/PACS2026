@@ -298,7 +298,7 @@ const PrestacaoContasList = () => {
 
   const handleDownloadPdf = async (projeto) => {
     try {
-      const response = await api.get(`/mrosc/projetos/${projeto.projeto_id}/export/pdf`, {
+      const response = await api.get(`/mrosc/projetos/${projeto.projeto_id}/relatorio/pdf`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
