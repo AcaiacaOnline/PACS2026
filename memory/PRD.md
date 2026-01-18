@@ -190,9 +190,15 @@ Baseado na planilha orçamentária SUCC/BH e Recomendação MPC 01/2025:
 #### ✅ 5. Backup Completo v2.0
 - Inclui todos os módulos (PAC Obras, MROSC, DOEM, Assinaturas)
 
-#### 📋 Tarefas Pendentes (P0)
-1. **Refatoração do `server.py` em módulos** - Backend monolítico (8200+ linhas)
-2. **Versão cPanel** - Pacote para hospedagem compartilhada
+#### 📋 Tarefas Pendentes (P0) - ATUALIZADAS
+1. ~~**Refatoração do `server.py` em módulos**~~ - ✅ Módulos criados (necessário integração final)
+2. ~~**Versão cPanel**~~ - ✅ Pacote completo criado
+3. ~~**Testes Unitários**~~ - ✅ Estrutura criada
+
+#### 📋 Tarefas P1 (Próximas)
+1. **Relatório PDF Consolidado MROSC** - PDF com todos os anexos incorporados
+2. **Integração final dos módulos** - Fazer server.py usar os novos módulos de routes
+3. **Ajuste dos testes** - Corrigir fixtures async para funcionar corretamente
 
 ---
 
