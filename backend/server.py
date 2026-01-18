@@ -3397,11 +3397,29 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     
     filename = f"PAC_Obras_{pac['nome_secretaria'].replace(' ', '_')}_{pac.get('ano', '2026')}.pdf"
     
-    return StreamingResponse(
-        buffer,
-        media_type='application/pdf',
-        headers={'Content-Disposition': f'attachment; filename="{filename}"'}
-    )
+    # Adicionar assinatura digital ao PDF
+    try:
+        signed_buffer, validation_code = await add_signature_to_pdf(
+            buffer, user, f"PAC Obras - {pac['nome_secretaria']}", pac_obras_id, None, data
+        )
+        return StreamingResponse(
+            signed_buffer,
+            media_type='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'X-Validation-Code': validation_code
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Erro ao adicionar assinatura ao PDF de PAC Obras: {e}")
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type='application/pdf',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
 
 
 # ============ ROTAS DE GESTÃO PROCESSUAL ============
