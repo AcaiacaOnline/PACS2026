@@ -163,22 +163,81 @@ logger = get_logger("server")
 api_router = APIRouter(prefix="/api")
 
 # Models
-# Modelo de permissões do usuário
-class UserPermissions(BaseModel):
-    can_view: bool = True          # Visualizar PACs
-    can_edit: bool = False         # Editar PACs
-    can_delete: bool = False       # Excluir PACs
-    can_export: bool = False       # Gerar relatórios PDF/XLSX
-    can_manage_users: bool = False # Cadastrar/gerenciar usuários
-    is_full_admin: bool = False    # Todos os privilégios de administrador
+# NOTA: Modelos refatorados agora são importados do pacote 'models/'
+# Os aliases abaixo mantêm compatibilidade com o código existente
 
-# Dados adicionais do usuário para assinatura digital
-class UserSignatureData(BaseModel):
-    cpf: Optional[str] = None           # CPF (será mascarado na exibição)
-    cargo: Optional[str] = None         # Cargo ocupado
-    endereco: Optional[str] = None      # Endereço completo
-    cep: Optional[str] = None           # CEP
-    telefone: Optional[str] = None      # Telefone para contato
+# ============ ALIASES PARA MODELOS REFATORADOS ============
+# Estes aliases apontam para os modelos no pacote 'models/' para manter
+# compatibilidade com o código existente enquanto a refatoração é concluída.
+
+# User models - usando aliases do pacote models/
+UserPermissions = UserPermissionsModel
+UserSignatureData = UserSignatureDataModel
+User = UserModel
+UserCreate = UserCreateModel
+UserUpdate = UserUpdateModel
+UserLogin = UserLoginModel
+UserListItem = UserListItemModel
+
+# PAC models - usando aliases do pacote models/
+PAC = PACModel
+PACCreate = PACCreateModel
+PACUpdate = PACUpdateModel
+PACItem = PACItemModel
+PACItemCreate = PACItemCreateModel
+PACItemUpdate = PACItemUpdateModel
+
+# PAC Geral models - usando aliases do pacote models/
+PACGeral = PACGeralModel
+PACGeralCreate = PACGeralCreateModel
+PACGeralUpdate = PACGeralUpdateModel
+PACGeralItem = PACGeralItemModel
+PACGeralItemCreate = PACGeralItemCreateModel
+PACGeralItemUpdate = PACGeralItemUpdateModel
+
+# PAC Obras models - usando aliases do pacote models/
+PACGeralObras = PACGeralObrasModel
+PACGeralObrasCreate = PACGeralObrasCreateModel
+PACGeralObrasUpdate = PACGeralObrasUpdateModel
+PACGeralObrasItem = PACGeralObrasItemModel
+PACGeralObrasItemCreate = PACGeralObrasItemCreateModel
+PACGeralObrasItemUpdate = PACGeralObrasItemUpdateModel
+
+# Processo models - usando aliases do pacote models/
+Processo = ProcessoModel
+ProcessoCreate = ProcessoCreateModel
+ProcessoUpdate = ProcessoUpdateModel
+PaginatedResponse = PaginatedResponseModel
+
+# DOEM models - usando aliases do pacote models/
+DOEMPublicacao = DOEMPublicacaoModel
+DOEMPublicacaoCreate = DOEMPublicacaoCreateModel
+DOEMAssinante = DOEMAssinanteModel
+DOEMAssinatura = DOEMAssinaturaModel
+DOEMEdicao = DOEMEdicaoModel
+DOEMEdicaoCreate = DOEMEdicaoCreateModel
+DOEMEdicaoUpdate = DOEMEdicaoUpdateModel
+DOEMConfig = DOEMConfigModel
+DOEMConfigUpdate = DOEMConfigUpdateModel
+
+# Newsletter models - usando aliases do pacote models/
+NewsletterInscrito = NewsletterInscritoModel
+NewsletterInscricaoPublica = NewsletterInscricaoPublicaModel
+NewsletterInscricaoManual = NewsletterInscricaoManualModel
+
+# MROSC models - usando aliases do pacote models/
+ProjetoMROSC = ProjetoMROSCModel
+ProjetoMROSCCreate = ProjetoMROSCCreateModel
+ProjetoMROSCUpdate = ProjetoMROSCUpdateModel
+RecursoHumanoMROSC = RecursoHumanoMROSCModel
+RecursoHumanoMROSCCreate = RecursoHumanoMROSCCreateModel
+DespesaMROSC = DespesaMROSCModel
+DespesaMROSCCreate = DespesaMROSCCreateModel
+DocumentoMROSC = DocumentoMROSCModel
+DocumentoMROSCCreate = DocumentoMROSCCreateModel
+
+# ============ MODELOS ESPECÍFICOS DO SERVER (NÃO REFATORADOS) ============
+# Estes modelos são usados apenas internamente e não foram movidos para o pacote models/
 
 class SignatureRequest(BaseModel):
     """Solicitação de assinatura digital com data opcional"""
@@ -186,98 +245,11 @@ class SignatureRequest(BaseModel):
     data_assinatura: Optional[str] = None  # Formato: DD/MM/YYYY HH:MM:SS (retroativa ou futura)
     observacoes: Optional[str] = None  # Observações opcionais
 
-class User(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    user_id: str
-    email: EmailStr
-    name: str
-    is_admin: bool = False
-    is_active: bool = True
-    picture: Optional[str] = None
-    permissions: Optional[UserPermissions] = None
-    signature_data: Optional[UserSignatureData] = None
-    created_at: datetime
+class SignaturePayload(BaseModel):
+    """Payload para assinatura de documento"""
+    data_assinatura: Optional[str] = None  # Data customizada de assinatura
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    is_admin: bool = False
-    permissions: Optional[UserPermissions] = None
-    signature_data: Optional[UserSignatureData] = None
-
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    is_admin: Optional[bool] = None
-    is_active: bool = True
-    permissions: Optional[UserPermissions] = None
-    signature_data: Optional[UserSignatureData] = None
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserListItem(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    user_id: str
-    email: EmailStr
-    name: str
-    is_admin: bool
-    is_active: bool = True
-    permissions: Optional[UserPermissions] = None
-    signature_data: Optional[UserSignatureData] = None
-    created_at: datetime
-
-class PAC(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    pac_id: str
-    user_id: str
-    secretaria: str
-    secretario: str
-    fiscal: str
-    telefone: str
-    email: str
-    endereco: str
-    ano: str = "2026"
-    codigo_classificacao: Optional[str] = None  # NOVO: Código de classificação orçamentária
-    subitem_classificacao: Optional[str] = None  # NOVO: Subitem da classificação
-    total_value: float = 0.0
-    stats: Optional[Dict] = None
-    created_at: datetime
-    updated_at: datetime
-
-class PACCreate(BaseModel):
-    secretaria: str
-    secretario: str
-    fiscal: str
-    telefone: str
-    email: str
-    endereco: str
-    ano: str = "2026"
-    codigo_classificacao: Optional[str] = None  # NOVO
-    subitem_classificacao: Optional[str] = None  # NOVO
-
-class PACUpdate(BaseModel):
-    secretaria: Optional[str] = None
-    secretario: Optional[str] = None
-    fiscal: Optional[str] = None
-    telefone: Optional[str] = None
-    email: Optional[str] = None
-    endereco: Optional[str] = None
-    ano: Optional[str] = None
-    codigo_classificacao: Optional[str] = None  # NOVO
-    subitem_classificacao: Optional[str] = None  # NOVO
-
-class PACItem(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    item_id: str
-    pac_id: str
-    tipo: str
-    catmat: str
-    descricao: str
-    unidade: str
+# ============ CONSTANTES ============
     quantidade: float
     valorUnitario: float
     valorTotal: float
