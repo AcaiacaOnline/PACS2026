@@ -229,12 +229,14 @@ Baseado na planilha orçamentária SUCC/BH e Recomendação MPC 01/2025:
 #### 📋 Tarefas Pendentes (P0) - ATUALIZADAS
 1. ~~**Refatoração do `server.py` em módulos**~~ - ✅ Módulos criados (necessário integração final)
 2. ~~**Versão cPanel**~~ - ✅ Pacote completo criado
-3. ~~**Testes Unitários**~~ - ✅ Estrutura criada
+3. ~~**Testes Unitários**~~ - ✅ Estrutura criada e corrigida
+4. ~~**Relatório PDF Consolidado MROSC**~~ - ✅ Implementado com anexos
+5. ~~**Painel Analytics Tempo Real**~~ - ✅ Implementado
 
 #### 📋 Tarefas P1 (Próximas)
-1. **Relatório PDF Consolidado MROSC** - PDF com todos os anexos incorporados
-2. **Integração final dos módulos** - Fazer server.py usar os novos módulos de routes
-3. **Ajuste dos testes** - Corrigir fixtures async para funcionar corretamente
+1. **Integração final dos módulos** - Refatorar server.py para usar os novos routers de forma definitiva
+2. **Documentação API (Swagger)** - Gerar documentação automática
+3. **Sistema de logs centralizado** - Implementar logging estruturado
 
 ---
 
