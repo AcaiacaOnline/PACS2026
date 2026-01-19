@@ -26,7 +26,57 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 12)
+## Última Atualização: 19/01/2026 (Sessão 13)
+
+### Changelog - Sessão 13 (19/01/2026)
+
+#### ✅ 1. SISTEMA DE ASSINATURA DIGITAL REUTILIZÁVEL
+- Criado componente `SignatureModal.jsx` para confirmação de assinatura
+- Funcionalidades:
+  - Confirmação visual do documento a ser assinado
+  - Exibição dos dados do assinante (nome, CPF mascarado, cargo)
+  - Campo de data/hora com suporte a data retroativa
+  - Opção de "Assinar e Baixar" ou "Baixar sem Assinar"
+  - Validação de CPF e cargo antes de permitir assinatura
+  - Design com gradient vermelho e animações
+- Integrado em:
+  - `PACEditor.jsx` - Exportação de PAC Individual
+  - `PACGeralEditor.jsx` - Exportação de PAC Consolidado
+  - (Pronto para integrar em outros componentes)
+
+#### ✅ 2. SISTEMA DE TEMPLATES/TEMAS
+- Criado `ThemeProvider.jsx` com 7 temas disponíveis:
+  1. **Padrão (Azul)** - Tema institucional
+  2. **Governo (Verde/Amarelo)** - Cores do Brasil
+  3. **Minas Gerais (Vermelho)** - Estilo Diário Oficial MG
+  4. **Moderno (Roxo)** - Design contemporâneo
+  5. **Escuro** - Modo noturno
+  6. **Terra (Marrom)** - Tons naturais
+  7. **Oceano (Azul-Verde)** - Tons calmantes
+
+- Funcionalidades:
+  - Persistência no localStorage
+  - Variáveis CSS dinâmicas
+  - Preview em tempo real
+  - Paleta de cores completa por tema
+
+#### ✅ 3. PÁGINA DE CONFIGURAÇÕES
+- Criada `/configuracoes` com 4 abas:
+  - **Aparência**: Seletor de temas com preview
+  - **Notificações**: Toggles de preferências
+  - **Segurança**: Links para alteração de senha
+  - **Sistema**: Informações e limpeza de cache
+
+#### ✅ 4. ARQUIVOS CRIADOS/MODIFICADOS
+- `/app/frontend/src/components/SignatureModal.jsx` - NOVO
+- `/app/frontend/src/components/ThemeProvider.jsx` - NOVO
+- `/app/frontend/src/pages/Configuracoes.jsx` - NOVO
+- `/app/frontend/src/App.js` - Integração ThemeProvider
+- `/app/frontend/src/pages/PACEditor.jsx` - Integração SignatureModal
+- `/app/frontend/src/pages/PACGeralEditor.jsx` - Integração SignatureModal
+- `/app/frontend/src/components/Layout.jsx` - Link para Configurações
+
+---
 
 ### Changelog - Sessão 12 (19/01/2026)
 
