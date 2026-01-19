@@ -8403,13 +8403,16 @@ async def export_relatorio_consolidado_pdf(request: Request):
     titulo_style = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#1F4E78'), alignment=TA_CENTER, spaceAfter=6*mm)
     subtitulo_style = ParagraphStyle('Subtitulo', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'), spaceBefore=6*mm, spaceAfter=3*mm)
     
-    # Cabeçalho
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
-    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', alignment=TA_CENTER, fontSize=9)))
+    # Cabeçalho com brasão
+    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
+    header_elements = create_header_elements(
+        styles, 
+        title='RELATÓRIO GERENCIAL CONSOLIDADO',
+        subtitle=f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}',
+        show_brasao=True
+    )
+    elements.extend(header_elements)
     elements.append(Spacer(1, 4*mm))
-    elements.append(Paragraph('<b>RELATÓRIO GERENCIAL CONSOLIDADO</b>', ParagraphStyle('TitDoc', alignment=TA_CENTER, fontSize=14, textColor=colors.HexColor('#1F4E78'))))
-    elements.append(Paragraph(f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}', ParagraphStyle('Data', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
-    elements.append(Spacer(1, 8*mm))
     
     # Resumo Executivo
     elements.append(Paragraph('1. RESUMO EXECUTIVO', subtitulo_style))
