@@ -5538,7 +5538,7 @@ async def download_pdf_edicao(edicao_id: str, request: Request):
     )
 
 async def gerar_pdf_doem(edicao: dict) -> BytesIO:
-    """Gera PDF do DOEM em formato de jornal oficial com cabeçalho e rodapé customizados"""
+    """Gera PDF do DOEM em formato de jornal oficial com cabeçalho e rodapé padronizados"""
     from reportlab.platypus import Frame, PageTemplate, BaseDocTemplate
     from reportlab.lib.utils import ImageReader
     from PIL import Image as PILImage
@@ -5546,21 +5546,11 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
     buffer = BytesIO()
     config = await get_doem_config()
     
-    # Margens reduzidas para aproveitar melhor o espaço
+    # Margens ajustadas para o layout DOEM padronizado
     left_margin = 15*mm
     right_margin = 15*mm
-    top_margin = 35*mm  # Espaço para cabeçalho com imagem
-    bottom_margin = 30*mm  # Espaço para rodapé com imagem
-    
-    # Caminhos das imagens (versões otimizadas)
-    brasao_path = ROOT_DIR / 'brasao_doem_small.png'
-    rodape_path = ROOT_DIR / 'rodape_doem_small.jpg'
-    
-    # Fallback para imagens originais se as otimizadas não existirem
-    if not brasao_path.exists():
-        brasao_path = ROOT_DIR / 'brasao_doem.png'
-    if not rodape_path.exists():
-        rodape_path = ROOT_DIR / 'rodape_doem.jpg'
+    top_margin = 45*mm  # Espaço para cabeçalho DOEM (brasões + ACAIACA + linhas)
+    bottom_margin = 35*mm  # Espaço para rodapé (3 linhas de texto)
     
     styles = getSampleStyleSheet()
     
