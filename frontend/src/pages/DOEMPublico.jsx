@@ -663,7 +663,7 @@ const DOEMPublico = () => {
               {searchResults.total === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   <Search size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Nenhum resultado encontrado</p>
+                  <p>Nenhum resultado encontrado para sua busca</p>
                 </div>
               ) : (
                 <div className="space-y-3">
