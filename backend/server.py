@@ -723,17 +723,62 @@ def get_professional_styles():
     return custom_styles, cor_primaria, cor_secundaria, cor_destaque
 
 def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool = False):
-    """Cria cabeçalho profissional para relatórios PAC"""
+    """Cria cabeçalho profissional para relatórios PAC com brasão institucional"""
+    from utils.pdf_utils import get_brasao_path, PREFEITURA_INFO
+    
     elements = []
     cor_primaria = colors.HexColor('#1F4E78')
     
-    # Logo path
-    logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
+    # Tentar carregar o brasão
+    brasao_path = get_brasao_path()
     
-    # Título principal
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA', styles['title']))
-    elements.append(Paragraph('Estado de Minas Gerais', ParagraphStyle('Estado', fontSize=10, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=8)))
+    if brasao_path:
+        try:
+            # Criar cabeçalho com brasão
+            brasao_img = Image(brasao_path, width=18*mm, height=18*mm)
+            
+            # Texto do cabeçalho
+            header_text = f"""
+            <font size="14"><b>PREFEITURA MUNICIPAL DE ACAIACA</b></font><br/>
+            <font size="9" color="#4A5568">ESTADO DE MINAS GERAIS</font><br/>
+            <font size="7" color="#718096">{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}</font><br/>
+            <font size="7" color="#718096">Tel.: {PREFEITURA_INFO['telefone']} | {PREFEITURA_INFO['portal']}</font>
+            """
+            
+            header_para = Paragraph(header_text, ParagraphStyle(
+                'HeaderText',
+                fontSize=14,
+                fontName='Helvetica-Bold',
+                textColor=cor_primaria,
+                leading=14,
+                alignment=TA_LEFT
+            ))
+            
+            header_table = Table(
+                [[brasao_img, header_para]],
+                colWidths=[22*mm, None]
+            )
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+                ('TOPPADDING', (0, 0), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ]))
+            
+            elements.append(header_table)
+            elements.append(Spacer(1, 4*mm))
+        except Exception as e:
+            logging.warning(f"Erro ao carregar brasão no header: {e}")
+            # Fallback para texto simples
+            elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA', styles['title']))
+            elements.append(Paragraph('Estado de Minas Gerais', ParagraphStyle('Estado', fontSize=10, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=8)))
+    else:
+        # Sem brasão - texto centralizado
+        elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA', styles['title']))
+        elements.append(Paragraph('Estado de Minas Gerais', ParagraphStyle('Estado', fontSize=10, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=8)))
     
+    # Título do documento
     if is_pac_geral:
         elements.append(Paragraph('PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES CONSOLIDADO', styles['subtitle']))
     else:
