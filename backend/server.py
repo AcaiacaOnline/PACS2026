@@ -3207,10 +3207,11 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     elements.append(Spacer(1, 8*mm))
     
     # Rodapé
-    footer_text = f'<font size=6><i>Total de {len(processos)} processos | Gerado em {datetime.now().strftime("%d/%m/%Y às %H:%M")} | Sistema Planejamento Acaiaca</i></font>'
+    footer_text = f'<font size=6><i>Total de {len(processos)} processos</i></font>'
     elements.append(Paragraph(footer_text, ParagraphStyle('Footer', alignment=TA_CENTER, textColor=colors.grey)))
     
-    doc.build(elements)
+    # Build com callback DOEM para cabeçalho/rodapé em todas as páginas
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     orientation_name = 'Paisagem' if orientation.lower() == 'landscape' else 'Retrato'
