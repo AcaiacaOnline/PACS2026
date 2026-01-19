@@ -211,6 +211,36 @@ export const THEMES = {
       '--theme-header-to': '#14b8a6',
     }
   },
+  
+  sunset: {
+    id: 'sunset',
+    name: 'Pôr do Sol (Laranja/Dourado)',
+    description: 'Tons quentes de laranja, dourado e vermelho',
+    colors: {
+      primary: '#ea580c',        // orange-600
+      primaryHover: '#c2410c',   // orange-700
+      primaryLight: '#ffedd5',   // orange-100
+      secondary: '#b45309',      // amber-700
+      accent: '#f59e0b',         // amber-500
+      success: '#16a34a',        // green-600
+      warning: '#eab308',        // yellow-500
+      danger: '#dc2626',         // red-600
+      background: '#fffbeb',     // amber-50
+      surface: '#ffffff',
+      text: '#78350f',           // amber-900
+      textMuted: '#92400e',      // amber-800
+      border: '#fed7aa',         // orange-200
+      headerBg: 'linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #b45309 100%)',
+      sidebarBg: '#7c2d12',      // orange-900
+    },
+    cssVars: {
+      '--theme-primary': '#ea580c',
+      '--theme-primary-hover': '#c2410c',
+      '--theme-accent': '#f59e0b',
+      '--theme-header-from': '#ea580c',
+      '--theme-header-to': '#dc2626',
+    }
+  },
 };
 
 // Contexto do Tema
