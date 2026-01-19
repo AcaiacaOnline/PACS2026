@@ -7387,13 +7387,16 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
         leading=12
     )
     
-    # ===== CABEÇALHO =====
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
-    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', parent=styles['Normal'], alignment=TA_CENTER, fontSize=9)))
+    # ===== CABEÇALHO COM BRASÃO =====
+    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
+    header_elements = create_header_elements(
+        styles, 
+        title='RELATÓRIO DE PRESTAÇÃO DE CONTAS',
+        subtitle='Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)',
+        show_brasao=True
+    )
+    elements.extend(header_elements)
     elements.append(Spacer(1, 4*mm))
-    elements.append(Paragraph('<b>RELATÓRIO DE PRESTAÇÃO DE CONTAS</b>', ParagraphStyle('RelTitulo', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14, textColor=colors.HexColor('#2E7D32'))))
-    elements.append(Paragraph('Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)', ParagraphStyle('Lei', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
-    elements.append(Spacer(1, 8*mm))
     
     # ===== DADOS DO PROJETO =====
     elements.append(Paragraph('1. IDENTIFICAÇÃO DO PROJETO', subtitulo_style))
