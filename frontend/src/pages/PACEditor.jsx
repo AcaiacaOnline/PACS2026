@@ -4,6 +4,7 @@ import { Save, Plus, Edit, Trash2, FileSpreadsheet, FileText, Upload, Download, 
 import Layout from '../components/Layout';
 import ClassificacaoSelector from '../components/ClassificacaoSelector';
 import Pagination, { usePagination } from '../components/Pagination';
+import SignatureModal from '../components/SignatureModal';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { TelefoneInput, EmailInput, CurrencyInput, maskCurrency, unmaskCurrency } from '../utils/masks';
@@ -18,6 +19,7 @@ const PACEditor = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [pacOwner, setPacOwner] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
   
   // Paginação de itens
   const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(15);
