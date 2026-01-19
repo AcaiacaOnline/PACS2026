@@ -724,13 +724,7 @@ def get_professional_styles():
 
 def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool = False):
     """Cria cabeçalho no estilo DOEM (Diário Oficial Eletrônico Municipal)"""
-    from utils.pdf_utils import get_brasao_path, PREFEITURA_INFO, AZUL_ROYAL, CINZA_LINHA, create_header_elements
-    from reportlab.platypus import HRFlowable
-    
-    elements = []
-    
-    # Usar a nova função de cabeçalho estilo DOEM
-    ano = pac_data.get("ano", datetime.now().year)
+    from utils.pdf_utils import create_doem_header_elements
     
     # Título do documento
     if is_pac_geral:
@@ -738,17 +732,13 @@ def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool 
     else:
         titulo = 'PAC - PLANO ANUAL DE CONTRATAÇÕES'
     
+    ano = pac_data.get("ano", datetime.now().year)
     subtitulo = f'Exercício {ano} - Lei Federal nº 14.133/2021'
     
-    header_elements = create_header_elements(
+    header_elements = create_doem_header_elements(
         styles,
-        title=titulo,
-        subtitle=subtitulo,
-        show_brasao=True,
-        ano=ano,
-        numero_edicao=1,
-        num_paginas=1,
-        data_publicacao=datetime.now()
+        titulo_documento=titulo,
+        subtitulo=subtitulo
     )
     
     return header_elements
