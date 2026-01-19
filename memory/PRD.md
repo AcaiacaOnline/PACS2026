@@ -26,23 +26,30 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 11)
+## Última Atualização: 19/01/2026 (Sessão 11 - Continuação)
 
 ### Changelog - Sessão 11 (19/01/2026)
 
 #### ✅ 1. REFORMULAÇÃO COMPLETA DA ASSINATURA DIGITAL
-- **Layout profissional em 3 linhas verticais** na margem direita:
-  - **Linha 1 (externa)**: `ASSINADO DIGITALMENTE: NOME (Cargo)`
-  - **Linha 2 (meio)**: `CPF: ***456.789-** • Data: DD/MM/YYYY HH:MM:SS`
-  - **Linha 3 (interna)**: `Código: DOC-XXXXXX • Valide: pac.acaiaca.mg.gov.br/validar`
-- **Cor vermelha (#DC2626)** aplicada corretamente em todo o texto
-- **QR Code vermelho** no canto superior direito para validação
-- **Sem sobreposição** com o conteúdo principal do documento
-- **Arquivo modificado**: `/app/backend/server.py` - função `draw_signature_seal()`
+- **Layout profissional em 3 linhas verticais** na margem direita
+- **Cor vermelha (#DC2626)** aplicada corretamente
+- **QR Code vermelho** no canto superior direito
+- **Sem sobreposição** com o conteúdo principal
 
-#### ✅ 2. TESTES VALIDADOS (34/34)
-- Todos os testes unitários passando
-- Nenhuma regressão identificada
+#### ✅ 2. REFATORAÇÃO DO SERVER.PY (P0 - EM PROGRESSO)
+- **server.py reduzido de 9.581 → 8.450 linhas (-12%)**
+- Criado `/app/backend/utils/pdf_utils.py` com funções de assinatura refatoradas:
+  - `mask_cpf()`
+  - `generate_validation_code()`
+  - `get_professional_styles()`
+  - `draw_signature_seal()`
+  - `create_signature_page_mrosc()`
+- Modelos já são importados do pacote `models/`
+- Sistema de aliases mantém compatibilidade com código existente
+
+#### ✅ 3. TESTES VALIDADOS (34/34)
+- Todos os testes unitários passando após refatoração
+- PDF de teste gerado e validado
 
 ---
 
