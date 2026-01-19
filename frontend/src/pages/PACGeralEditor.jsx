@@ -804,7 +804,7 @@ const PACGeralEditor = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <button
-                    onClick={() => handleExportPDF('landscape')}
+                    onClick={() => openSignatureModal('landscape')}
                     className="flex flex-col items-center p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
                   >
                     <div className="w-16 h-10 border-2 border-primary rounded mb-2"></div>
@@ -813,7 +813,7 @@ const PACGeralEditor = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleExportPDF('portrait')}
+                    onClick={() => openSignatureModal('portrait')}
                     className="flex flex-col items-center p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
                   >
                     <div className="w-10 h-14 border-2 border-primary rounded mb-2"></div>
@@ -828,6 +828,20 @@ const PACGeralEditor = () => {
               </div>
             </div>
           </div>
+
+          {/* Modal de Assinatura Digital */}
+          <SignatureModal
+            isOpen={showSignatureModal}
+            onClose={() => setShowSignatureModal(false)}
+            onConfirm={handleSignatureConfirm}
+            onDownloadWithoutSignature={handleDownloadWithoutSignature}
+            documentInfo={{
+              title: `PAC Geral ${pac.ano || new Date().getFullYear()} - ${pac.nome_secretaria}`,
+              subtitle: `Responsável: ${pac.secretario}`,
+              type: 'PAC Consolidado'
+            }}
+            user={currentUser}
+          />
         )}
 
         {/* Modal de Importação */}
