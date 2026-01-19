@@ -378,7 +378,7 @@ const PACEditor = () => {
                       XLSX
                     </button>
                     <button
-                      onClick={handleExportPDF}
+                      onClick={() => setShowSignatureModal(true)}
                       data-testid="export-pdf-btn"
                       className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
@@ -391,6 +391,20 @@ const PACEditor = () => {
             )}
           </div>
         </div>
+
+        {/* Modal de Assinatura Digital */}
+        <SignatureModal
+          isOpen={showSignatureModal}
+          onClose={() => setShowSignatureModal(false)}
+          onConfirm={handleSignatureConfirm}
+          onDownloadWithoutSignature={handleDownloadWithoutSignature}
+          documentInfo={{
+            title: `PAC ${headerData.ano} - ${headerData.secretaria}`,
+            subtitle: `Responsável: ${headerData.secretario}`,
+            type: 'Plano Anual de Contratações'
+          }}
+          user={currentUser}
+        />
 
         {/* Header for Print */}
         <div className="hidden print:block text-center mb-8 border-b-2 border-black pb-4">
