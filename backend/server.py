@@ -5041,10 +5041,10 @@ def create_signature_page_mrosc(signers: list, validation_code: str, doc_info: d
     return buffer
 
 # ===== Sistema de Assinatura Digital Avançada =====
-
-def generate_validation_code() -> str:
-    """Gera código único para validação de documento"""
-    return f"DOC-{uuid.uuid4().hex[:8].upper()}-{datetime.now().strftime('%Y%m%d')}"
+# Funções refatoradas - agora importadas de utils/pdf_utils.py
+generate_validation_code = generate_validation_code_util
+draw_signature_seal = draw_signature_seal_util
+create_signature_page_mrosc = create_signature_page_mrosc_util
 
 async def save_document_signature(doc_id: str, doc_type: str, signers: list, hash_doc: str, validation_code: str = None) -> dict:
     """Salva a assinatura do documento no banco de dados para validação posterior"""
@@ -5062,117 +5062,6 @@ async def save_document_signature(doc_id: str, doc_type: str, signers: list, has
     }
     await db.document_signatures.insert_one(signature_record)
     return {'validation_code': validation_code, 'signature_id': signature_record['signature_id']}
-
-def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None, signature_date: str = None):
-    """
-    Desenha o selo de assinatura digital na LATERAL DIREITA da página.
-    Layout profissional: QR Code no topo + 3 linhas de texto vertical vermelho.
-    
-    Args:
-        canvas: Canvas do reportlab
-        page_width: Largura da página
-        page_height: Altura da página
-        signers: Lista de dicts com dados dos assinantes (nome, cpf, cargo)
-        validation_code: Código para validação do documento
-        qr_code_url: URL para o QR Code de validação (opcional)
-        signature_date: Data da assinatura (formato DD/MM/YYYY HH:MM:SS)
-    """
-    from reportlab.lib.utils import ImageReader
-    import qrcode
-    
-    # Cor vermelho oficial
-    VERMELHO = colors.HexColor("#DC2626")
-    VERMELHO_CLARO = colors.HexColor("#FEF2F2")
-    
-    # Usar a data da assinatura fornecida ou a atual
-    if signature_date:
-        data_assinatura = signature_date
-    else:
-        data_assinatura = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
-    
-    # Preparar dados do assinante
-    if signers:
-        nome = signers[0].get('nome', 'N/A').upper()
-        cpf = signers[0].get('cpf', '')
-        cargo = signers[0].get('cargo', '')
-        cpf_masked = mask_cpf(cpf)
-    else:
-        nome = 'N/A'
-        cpf_masked = '***.***.***-**'
-        cargo = ''
-    
-    # ===== CONFIGURAÇÕES DE LAYOUT =====
-    margin_right = 3 * mm  # Distância da borda direita
-    qr_size = 14 * mm
-    qr_x = page_width - qr_size - margin_right - 1*mm
-    qr_y = page_height - qr_size - 10 * mm
-    
-    # ===== DESENHAR QR CODE =====
-    if qr_code_url:
-        try:
-            qr = qrcode.QRCode(version=1, box_size=3, border=1)
-            qr.add_data(qr_code_url)
-            qr.make(fit=True)
-            qr_img = qr.make_image(fill_color="#DC2626", back_color="#FFFFFF")
-            
-            qr_buffer = BytesIO()
-            qr_img.save(qr_buffer, format='PNG')
-            qr_buffer.seek(0)
-            
-            canvas.drawImage(ImageReader(qr_buffer), qr_x, qr_y, width=qr_size, height=qr_size)
-        except Exception as e:
-            logging.error(f"Erro ao gerar QR Code: {e}")
-    
-    # ===== PREPARAR AS 3 LINHAS DE TEXTO =====
-    # Linha 1 (mais à direita): Nome e cargo do assinante
-    texto_linha1 = f"ASSINADO DIGITALMENTE: {nome}"
-    if cargo:
-        texto_linha1 += f" ({cargo})"
-    
-    # Linha 2 (meio): CPF e Data
-    texto_linha2 = f"CPF: {cpf_masked} • Data: {data_assinatura}"
-    
-    # Linha 3 (mais à esquerda): Código e URL de validação
-    texto_linha3 = f"Código: {validation_code} • Valide: pac.acaiaca.mg.gov.br/validar"
-    
-    # ===== POSIÇÕES DAS 3 LINHAS VERTICAIS =====
-    font_size = 5.5
-    line_spacing = 3 * mm  # Espaço entre linhas
-    
-    # Posições X (da borda direita para dentro)
-    x1 = page_width - margin_right - 1 * mm  # Linha 1 - mais externa
-    x2 = x1 - line_spacing                    # Linha 2 - meio
-    x3 = x2 - line_spacing                    # Linha 3 - mais interna
-    
-    # Posição Y - começar abaixo do QR Code
-    start_y = qr_y - 3 * mm
-    
-    # ===== DESENHAR LINHA 1 (Nome/Cargo) - MAIS EXTERNA =====
-    canvas.saveState()
-    canvas.translate(x1, start_y)
-    canvas.rotate(-90)  # Rotação para texto de cima para baixo
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica-Bold", font_size)
-    canvas.drawString(0, 0, texto_linha1)
-    canvas.restoreState()
-    
-    # ===== DESENHAR LINHA 2 (CPF/Data) - MEIO =====
-    canvas.saveState()
-    canvas.translate(x2, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, texto_linha2)
-    canvas.restoreState()
-    
-    # ===== DESENHAR LINHA 3 (Código/URL) - MAIS INTERNA =====
-    canvas.saveState()
-    canvas.translate(x3, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, texto_linha3)
-    canvas.restoreState()
 
 async def get_doem_config() -> dict:
     """Obtém ou cria configuração padrão do DOEM"""
