@@ -838,21 +838,21 @@ const PACGeralEditor = () => {
               </div>
             </div>
           </div>
-
-          {/* Modal de Assinatura Digital */}
-          <SignatureModal
-            isOpen={showSignatureModal}
-            onClose={() => setShowSignatureModal(false)}
-            onConfirm={handleSignatureConfirm}
-            onDownloadWithoutSignature={handleDownloadWithoutSignature}
-            documentInfo={{
-              title: `PAC Geral ${pac.ano || new Date().getFullYear()} - ${pac.nome_secretaria}`,
-              subtitle: `Responsável: ${pac.secretario}`,
-              type: 'PAC Consolidado'
-            }}
-            user={currentUser}
-          />
         )}
+
+        {/* Modal de Assinatura Digital */}
+        <SignatureModal
+          isOpen={showSignatureModal}
+          onClose={() => setShowSignatureModal(false)}
+          onConfirm={handleSignatureConfirm}
+          onDownloadWithoutSignature={handleDownloadWithoutSignature}
+          documentInfo={{
+            title: `PAC Geral ${pac.ano || new Date().getFullYear()} - ${pac.nome_secretaria}`,
+            subtitle: `Responsável: ${pac.secretario}`,
+            type: 'PAC Consolidado'
+          }}
+          user={currentUser}
+        />
 
         {/* Modal de Importação */}
         {showImportModal && (
