@@ -239,13 +239,43 @@ export const ThemeProvider = ({ children }) => {
     setIsLoaded(true);
   }, []);
 
+  // Converter HEX para HSL
+  const hexToHSL = (hex) => {
+    let r = 0, g = 0, b = 0;
+    if (hex.length === 4) {
+      r = parseInt(hex[1] + hex[1], 16);
+      g = parseInt(hex[2] + hex[2], 16);
+      b = parseInt(hex[3] + hex[3], 16);
+    } else if (hex.length === 7) {
+      r = parseInt(hex.slice(1, 3), 16);
+      g = parseInt(hex.slice(3, 5), 16);
+      b = parseInt(hex.slice(5, 7), 16);
+    }
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+        default: h = 0;
+      }
+    }
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  };
+
   // Aplicar variáveis CSS quando o tema mudar
   useEffect(() => {
     const theme = THEMES[currentTheme];
     if (theme) {
       const root = document.documentElement;
       
-      // Aplicar variáveis CSS
+      // Aplicar variáveis CSS personalizadas
       Object.entries(theme.cssVars).forEach(([key, value]) => {
         root.style.setProperty(key, value);
       });
@@ -255,11 +285,34 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty(`--color-${key}`, value);
       });
 
+      // Aplicar variáveis HSL para Tailwind
+      const colors = theme.colors;
+      root.style.setProperty('--primary', hexToHSL(colors.primary));
+      root.style.setProperty('--primary-foreground', currentTheme === 'dark' ? '222 47% 11%' : '210 40% 98%');
+      root.style.setProperty('--background', hexToHSL(colors.background));
+      root.style.setProperty('--foreground', hexToHSL(colors.text));
+      root.style.setProperty('--card', hexToHSL(colors.surface));
+      root.style.setProperty('--card-foreground', hexToHSL(colors.text));
+      root.style.setProperty('--muted', hexToHSL(colors.border));
+      root.style.setProperty('--muted-foreground', hexToHSL(colors.textMuted));
+      root.style.setProperty('--accent', hexToHSL(colors.accent));
+      root.style.setProperty('--accent-foreground', '0 0% 100%');
+      root.style.setProperty('--border', hexToHSL(colors.border));
+      root.style.setProperty('--secondary', hexToHSL(colors.secondary));
+      root.style.setProperty('--secondary-foreground', '0 0% 100%');
+
       // Salvar no localStorage
       localStorage.setItem('app-theme', currentTheme);
 
       // Classe no body para estilos específicos
       document.body.className = `theme-${currentTheme}`;
+      
+      // Adicionar classe dark se tema escuro
+      if (currentTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, [currentTheme]);
 
