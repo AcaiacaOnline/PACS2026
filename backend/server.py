@@ -4135,35 +4135,34 @@ async def public_export_pac_pdf(pac_id: str, orientation: str = "landscape"):
 
 @public_router.get("/pacs-geral/{pac_geral_id}/export/pdf")
 async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "landscape"):
-    """Exporta PAC Geral para PDF (público)."""
+    """Exporta PAC Geral para PDF (público) - Formato DOEM."""
     pac_geral = await db.pacs_geral.find_one({'pac_geral_id': pac_geral_id}, {'_id': 0})
     if not pac_geral:
         raise HTTPException(status_code=404, detail="PAC Geral não encontrado")
     items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
-    
-    # Margens padronizadas conforme Lei 14.133/2021
-    # 5cm (esquerda/direita), 3cm (superior/inferior)
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
+    
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO',
+        subtitulo=f'Exercício {pac_geral.get("ano", "2026")} - Lei Federal nº 14.133/2021',
+        total_pages=1
+    )
     
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=REPORT_MARGIN_LEFT, 
-        rightMargin=REPORT_MARGIN_RIGHT, 
-        topMargin=REPORT_MARGIN_TOP, 
-        bottomMargin=REPORT_MARGIN_BOTTOM
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=55*mm,
+        bottomMargin=35*mm
     )
     
     elements = []
     styles = getSampleStyleSheet()
-    
-    # Cabeçalho
-    elements.append(Paragraph('<b>PREFEITURA MUNICIPAL DE ACAIACA - MG</b>', ParagraphStyle('Center', fontSize=12, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('<b>PAC ACAIACA 2026 - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO</b>', ParagraphStyle('Center', fontSize=10, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('Lei Federal nº 14.133/2021', ParagraphStyle('Center', fontSize=8, alignment=1)))
-    elements.append(Spacer(1, 4*mm))
     
     # Dados
     elements.append(Paragraph(f"<b>Secretaria Responsável:</b> {pac_geral.get('nome_secretaria', '')}", ParagraphStyle('Normal', fontSize=9)))
@@ -4178,7 +4177,7 @@ async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "lan
     # Tabela de itens
     elements.append(Paragraph('<b>DETALHAMENTO DOS ITENS</b>', ParagraphStyle('Header', fontSize=9, fontName='Helvetica-Bold', spaceAfter=2)))
     
-    table_data = [['#', 'Código\nCATMAT', 'Descrição do Objeto', 'Justificativa da Contratação', 'Und', 'Qtd\nTotal', 'Valor\nUnitário', 'Valor\nTotal', 'Prior.', 'Classificação Orçamentária\n(Código - Subitem)']]
+    table_data = [['#', 'CATMAT', 'Descrição', 'Justificativa', 'Und', 'Qtd', 'V.Unit', 'V.Total', 'Prior.', 'Classif.']]
     
     for idx, item in enumerate(items, start=1):
         classificacao_text = ''
@@ -4187,68 +4186,58 @@ async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "lan
             if item.get('subitem_classificacao'):
                 classificacao_text += f"\n{item['subitem_classificacao']}"
         
-        justificativa = item.get('justificativa', '') or 'Não informada'
-        descricao = item.get('descricao', '')
+        justificativa = (item.get('justificativa', '') or 'N/I')[:50]
+        descricao = item.get('descricao', '')[:70]
         
         table_data.append([
             str(idx),
             item.get('catmat', ''),
-            Paragraph(f"<font size=7>{descricao}</font>", styles['Normal']),
-            Paragraph(f"<font size=6>{justificativa}</font>", styles['Normal']),
+            Paragraph(f"<font size=6>{descricao}</font>", styles['Normal']),
+            Paragraph(f"<font size=5>{justificativa}</font>", styles['Normal']),
             item.get('unidade', ''),
             str(int(item.get('quantidade_total', 0))),
-            f"R$ {item.get('valorUnitario', 0):,.2f}",
-            f"R$ {item.get('valorTotal', 0):,.2f}",
+            f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
             item.get('prioridade', ''),
-            Paragraph(f"<font size=6>{classificacao_text}</font>", styles['Normal'])
+            Paragraph(f"<font size=5>{classificacao_text}</font>", styles['Normal'])
         ])
     
     total = sum(item.get('valorTotal', 0) for item in items)
     total_qtd = sum(item.get('quantidade_total', 0) for item in items)
     table_data.append([
-        '', '', Paragraph('<b>TOTAL GERAL:</b>', styles['Normal']), '', '',
-        str(int(total_qtd)), '', f"R$ {total:,.2f}", '', ''
+        '', '', Paragraph('<b>TOTAL:</b>', styles['Normal']), '', '',
+        str(int(total_qtd)), '', f"R$ {total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'), '', ''
     ])
     
     if orientation.lower() == 'portrait':
-        col_widths = [0.5*cm, 1.2*cm, 3.5*cm, 3*cm, 0.8*cm, 1*cm, 1.5*cm, 1.6*cm, 0.8*cm, 2.5*cm]
+        col_widths = [0.5*cm, 1*cm, 3*cm, 2.5*cm, 0.7*cm, 0.8*cm, 1.4*cm, 1.5*cm, 0.7*cm, 2.2*cm]
     else:
-        col_widths = [0.6*cm, 1.5*cm, 5*cm, 5*cm, 1*cm, 1.2*cm, 2*cm, 2.2*cm, 1*cm, 4.5*cm]
+        col_widths = [0.5*cm, 1.3*cm, 5*cm, 4.5*cm, 0.9*cm, 1*cm, 1.8*cm, 2*cm, 0.9*cm, 4*cm]
     
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 7),
+        ('FONTSIZE', (0, 0), (-1, 0), 6),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
-        ('FONTSIZE', (0, 1), (-1, -2), 7),
+        ('FONTSIZE', (0, 1), (-1, -2), 6),
         ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F2F2F2')]),
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFC000')),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     
     elements.append(table)
-    elements.append(Spacer(1, 10*mm))
     
-    # Assinaturas
-    sig_data = [
-        ['_' * 50, '_' * 50],
-        [pac_geral.get('secretario', ''), pac_geral.get('fiscal_contrato', '')],
-        ['Secretário(a) Responsável', 'Fiscal do Contrato'],
-    ]
-    sig_table = Table(sig_data, colWidths=[10*cm, 10*cm])
-    sig_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
-    ]))
-    elements.append(sig_table)
-    
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     filename = f'PAC_Geral_{pac_geral.get("nome_secretaria", "").replace(" ", "_")}.pdf'
