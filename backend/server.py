@@ -2145,23 +2145,27 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Margens ajustadas para acomodar selo de assinatura na direita
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES CONSOLIDADO',
+        subtitulo=f'Exercício {pac.get("ano", "2026")} - Lei Federal nº 14.133/2021',
+        total_pages=1
+    )
+    
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=15*mm,
-        rightMargin=25*mm,  # Espaço para selo de assinatura digital
-        topMargin=15*mm, 
-        bottomMargin=15*mm,
+        leftMargin=20*mm,
+        rightMargin=20*mm,
+        topMargin=50*mm,  # Espaço para cabeçalho DOEM
+        bottomMargin=40*mm,  # Espaço para rodapé DOEM
         title=f'PAC Geral {pac.get("nome_secretaria", "")} {pac.get("ano", "2026")}'
     )
     
     elements = []
     custom_styles, cor_primaria, cor_secundaria, cor_destaque = get_professional_styles()
     base_styles = getSampleStyleSheet()
-    
-    # Cabeçalho profissional
-    elements.extend(create_professional_header(pac, custom_styles, is_pac_geral=True))
     
     # Caixa de informações
     elements.append(create_info_box(pac, custom_styles, is_pac_geral=True))
@@ -2243,11 +2247,8 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     # Seção de assinaturas
     elements.extend(create_signature_section(pac, custom_styles, is_pac_geral=True))
     
-    # Rodapé
-    elements.append(Spacer(1, 6*mm))
-    elements.append(Paragraph(create_footer_text(), custom_styles['footer']))
-    
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
