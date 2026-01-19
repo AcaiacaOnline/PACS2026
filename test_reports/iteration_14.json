@@ -1,0 +1,106 @@
+{
+  "summary": "Complete testing of PDF export layout for DOEM format. All 11 backend tests passed. PDF exports are working correctly with the expected layout: ACAIACA header, two blue lines, publication info, footer with Prefeitura info, and digital signature with QR code.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "test_report_links": [
+    "/app/tests/test_pdf_layout_doem.py",
+    "/app/test_reports/pytest/pytest_pdf_layout_doem.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [],
+  
+  "updated_files": [
+    "/app/tests/test_pdf_layout_doem.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (UI verified via browser automation)"
+  },
+  
+  "features_verified": {
+    "pac_individual_pdf_authenticated": {
+      "endpoint": "GET /api/pacs/{pac_id}/export/pdf",
+      "status": "WORKING",
+      "layout_elements": {
+        "acaiaca_header": "✓ Present",
+        "ano_numero_paginas": "✓ Present (ANO 134 - Nº 1 - 1 PÁGINAS)",
+        "date_extenso": "✓ Present (Acaiaca, Segunda-feira, 19 de Janeiro de 2026)",
+        "doem_url": "✓ Present (https://pac.acaiaca.mg.gov.br/doem)",
+        "footer_prefeitura": "✓ Present (3 lines with CNPJ, address, contact)",
+        "digital_signature": "✓ Present (masked CPF, validation code, QR code)"
+      }
+    },
+    "pac_individual_pdf_public": {
+      "endpoint": "GET /api/public/pacs/{pac_id}/export/pdf",
+      "status": "WORKING"
+    },
+    "processos_pdf_public": {
+      "endpoint": "GET /api/public/processos/export/pdf",
+      "status": "WORKING"
+    },
+    "pdf_portrait_orientation": {
+      "status": "WORKING"
+    },
+    "pdf_with_custom_signature_date": {
+      "status": "WORKING"
+    },
+    "brasao_file": {
+      "path": "/app/backend/static/brasao_acaiaca.png",
+      "status": "EXISTS (13MB)"
+    }
+  },
+  
+  "pdf_layout_verification": {
+    "header": {
+      "brasoes": "Two brasões (left and right) - implemented in _draw_header",
+      "acaiaca_text": "ACAIACA centered in navy blue (#000080)",
+      "blue_lines": "Two horizontal lines (thin 1pt and thick 2.5pt)",
+      "publication_info": "ANO, Nº, PÁGINAS centered between lines",
+      "date": "Date in Portuguese format on the right"
+    },
+    "footer": {
+      "line1": "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90",
+      "line2": "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000",
+      "line3": "Tel.: (31) 3887-1650 | Portal: https://acaiaca.mg.gov.br | E-mail: administracao@acaiaca.mg.gov.br"
+    },
+    "digital_signature": {
+      "qr_code": "Present in top right corner",
+      "signer_info": "ASSINADO DIGITALMENTE: [NAME] ([CARGO])",
+      "cpf_masked": "CPF: ***XXX.XXX-**",
+      "validation_code": "Código: DOC-XXXXXXXX-YYYYMMDD",
+      "validation_url": "Valide: pac.acaiaca.mg.gov.br/validar"
+    }
+  },
+  
+  "test_credentials": {
+    "admin_email": "cristiano.abdo@acaiaca.mg.gov.br",
+    "admin_password": "Cris@820906"
+  },
+  
+  "test_pac_id": "pac_f905e7811e98",
+  
+  "seed_data_creation": "None - used existing PAC data",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "PDF export layout has been verified to match the DOEM format. The DOEMTemplate class in /app/backend/utils/pdf_utils.py correctly implements the header with brasões, ACAIACA text, blue lines, and footer with Prefeitura info. Digital signature with QR code is working. All PDF export endpoints (/api/pacs/{pac_id}/export/pdf, /api/public/pacs/{pac_id}/export/pdf, /api/public/processos/export/pdf) are functional.",
+  
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
