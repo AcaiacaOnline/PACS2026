@@ -259,24 +259,47 @@ const PACGeralEditor = () => {
     }
   };
 
-  const handleExportPDF = async (orientation = 'landscape') => {
+  const handleExportPDF = async (orientation = 'landscape', withSignature = false, signatureDate = null) => {
     try {
-      const response = await api.get(`/pacs-geral/${id}/export/pdf?orientation=${orientation}`, {
+      let url = `/pacs-geral/${id}/export/pdf?orientation=${orientation}`;
+      if (withSignature) {
+        url += `&assinar=true`;
+        if (signatureDate) {
+          url += `&data_assinatura=${encodeURIComponent(signatureDate)}`;
+        }
+      }
+      
+      const response = await api.get(url, {
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = blobUrl;
       const orientationName = orientation === 'landscape' ? 'Paisagem' : 'Retrato';
-      link.setAttribute('download', `PAC_Geral_${pac.nome_secretaria}_${orientationName}.pdf`);
+      const signedSuffix = withSignature ? '_ASSINADO' : '';
+      link.setAttribute('download', `PAC_Geral_${pac.nome_secretaria}_${orientationName}${signedSuffix}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       setShowExportModal(false);
-      toast.success('Exportado com sucesso!');
+      setShowSignatureModal(false);
+      toast.success(withSignature ? 'PDF assinado gerado com sucesso!' : 'Exportado com sucesso!');
     } catch (error) {
       toast.error('Erro ao exportar PDF');
     }
+  };
+
+  const openSignatureModal = (orientation) => {
+    setPdfOrientation(orientation);
+    setShowSignatureModal(true);
+  };
+
+  const handleSignatureConfirm = async (signatureDate) => {
+    await handleExportPDF(pdfOrientation, true, signatureDate);
+  };
+
+  const handleDownloadWithoutSignature = async () => {
+    await handleExportPDF(pdfOrientation, false);
   };
 
   const handleImportFile = async (e) => {
