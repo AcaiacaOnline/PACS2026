@@ -523,7 +523,7 @@ const PACEditor = () => {
                   {items.length === 0 ? (
                     <tr>
                       <td colSpan="10" className="px-4 py-8 text-center text-muted-foreground">
-                        Nenhum item cadastrado. Clique em "Adicionar Item" para começar.
+                        Nenhum item cadastrado. Clique em Adicionar Item para começar.
                       </td>
                     </tr>
                   ) : (
