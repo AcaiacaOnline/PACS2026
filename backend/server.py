@@ -1412,22 +1412,27 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='PAC - PLANO ANUAL DE CONTRATAÇÕES',
+        subtitulo=f'Exercício {pac.get("ano", "2026")} - Lei Federal nº 14.133/2021',
+        total_pages=1
+    )
+    
     # Margens ajustadas para acomodar selo de assinatura na direita
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=15*mm,
-        rightMargin=25*mm,  # Espaço para selo de assinatura digital
-        topMargin=15*mm, 
-        bottomMargin=15*mm,
+        leftMargin=20*mm,
+        rightMargin=20*mm,
+        topMargin=50*mm,  # Espaço para cabeçalho DOEM
+        bottomMargin=40*mm,  # Espaço para rodapé DOEM
         title=f'PAC {pac["secretaria"]} {pac.get("ano", "2026")}'
     )
     
     elements = []
     custom_styles, cor_primaria, cor_secundaria, cor_destaque = get_professional_styles()
-    
-    # Cabeçalho profissional
-    elements.extend(create_professional_header(pac, custom_styles, is_pac_geral=False))
     
     # Caixa de informações
     elements.append(create_info_box(pac, custom_styles, is_pac_geral=False))
@@ -1455,11 +1460,8 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     # Seção de assinaturas
     elements.extend(create_signature_section(pac, custom_styles, is_pac_geral=False))
     
-    # Rodapé
-    elements.append(Spacer(1, 6*mm))
-    elements.append(Paragraph(create_footer_text(), custom_styles['footer']))
-    
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
