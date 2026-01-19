@@ -626,7 +626,8 @@ const DOEMPublico = () => {
                 {/* Rodapé do Documento */}
                 <div className="bg-gray-50 border-t border-gray-200 p-4 text-center text-xs text-gray-500">
                   <p>Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90</p>
-                  <p>Praça Antônio Carlos, 10 - Centro - CEP: 35444-000</p>
+                  <p>Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000</p>
+                  <p>Tel.: (31) 3887-1650 | Portal: https://acaiaca.mg.gov.br | E-mail: administracao@acaiaca.mg.gov.br</p>
                 </div>
               </div>
             ) : (
