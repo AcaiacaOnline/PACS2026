@@ -2434,13 +2434,21 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     buffer = BytesIO()
     page_size = landscape(A4) if orientation.lower() == 'landscape' else A4
     
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA',
+        subtitulo='Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME',
+        total_pages=1
+    )
+    
     doc = SimpleDocTemplate(
         buffer,
         pagesize=page_size,
-        leftMargin=15*mm,
-        rightMargin=15*mm,
-        topMargin=15*mm,
-        bottomMargin=15*mm,
+        leftMargin=20*mm,
+        rightMargin=20*mm,
+        topMargin=50*mm,  # Espaço para cabeçalho DOEM
+        bottomMargin=40*mm,  # Espaço para rodapé DOEM
         title=f'PAC Obras - {pac["nome_secretaria"]} {pac.get("ano", "2026")}'
     )
     
@@ -2450,17 +2458,6 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     # Estilos
     titulo_style = ParagraphStyle('TituloPACObras', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#1565C0'), alignment=TA_CENTER, spaceAfter=4*mm)
     subtitulo_style = ParagraphStyle('SubtituloPACObras', parent=styles['Heading2'], fontSize=11, textColor=colors.HexColor('#1976D2'), spaceBefore=6*mm, spaceAfter=3*mm)
-    
-    # ===== CABEÇALHO COM BRASÃO =====
-    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
-    header_elements = create_header_elements(
-        styles, 
-        title='PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA',
-        subtitle='Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME',
-        show_brasao=True
-    )
-    elements.extend(header_elements)
-    elements.append(Spacer(1, 4*mm))
     
     # ===== DADOS DA SECRETARIA =====
     elements.append(Paragraph('IDENTIFICAÇÃO', subtitulo_style))
@@ -2555,12 +2552,8 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     elements.append(Paragraph(f'<b>{pac.get("secretario", "Secretário(a)")}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=9)))
     elements.append(Paragraph(f'{pac.get("nome_secretaria", "")}', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
     
-    # ===== RODAPÉ =====
-    elements.append(Spacer(1, 8*mm))
-    data_geracao = datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M')
-    elements.append(Paragraph(f'Documento gerado em {data_geracao} | Planejamento Acaiaca © 2026', ParagraphStyle('Rodape', alignment=TA_CENTER, fontSize=6, textColor=colors.gray)))
-    
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     filename = f"PAC_Obras_{pac['nome_secretaria'].replace(' ', '_')}_{pac.get('ano', '2026')}.pdf"
