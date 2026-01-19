@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Newspaper, Search, Calendar, Download, ChevronDown, ChevronRight, 
-  FileText, CheckCircle, ArrowLeft, Home
+  FileText, CheckCircle, ArrowLeft, Home, Eye, ZoomIn, ZoomOut,
+  ChevronLeft, Filter, X, Printer, Share2, BookOpen, Building2
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -15,35 +16,60 @@ const publicApi = axios.create({
   }
 });
 
+// Categorias do DOEM inspiradas no Diário Oficial de MG
+const CATEGORIAS_DOEM = [
+  {
+    id: 'executivo',
+    nome: 'Diário do Executivo',
+    icon: Building2,
+    segmentos: ['Decretos', 'Portarias', 'Resoluções', 'Editais', 'Processos Administrativos']
+  },
+  {
+    id: 'municipios',
+    nome: 'Diário dos Municípios',
+    icon: Newspaper,
+    segmentos: ['Prestações de Contas', 'Leis']
+  },
+  {
+    id: 'terceiros',
+    nome: 'Diário de Terceiros',
+    icon: BookOpen,
+    segmentos: ['Publicações do Terceiro Setor', 'Publicações do Legislativo']
+  }
+];
+
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
 const DOEMPublico = () => {
   const navigate = useNavigate();
   const [edicoes, setEdicoes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [anos, setAnos] = useState([]);
-  const [anoExpandido, setAnoExpandido] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [selectedEdicao, setSelectedEdicao] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Estados dos filtros
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState(['executivo']);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSegmento, setSelectedSegmento] = useState(null);
+  
+  // Estados do visualizador
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [zoom, setZoom] = useState(100);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
   useEffect(() => {
-    fetchAnos();
     fetchEdicoes();
   }, []);
-
-  const fetchAnos = async () => {
-    try {
-      const response = await publicApi.get('/public/doem/anos');
-      const anosDisponiveis = response.data.anos || [new Date().getFullYear()];
-      setAnos(anosDisponiveis);
-      if (anosDisponiveis.length > 0) {
-        setAnoExpandido(anosDisponiveis[0]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar anos:', error);
-      setAnos([new Date().getFullYear()]);
-    }
-  };
 
   const fetchEdicoes = async () => {
     setLoading(true);
@@ -51,9 +77,13 @@ const DOEMPublico = () => {
     try {
       const response = await publicApi.get('/public/doem/edicoes?limit=100');
       setEdicoes(response.data);
+      if (response.data.length > 0) {
+        setSelectedEdicao(response.data[0]);
+        setTotalPages(response.data[0].publicacoes?.length || 1);
+      }
     } catch (error) {
       console.error('Erro ao carregar edições:', error);
-      setError('Não foi possível carregar as edições do DOEM. Tente novamente mais tarde.');
+      setError('Não foi possível carregar as edições do DOEM.');
     } finally {
       setLoading(false);
     }
@@ -68,6 +98,7 @@ const DOEMPublico = () => {
     try {
       const response = await publicApi.get(`/public/doem/busca?q=${encodeURIComponent(searchTerm)}`);
       setSearchResults(response.data);
+      setShowAdvancedSearch(true);
     } catch (error) {
       toast.error('Erro ao buscar');
     }
@@ -85,6 +116,7 @@ const DOEMPublico = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      toast.success('PDF baixado com sucesso!');
     } catch (error) {
       toast.error('Erro ao baixar PDF');
     }
@@ -103,344 +135,573 @@ const DOEMPublico = () => {
     }
   };
 
-  const edicoesporAno = anos.map(ano => ({
-    ano,
-    edicoes: edicoes.filter(e => e.ano === ano)
-  }));
+  const formatDateShort = (date) => {
+    const d = new Date(date);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  };
 
-  const ultimaEdicao = edicoes.length > 0 ? edicoes[0] : null;
+  // Filtrar edições
+  const filteredEdicoes = useMemo(() => {
+    let filtered = [...edicoes];
+    
+    // Filtrar por data selecionada (mesmo mês/ano)
+    if (selectedDate) {
+      const month = selectedDate.getMonth();
+      const year = selectedDate.getFullYear();
+      filtered = filtered.filter(e => {
+        if (!e.data_publicacao) return false;
+        const pubDate = new Date(e.data_publicacao);
+        return pubDate.getMonth() === month && pubDate.getFullYear() === year;
+      });
+    }
+    
+    // Filtrar por segmento
+    if (selectedSegmento) {
+      filtered = filtered.filter(e => 
+        e.publicacoes?.some(p => p.segmento === selectedSegmento)
+      );
+    }
+    
+    return filtered;
+  }, [edicoes, selectedDate, selectedSegmento]);
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => 
+      prev.includes(categoryId) 
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const handleSelectSegmento = (segmento) => {
+    setSelectedSegmento(selectedSegmento === segmento ? null : segmento);
+  };
+
+  // Gerar dias do calendário
+  const generateCalendarDays = () => {
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  };
+
+  const changeMonth = (delta) => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    setSelectedDate(newDate);
+  };
+
+  const selectDay = (day) => {
+    if (!day) return;
+    const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
+    setSelectedDate(newDate);
+    setShowCalendar(false);
+  };
+
+  // Verificar se há edição no dia
+  const hasEditionOnDay = (day) => {
+    if (!day) return false;
+    return edicoes.some(e => {
+      if (!e.data_publicacao) return false;
+      const pubDate = new Date(e.data_publicacao);
+      return (
+        pubDate.getDate() === day &&
+        pubDate.getMonth() === selectedDate.getMonth() &&
+        pubDate.getFullYear() === selectedDate.getFullYear()
+      );
+    });
+  };
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: 'url(/bg-acaiaca.png)' }}
-    >
-      <div className="min-h-screen bg-black/40 backdrop-blur-sm">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-lg border-b border-white/10 shadow-xl">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/20 rounded-xl">
-                  <Newspaper className="text-primary" size={40} />
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white">
-                    DOEM - Diário Oficial Eletrônico
-                  </h1>
-                  <p className="text-slate-300">
-                    Município de Acaiaca - MG
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* ===== HEADER ESTILO DIÁRIO OFICIAL MG ===== */}
+      <header className="bg-[#8B0000] text-white shadow-lg">
+        <div className="flex items-stretch">
+          {/* Seção de Data/Calendário */}
+          <div className="bg-[#6B0000] px-4 py-3 min-w-[220px] border-r border-[#500000]">
+            <div className="text-xs text-white/70 mb-1">Edição do dia</div>
+            <button 
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="flex items-center gap-3 w-full text-left hover:bg-white/10 rounded-lg p-2 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Calendar size={20} className="text-white/80" />
+                <span className="text-3xl font-bold">{selectedDate.getDate()}</span>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => navigate('/transparencia')}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
-                >
-                  <Home size={18} />
-                  Portal Principal
-                </button>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors border border-white/20"
-                >
-                  <ArrowLeft size={18} />
-                  Acesso Administrativo
-                </button>
+              <div className="flex-1">
+                <div className="text-sm font-semibold">{selectedDate.getFullYear()}</div>
+                <div className="text-sm text-white/90">{MESES[selectedDate.getMonth()]}</div>
+                <div className="text-xs text-white/70">{DIAS_SEMANA[selectedDate.getDay()]}</div>
               </div>
-            </div>
-          </div>
-        </header>
+              <ChevronDown size={18} className="text-[#DC2626]" />
+            </button>
 
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          {/* Barra de Busca */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl p-6 mb-8 shadow-xl">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Search className="text-primary" size={24} />
-              Pesquisar Publicações
-            </h2>
-            <div className="flex gap-4">
+            {/* Dropdown do Calendário */}
+            {showCalendar && (
+              <div className="absolute top-20 left-4 bg-white text-gray-800 rounded-xl shadow-2xl z-50 p-4 w-[300px]">
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <ChevronLeft size={18} />
+                  </button>
+                  <span className="font-semibold">
+                    {MESES[selectedDate.getMonth()]} {selectedDate.getFullYear()}
+                  </span>
+                  <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
+                    <div key={i} className="font-semibold text-gray-500 py-1">{d}</div>
+                  ))}
+                </div>
+                
+                <div className="grid grid-cols-7 gap-1">
+                  {generateCalendarDays().map((day, i) => (
+                    <button
+                      key={i}
+                      onClick={() => selectDay(day)}
+                      disabled={!day}
+                      className={`
+                        p-2 text-sm rounded-lg transition-colors relative
+                        ${!day ? 'invisible' : 'hover:bg-gray-100'}
+                        ${day === selectedDate.getDate() ? 'bg-[#8B0000] text-white' : ''}
+                        ${hasEditionOnDay(day) && day !== selectedDate.getDate() ? 'font-bold text-[#8B0000]' : ''}
+                      `}
+                    >
+                      {day}
+                      {hasEditionOnDay(day) && (
+                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#DC2626] rounded-full"></span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={() => { setSelectedDate(new Date()); setShowCalendar(false); }}
+                  className="w-full mt-3 py-2 text-sm text-[#8B0000] hover:bg-gray-100 rounded-lg font-medium"
+                >
+                  Ir para hoje
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Barra de Pesquisa Avançada */}
+          <div className="flex-1 flex items-center px-6">
+            <div className="flex-1 relative">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Digite o termo de busca (mínimo 3 caracteres)..."
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/50 outline-none"
+                placeholder="Clique aqui para efetuar a pesquisa avançada"
+                className="w-full px-4 py-3 bg-transparent border-none outline-none text-white placeholder-white/60 text-sm"
               />
-              <button
-                onClick={handleSearch}
-                className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-semibold"
+            </div>
+            <button
+              onClick={handleSearch}
+              className="p-3 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <Search size={22} className="text-white" />
+            </button>
+          </div>
+
+          {/* Botões de Navegação */}
+          <div className="flex items-center gap-2 px-4">
+            <button
+              onClick={() => navigate('/transparencia')}
+              className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
+            >
+              <Home size={16} />
+              <span className="hidden md:inline">Portal</span>
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm"
+            >
+              <ArrowLeft size={16} />
+              <span className="hidden md:inline">Admin</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ===== ÁREA PRINCIPAL COM SIDEBAR ===== */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* SIDEBAR ESQUERDA - Filtros */}
+        <aside className="w-[280px] bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
+          {/* Categorias Estilo Accordion */}
+          <nav className="py-2">
+            {CATEGORIAS_DOEM.map((categoria) => {
+              const Icon = categoria.icon;
+              const isExpanded = expandedCategories.includes(categoria.id);
+              
+              return (
+                <div key={categoria.id} className="border-b border-gray-100">
+                  <button
+                    onClick={() => toggleCategory(categoria.id)}
+                    className="w-full flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="w-1 h-8 bg-[#DC2626] rounded-full"></div>
+                    <Icon size={20} className="text-gray-600 group-hover:text-[#8B0000]" />
+                    <span className="flex-1 text-left font-medium text-gray-700 group-hover:text-[#8B0000]">
+                      {categoria.nome}
+                    </span>
+                    <ChevronDown 
+                      size={18} 
+                      className={`text-[#DC2626] transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                    />
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="bg-gray-50 py-2">
+                      {categoria.segmentos.map((segmento) => (
+                        <button
+                          key={segmento}
+                          onClick={() => handleSelectSegmento(segmento)}
+                          className={`
+                            w-full flex items-center gap-2 px-8 py-2 text-sm transition-colors
+                            ${selectedSegmento === segmento 
+                              ? 'bg-[#8B0000] text-white' 
+                              : 'text-gray-600 hover:bg-gray-100 hover:text-[#8B0000]'}
+                          `}
+                        >
+                          <FileText size={14} />
+                          {segmento}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Lista de Edições do Mês */}
+          <div className="border-t border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-500 mb-3 flex items-center gap-2">
+              <Calendar size={14} />
+              Edições de {MESES[selectedDate.getMonth()]}
+            </h3>
+            
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {filteredEdicoes.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Nenhuma edição neste período
+                </p>
+              ) : (
+                filteredEdicoes.map((edicao) => (
+                  <button
+                    key={edicao.edicao_id}
+                    onClick={() => {
+                      setSelectedEdicao(edicao);
+                      setCurrentPage(1);
+                      setTotalPages(edicao.publicacoes?.length || 1);
+                    }}
+                    className={`
+                      w-full text-left p-3 rounded-lg transition-colors text-sm
+                      ${selectedEdicao?.edicao_id === edicao.edicao_id 
+                        ? 'bg-[#8B0000] text-white' 
+                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700'}
+                    `}
+                  >
+                    <div className="font-medium">Edição nº {edicao.numero_edicao}</div>
+                    <div className={`text-xs ${selectedEdicao?.edicao_id === edicao.edicao_id ? 'text-white/70' : 'text-gray-500'}`}>
+                      {formatDateShort(edicao.data_publicacao)}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Filtro Ativo */}
+          {selectedSegmento && (
+            <div className="border-t border-gray-200 p-4">
+              <div className="flex items-center gap-2 bg-[#8B0000]/10 text-[#8B0000] px-3 py-2 rounded-lg text-sm">
+                <Filter size={14} />
+                <span className="flex-1">{selectedSegmento}</span>
+                <button onClick={() => setSelectedSegmento(null)} className="hover:bg-[#8B0000]/20 p-1 rounded">
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* ÁREA PRINCIPAL - Visualizador de Documento */}
+        <main className="flex-1 flex flex-col bg-gray-200 overflow-hidden">
+          {/* Toolbar do Visualizador */}
+          <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Navegação de Páginas */}
+              <div className="flex items-center gap-2 text-sm">
+                <button 
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage <= 1}
+                  className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={currentPage}
+                    onChange={(e) => setCurrentPage(Math.min(totalPages, Math.max(1, parseInt(e.target.value) || 1)))}
+                    className="w-12 px-2 py-1 border border-gray-200 rounded text-center text-sm"
+                    min={1}
+                    max={totalPages}
+                  />
+                  <span className="text-gray-500">de {totalPages}</span>
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+
+              {/* Busca no Documento */}
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
+                <input
+                  type="text"
+                  placeholder="Localizar..."
+                  className="px-3 py-1.5 border border-gray-200 rounded text-sm w-40"
+                />
+              </div>
+
+              {/* Zoom */}
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
+                <button 
+                  onClick={() => setZoom(Math.max(50, zoom - 10))}
+                  className="p-1.5 hover:bg-gray-100 rounded"
+                >
+                  <ZoomOut size={18} />
+                </button>
+                <span className="text-sm text-gray-600 w-12 text-center">{zoom}%</span>
+                <button 
+                  onClick={() => setZoom(Math.min(200, zoom + 10))}
+                  className="p-1.5 hover:bg-gray-100 rounded"
+                >
+                  <ZoomIn size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Ações do Documento */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => selectedEdicao && handleDownloadPDF(selectedEdicao)}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                disabled={!selectedEdicao}
               >
-                Buscar
+                <Download size={16} />
+                Download
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded" title="Imprimir">
+                <Printer size={18} className="text-gray-600" />
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded" title="Compartilhar">
+                <Share2 size={18} className="text-gray-600" />
               </button>
             </div>
-            
-            {searchResults && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                <h3 className="font-semibold text-gray-700 mb-2">
-                  {searchResults.total} resultado(s) encontrado(s)
-                </h3>
-                {searchResults.resultados.map((r, i) => (
-                  <div key={i} className="bg-white p-3 rounded-lg mb-2 border border-gray-100">
-                    <p className="text-sm text-gray-500">
-                      Edição nº {r.numero_edicao} - {formatDate(r.data_publicacao)}
-                    </p>
-                    <p className="font-medium text-gray-800">{r.publicacao.titulo}</p>
-                    <p className="text-sm text-gray-600 line-clamp-2">{r.publicacao.texto}</p>
+          </div>
+
+          {/* Área de Visualização do Documento */}
+          <div className="flex-1 overflow-auto p-6 flex justify-center">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B0000]"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">{error}</p>
+                <button 
+                  onClick={fetchEdicoes}
+                  className="px-4 py-2 bg-[#8B0000] text-white rounded-lg hover:bg-[#6B0000]"
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            ) : selectedEdicao ? (
+              <div 
+                className="bg-white shadow-xl rounded-lg max-w-4xl w-full"
+                style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
+              >
+                {/* Cabeçalho do Documento */}
+                <div className="border-b-4 border-[#8B0000] p-8">
+                  <div className="flex items-center justify-center gap-8 mb-6">
+                    <img 
+                      src="/brasao-acaiaca.png" 
+                      alt="Brasão" 
+                      className="h-20 w-auto"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div className="text-center">
+                      <h1 className="text-3xl font-bold tracking-wide text-[#1a365d]">MINAS GERAIS</h1>
+                      <div className="h-1 bg-[#8B0000] my-2"></div>
+                      <p className="text-sm text-gray-600">www.acaiaca.mg.gov.br</p>
+                    </div>
+                    <img 
+                      src="/brasao-mg.png" 
+                      alt="Brasão MG" 
+                      className="h-20 w-auto"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                   </div>
-                ))}
-                {searchResults.total === 0 && (
-                  <p className="text-gray-500 text-center py-4">
-                    Nenhum resultado encontrado para "{searchTerm}"
-                  </p>
-                )}
+                  
+                  <div className="text-center text-sm text-gray-600 mb-4">
+                    ANO {selectedEdicao.ano} – Nº {selectedEdicao.numero_edicao} – {totalPages} PÁGINA(S)
+                    <span className="float-right">
+                      ACAIACA, {formatDate(selectedEdicao.data_publicacao).toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="bg-[#1a365d] text-white py-3 px-6 text-center text-lg font-bold tracking-widest">
+                    DIÁRIO OFICIAL ELETRÔNICO MUNICIPAL
+                  </div>
+                </div>
+
+                {/* Conteúdo do Documento */}
+                <div className="p-8">
+                  <h2 className="text-lg font-bold text-[#1a365d] border-b-2 border-gray-300 pb-2 mb-6">
+                    PODER EXECUTIVO
+                  </h2>
+
+                  {/* Publicações */}
+                  <div className="space-y-8">
+                    {selectedEdicao.publicacoes?.slice(0, currentPage).map((pub, i) => (
+                      <div key={i} className="pb-6 border-b border-gray-200 last:border-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="bg-[#8B0000] text-white text-xs px-2 py-0.5 rounded">
+                            {pub.segmento || 'Geral'}
+                          </span>
+                          <span className="text-xs text-gray-500">{pub.tipo}</span>
+                        </div>
+                        
+                        <p className="text-xs text-gray-600 mb-1 font-medium">
+                          {pub.secretaria}
+                        </p>
+                        
+                        <h3 className="text-base font-bold text-gray-800 mb-3">
+                          {pub.titulo}
+                        </h3>
+                        
+                        <div className="text-sm text-gray-700 leading-relaxed text-justify whitespace-pre-wrap">
+                          {pub.texto}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Assinatura Digital */}
+                  {selectedEdicao.assinatura_digital?.assinado && (
+                    <div className="mt-8 pt-6 border-t-2 border-[#8B0000]">
+                      <div className="flex items-center gap-3 text-green-700">
+                        <CheckCircle size={20} />
+                        <div>
+                          <p className="font-semibold">Documento Assinado Digitalmente</p>
+                          <p className="text-xs text-gray-500">
+                            Código de Validação: {selectedEdicao.assinatura_digital.validation_code || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rodapé do Documento */}
+                <div className="bg-gray-50 border-t border-gray-200 p-4 text-center text-xs text-gray-500">
+                  <p>Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90</p>
+                  <p>Praça Antônio Carlos, 10 - Centro - CEP: 35444-000</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Newspaper size={64} className="mx-auto mb-4 opacity-50" />
+                <p>Selecione uma edição para visualizar</p>
               </div>
             )}
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Coluna Principal - Edições por Ano */}
-            <div className="lg:col-span-2">
-              <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-primary to-primary/80 p-5">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <FileText size={24} />
-                    EDIÇÕES POR ANO
-                  </h2>
-                </div>
-                
-                <div className="p-4">
-                  {loading ? (
-                    <div className="flex justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                    </div>
-                  ) : error ? (
-                    <div className="text-center py-8">
-                      <p className="text-red-500 mb-4">{error}</p>
-                      <button 
-                        onClick={fetchEdicoes}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-                      >
-                        Tentar Novamente
-                      </button>
-                    </div>
-                  ) : edicoesporAno.length === 0 || edicoesporAno.every(a => a.edicoes.length === 0) ? (
-                    <p className="text-center text-gray-500 py-8">
-                      Nenhuma edição publicada ainda
-                    </p>
-                  ) : (
-                    edicoesporAno.map(({ ano, edicoes: eds }) => (
-                      <div key={ano} className="mb-2">
-                        <button
-                          onClick={() => setAnoExpandido(anoExpandido === ano ? null : ano)}
-                          className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                        >
-                          <span className="flex items-center gap-3 font-semibold text-gray-700">
-                            <Calendar className="text-primary" size={20} />
-                            📁 {ano}
-                            <span className="text-sm font-normal text-gray-500">
-                              ({eds.length} edição{eds.length !== 1 ? 'ões' : ''})
-                            </span>
-                          </span>
-                          {anoExpandido === ano ? (
-                            <ChevronDown className="text-gray-400" size={20} />
-                          ) : (
-                            <ChevronRight className="text-gray-400" size={20} />
-                          )}
-                        </button>
-                        
-                        {anoExpandido === ano && eds.length > 0 && (
-                          <div className="ml-8 mt-2 space-y-2">
-                            {eds.map((edicao) => (
-                              <div
-                                key={edicao.edicao_id}
-                                className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-primary/30 transition-colors cursor-pointer"
-                                onClick={() => setSelectedEdicao(edicao)}
-                              >
-                                <div>
-                                  <span className="font-medium text-gray-800">
-                                    📄 Edição {edicao.numero_edicao}
-                                  </span>
-                                  <span className="text-sm text-gray-500 ml-2">
-                                    - {formatDate(edicao.data_publicacao)}
-                                  </span>
-                                </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDownloadPDF(edicao);
-                                  }}
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                  <Download size={14} />
-                                  PDF
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Coluna Lateral - Última Edição */}
-            <div className="lg:col-span-1">
-              <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden sticky top-4">
-                <div className="bg-gradient-to-r from-green-600 to-green-500 p-5">
-                  <h2 className="text-xl font-bold text-white">
-                    ÚLTIMA EDIÇÃO PUBLICADA
-                  </h2>
-                </div>
-                
-                <div className="p-5">
-                  {ultimaEdicao ? (
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Newspaper className="text-primary" size={24} />
-                        <span className="text-xl font-bold text-gray-800">
-                          Edição nº {ultimaEdicao.numero_edicao}
-                        </span>
-                      </div>
-                      
-                      <p className="text-sm text-gray-500 mb-4">
-                        {formatDate(ultimaEdicao.data_publicacao)}
-                      </p>
-                      
-                      {ultimaEdicao.assinatura_digital?.assinado && (
-                        <div className="flex items-center gap-1 text-green-600 text-sm mb-4">
-                          <CheckCircle size={16} />
-                          Assinado digitalmente
-                        </div>
-                      )}
-                      
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600 mb-2">
-                          Publicações:
-                        </p>
-                        {ultimaEdicao.publicacoes?.map((pub, i) => (
-                          <p key={i} className="text-sm text-gray-700 mb-1">
-                            • {pub.titulo}
-                          </p>
-                        ))}
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setSelectedEdicao(ultimaEdicao)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          Ver Completo
-                        </button>
-                        <button
-                          onClick={() => handleDownloadPDF(ultimaEdicao)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <Download size={18} />
-                          Baixar PDF
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-8">
-                      Nenhuma edição publicada
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
         </main>
+      </div>
 
-        {/* Modal de Visualização da Edição */}
-        {selectedEdicao && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedEdicao(null)}>
-            <div 
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-gradient-to-r from-primary to-primary/80 p-6 text-white">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      DOEM - Edição nº {selectedEdicao.numero_edicao}
-                    </h2>
-                    <p className="text-white/80">
-                      {formatDate(selectedEdicao.data_publicacao)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedEdicao(null)}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
+      {/* ===== MODAL DE PESQUISA AVANÇADA ===== */}
+      {showAdvancedSearch && searchResults && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            <div className="bg-[#8B0000] text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                Resultados da Pesquisa: "{searchTerm}"
+              </h3>
+              <button 
+                onClick={() => { setShowAdvancedSearch(false); setSearchResults(null); }}
+                className="p-2 hover:bg-white/20 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <p className="text-sm text-gray-500 mb-4">
+                {searchResults.total} resultado(s) encontrado(s)
+              </p>
               
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                  PODER EXECUTIVO
-                </h3>
-                
-                {selectedEdicao.publicacoes?.map((pub, i) => (
-                  <div key={i} className="mb-6 pb-6 border-b border-gray-100 last:border-0">
-                    <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded mb-2">
-                      {pub.tipo}
-                    </span>
-                    <p className="text-xs text-gray-500 mb-1">{pub.secretaria}</p>
-                    <h4 className="text-lg font-bold text-gray-800 mb-3">
-                      {pub.titulo}
-                    </h4>
-                    <div className="text-gray-700 whitespace-pre-wrap text-justify leading-relaxed">
-                      {pub.texto}
-                    </div>
-                  </div>
-                ))}
-                
-                {selectedEdicao.assinatura_digital?.assinado && (
-                  <div className="mt-6 p-4 bg-green-50 rounded-xl">
-                    <p className="text-green-700 font-medium flex items-center gap-2">
-                      <CheckCircle size={18} />
-                      Este documento foi assinado digitalmente
-                    </p>
-                    <p className="text-green-600 text-sm mt-1">
-                      Hash: {selectedEdicao.assinatura_digital.hash_documento?.slice(0, 32)}...
-                    </p>
-                  </div>
-                )}
-                
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => handleDownloadPDF(selectedEdicao)}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold"
-                  >
-                    <Download size={20} />
-                    Baixar PDF Completo
-                  </button>
+              {searchResults.total === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <Search size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>Nenhum resultado encontrado</p>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  {searchResults.resultados.map((r, i) => (
+                    <div 
+                      key={i} 
+                      className="p-4 border border-gray-200 rounded-lg hover:border-[#8B0000] transition-colors cursor-pointer"
+                      onClick={() => {
+                        const edicao = edicoes.find(e => e.edicao_id === r.edicao_id);
+                        if (edicao) {
+                          setSelectedEdicao(edicao);
+                          setShowAdvancedSearch(false);
+                          setSearchResults(null);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        <Calendar size={12} />
+                        Edição nº {r.numero_edicao} - {formatDateShort(r.data_publicacao)}
+                      </div>
+                      <h4 className="font-semibold text-gray-800 mb-1">{r.publicacao.titulo}</h4>
+                      <p className="text-sm text-gray-600 line-clamp-2">{r.publicacao.texto}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Footer */}
-        <footer className="bg-slate-900/95 backdrop-blur-lg border-t border-white/10 py-6 mt-12">
-          <div className="max-w-7xl mx-auto px-4 text-center">
-            <p className="text-slate-400 text-sm">
-              Prefeitura Municipal de Acaiaca | CNPJ: 18.295.287/0001-90
-            </p>
-            <p className="text-slate-500 text-xs mt-2">
-              Desenvolvido por Cristiano Abdo de Souza - Assessor de Planejamento, Compras e Logística
-            </p>
-          </div>
-        </footer>
-      </div>
+      {/* ===== FOOTER ===== */}
+      <footer className="bg-[#1a365d] text-white py-4 text-center text-sm">
+        <p>© {new Date().getFullYear()} Prefeitura Municipal de Acaiaca - MG</p>
+        <p className="text-white/60 text-xs mt-1">
+          Diário Oficial Eletrônico Municipal - Sistema de Gestão Municipal
+        </p>
+      </footer>
     </div>
   );
 };
