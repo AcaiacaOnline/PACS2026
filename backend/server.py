@@ -7290,13 +7290,22 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
     total_docs_valor = sum(d.get('valor', 0) for d in documentos)
     
     buffer = BytesIO()
+    
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='RELATÓRIO DE PRESTAÇÃO DE CONTAS',
+        subtitulo='Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)',
+        total_pages=1
+    )
+    
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
         leftMargin=20*mm,
         rightMargin=20*mm,
-        topMargin=20*mm,
-        bottomMargin=20*mm,
+        topMargin=50*mm,  # Espaço para cabeçalho DOEM
+        bottomMargin=40*mm,  # Espaço para rodapé DOEM
         title=f'Prestação de Contas - {projeto["nome_projeto"]}'
     )
     
@@ -7328,17 +7337,6 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
         fontSize=9,
         leading=12
     )
-    
-    # ===== CABEÇALHO COM BRASÃO =====
-    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
-    header_elements = create_header_elements(
-        styles, 
-        title='RELATÓRIO DE PRESTAÇÃO DE CONTAS',
-        subtitle='Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)',
-        show_brasao=True
-    )
-    elements.extend(header_elements)
-    elements.append(Spacer(1, 4*mm))
     
     # ===== DADOS DO PROJETO =====
     elements.append(Paragraph('1. IDENTIFICAÇÃO DO PROJETO', subtitulo_style))
