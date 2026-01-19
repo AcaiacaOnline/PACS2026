@@ -131,6 +131,7 @@ const AppRoutes = () => {
       <Route path="/users" element={<Navigate to="/usuarios" replace />} />
       <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
       <Route path="/historico-assinaturas" element={<ProtectedRoute><HistoricoAssinaturas /></ProtectedRoute>} />
+      <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
     </Routes>
   );
 };
