@@ -645,7 +645,7 @@ const DOEMPublico = () => {
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
             <div className="bg-[#8B0000] text-white px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">
-                Resultados da Pesquisa: "{searchTerm}"
+                Resultados da Pesquisa
               </h3>
               <button 
                 onClick={() => { setShowAdvancedSearch(false); setSearchResults(null); }}
