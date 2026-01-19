@@ -2494,13 +2494,16 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     titulo_style = ParagraphStyle('TituloPACObras', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#1565C0'), alignment=TA_CENTER, spaceAfter=4*mm)
     subtitulo_style = ParagraphStyle('SubtituloPACObras', parent=styles['Heading2'], fontSize=11, textColor=colors.HexColor('#1976D2'), spaceBefore=6*mm, spaceAfter=3*mm)
     
-    # ===== CABEÇALHO =====
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', titulo_style))
-    elements.append(Paragraph('CNPJ: 18.295.287/0001-90', ParagraphStyle('CNPJ', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8)))
-    elements.append(Spacer(1, 3*mm))
-    elements.append(Paragraph('<b>PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA</b>', ParagraphStyle('TitDoc', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=12, textColor=colors.HexColor('#0D47A1'))))
-    elements.append(Paragraph('Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME', ParagraphStyle('Lei', parent=styles['Normal'], alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
-    elements.append(Spacer(1, 6*mm))
+    # ===== CABEÇALHO COM BRASÃO =====
+    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
+    header_elements = create_header_elements(
+        styles, 
+        title='PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA',
+        subtitle='Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME',
+        show_brasao=True
+    )
+    elements.extend(header_elements)
+    elements.append(Spacer(1, 4*mm))
     
     # ===== DADOS DA SECRETARIA =====
     elements.append(Paragraph('IDENTIFICAÇÃO', subtitulo_style))
