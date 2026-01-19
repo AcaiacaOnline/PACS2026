@@ -275,16 +275,8 @@ def create_jwt_token(user_id: str) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-def mask_cpf(cpf: str) -> str:
-    """Mascara o CPF para exibição (LGPD): ***456.789-**"""
-    if not cpf:
-        return "***.***.***-**"
-    # Remove formatação
-    cpf_clean = re.sub(r'[^\d]', '', cpf)
-    if len(cpf_clean) != 11:
-        return "***.***.***-**"
-    # Exibe apenas os dígitos centrais: ***456.789-**
-    return f"***{cpf_clean[3:6]}.{cpf_clean[6:9]}-**"
+# Alias para função refatorada
+mask_cpf = mask_cpf_util
 
 async def get_current_user(request: Request) -> User:
     auth_header = request.headers.get('Authorization')
