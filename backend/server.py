@@ -5065,8 +5065,7 @@ async def save_document_signature(doc_id: str, doc_type: str, signers: list, has
 def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None, signature_date: str = None):
     """
     Desenha o selo de assinatura digital na LATERAL DIREITA da página.
-    Texto VERTICAL em VERMELHO, distribuído em 3 linhas do cabeçalho ao rodapé.
-    Layout profissional com QR Code no canto superior direito.
+    Layout profissional: QR Code no topo + 3 linhas de texto vertical vermelho.
     
     Args:
         canvas: Canvas do reportlab
@@ -5080,9 +5079,9 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     from reportlab.lib.utils import ImageReader
     import qrcode
     
-    # Cores
-    cor_vermelho = colors.HexColor("#DC2626")  # Vermelho vibrante
-    cor_vermelho_claro = colors.HexColor("#FEE2E2")  # Fundo suave
+    # Cor vermelho oficial
+    VERMELHO = colors.HexColor("#DC2626")
+    VERMELHO_CLARO = colors.HexColor("#FEF2F2")
     
     # Usar a data da assinatura fornecida ou a atual
     if signature_date:
@@ -5101,101 +5100,77 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
         cpf_masked = '***.***.***-**'
         cargo = ''
     
-    # ===== QR CODE NO CANTO SUPERIOR DIREITO =====
-    qr_size = 15 * mm
-    qr_margin = 8 * mm
-    qr_x = page_width - qr_size - qr_margin
-    qr_y = page_height - qr_size - qr_margin
+    # ===== CONFIGURAÇÕES DE LAYOUT =====
+    margin_right = 3 * mm  # Distância da borda direita
+    qr_size = 14 * mm
+    qr_x = page_width - qr_size - margin_right - 1*mm
+    qr_y = page_height - qr_size - 10 * mm
     
+    # ===== DESENHAR QR CODE =====
     if qr_code_url:
         try:
             qr = qrcode.QRCode(version=1, box_size=3, border=1)
             qr.add_data(qr_code_url)
             qr.make(fit=True)
-            qr_img = qr.make_image(fill_color="#DC2626", back_color="#ffffff")
+            qr_img = qr.make_image(fill_color="#DC2626", back_color="#FFFFFF")
             
             qr_buffer = BytesIO()
             qr_img.save(qr_buffer, format='PNG')
             qr_buffer.seek(0)
-            
-            # Desenhar borda sutil ao redor do QR
-            canvas.saveState()
-            canvas.setStrokeColor(cor_vermelho)
-            canvas.setLineWidth(0.5)
-            canvas.rect(qr_x - 1*mm, qr_y - 1*mm, qr_size + 2*mm, qr_size + 2*mm)
-            canvas.restoreState()
             
             canvas.drawImage(ImageReader(qr_buffer), qr_x, qr_y, width=qr_size, height=qr_size)
         except Exception as e:
             logging.error(f"Erro ao gerar QR Code: {e}")
     
     # ===== PREPARAR AS 3 LINHAS DE TEXTO =====
-    # Linha 1: Assinante e cargo
-    linha1 = f"ASSINADO DIGITALMENTE por {nome}"
+    # Linha 1 (mais à direita): Nome e cargo do assinante
+    texto_linha1 = f"ASSINADO DIGITALMENTE: {nome}"
     if cargo:
-        linha1 += f" - {cargo}"
+        texto_linha1 += f" ({cargo})"
     
-    # Linha 2: CPF e Data
-    linha2 = f"CPF: {cpf_masked}  •  Data: {data_assinatura}"
+    # Linha 2 (meio): CPF e Data
+    texto_linha2 = f"CPF: {cpf_masked} • Data: {data_assinatura}"
     
-    # Linha 3: Código e validação
-    linha3 = f"Código: {validation_code}  •  Verifique: pac.acaiaca.mg.gov.br/validar"
+    # Linha 3 (mais à esquerda): Código e URL de validação
+    texto_linha3 = f"Código: {validation_code} • Valide: pac.acaiaca.mg.gov.br/validar"
     
-    # ===== CONFIGURAÇÕES DE POSICIONAMENTO =====
-    # Margem direita - 3 linhas verticais
-    margin_right = 5 * mm
-    line_spacing = 3.5 * mm  # Espaçamento entre linhas
+    # ===== POSIÇÕES DAS 3 LINHAS VERTICAIS =====
+    font_size = 5.5
+    line_spacing = 3 * mm  # Espaço entre linhas
     
-    # Posições X para cada linha (da borda direita para dentro)
-    x_linha1 = page_width - margin_right
-    x_linha2 = x_linha1 - line_spacing
-    x_linha3 = x_linha2 - line_spacing
+    # Posições X (da borda direita para dentro)
+    x1 = page_width - margin_right - 1 * mm  # Linha 1 - mais externa
+    x2 = x1 - line_spacing                    # Linha 2 - meio
+    x3 = x2 - line_spacing                    # Linha 3 - mais interna
     
-    # Posição Y - do topo (abaixo do QR) até o rodapé
-    start_y = qr_y - 8 * mm  # Começa abaixo do QR Code
-    end_y = 15 * mm  # Margem inferior
+    # Posição Y - começar abaixo do QR Code
+    start_y = qr_y - 3 * mm
     
-    # Tamanho da fonte ajustado para caber
-    font_size = 6
-    
-    # ===== DESENHAR FAIXA DE FUNDO SUTIL =====
+    # ===== DESENHAR LINHA 1 (Nome/Cargo) - MAIS EXTERNA =====
     canvas.saveState()
-    canvas.setFillColor(cor_vermelho_claro)
-    canvas.setStrokeColor(cor_vermelho)
-    canvas.setLineWidth(0.3)
-    # Faixa vertical na margem direita
-    faixa_width = 12 * mm
-    faixa_x = page_width - faixa_width - 2 * mm
-    faixa_y = end_y - 5 * mm
-    faixa_height = start_y - end_y + 10 * mm
-    canvas.roundRect(faixa_x, faixa_y, faixa_width, faixa_height, 2*mm, fill=1, stroke=1)
-    canvas.restoreState()
-    
-    # ===== DESENHAR LINHA 1 (mais externa) =====
-    canvas.saveState()
-    canvas.translate(x_linha1, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(cor_vermelho)
+    canvas.translate(x1, start_y)
+    canvas.rotate(-90)  # Rotação para texto de cima para baixo
+    canvas.setFillColor(VERMELHO)
     canvas.setFont("Helvetica-Bold", font_size)
-    canvas.drawString(0, 0, linha1)
+    canvas.drawString(0, 0, texto_linha1)
     canvas.restoreState()
     
-    # ===== DESENHAR LINHA 2 (meio) =====
+    # ===== DESENHAR LINHA 2 (CPF/Data) - MEIO =====
     canvas.saveState()
-    canvas.translate(x_linha2, start_y)
+    canvas.translate(x2, start_y)
     canvas.rotate(-90)
-    canvas.setFillColor(cor_vermelho)
+    canvas.setFillColor(VERMELHO)
     canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, linha2)
+    canvas.drawString(0, 0, texto_linha2)
     canvas.restoreState()
     
-    # ===== DESENHAR LINHA 3 (mais interna) =====
+    # ===== DESENHAR LINHA 3 (Código/URL) - MAIS INTERNA =====
     canvas.saveState()
-    canvas.translate(x_linha3, start_y)
+    canvas.translate(x3, start_y)
     canvas.rotate(-90)
-    canvas.setFillColor(cor_vermelho)
+    canvas.setFillColor(VERMELHO)
     canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, linha3)
+    canvas.drawString(0, 0, texto_linha3)
     canvas.restoreState()
 
 async def get_doem_config() -> dict:
