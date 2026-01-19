@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_PYPDF2 = False
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://planning-system-2.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://doem-pdf-system.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "cristiano.abdo@acaiaca.mg.gov.br"
