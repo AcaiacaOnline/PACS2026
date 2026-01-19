@@ -200,22 +200,42 @@ const PACEditor = () => {
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (withSignature = false, signatureDate = null) => {
     try {
-      const response = await api.get(`/pacs/${id}/export/pdf`, {
+      let url = `/pacs/${id}/export/pdf`;
+      if (withSignature) {
+        url += `?assinar=true`;
+        if (signatureDate) {
+          url += `&data_assinatura=${encodeURIComponent(signatureDate)}`;
+        }
+      }
+      
+      const response = await api.get(url, {
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `PAC_${headerData.secretaria.replace(/\s+/g, '_')}.pdf`);
+      link.href = blobUrl;
+      const filename = withSignature 
+        ? `PAC_${headerData.secretaria.replace(/\s+/g, '_')}_ASSINADO.pdf`
+        : `PAC_${headerData.secretaria.replace(/\s+/g, '_')}.pdf`;
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success('PDF gerado com sucesso!');
+      toast.success(withSignature ? 'PDF assinado gerado com sucesso!' : 'PDF gerado com sucesso!');
+      setShowSignatureModal(false);
     } catch (error) {
       toast.error('Erro ao gerar PDF');
     }
+  };
+
+  const handleSignatureConfirm = async (signatureDate) => {
+    await handleExportPDF(true, signatureDate);
+  };
+
+  const handleDownloadWithoutSignature = async () => {
+    await handleExportPDF(false);
   };
 
   const handleDownloadTemplate = async () => {
