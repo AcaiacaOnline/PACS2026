@@ -6534,6 +6534,144 @@ async def delete_despesa_mrosc(projeto_id: str, despesa_id: str, request: Reques
         raise HTTPException(status_code=404, detail="Despesa não encontrada")
     return {'message': 'Despesa excluída com sucesso'}
 
+# ===== IMPORTAÇÃO DE PLANILHA EXCEL =====
+from utils.mrosc_importer import MROSCExcelImporter
+
+@mrosc_router.get("/importar/template")
+async def download_template_mrosc(request: Request):
+    """
+    Baixa o template de planilha Excel para importação MROSC.
+    Retorna arquivo .xlsx com as colunas esperadas e exemplos.
+    """
+    user = await get_current_user(request)
+    importer = MROSCExcelImporter()
+    template_bytes = importer.generate_template()
+    
+    return Response(
+        content=template_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": "attachment; filename=template_mrosc_importacao.xlsx"
+        }
+    )
+
+@mrosc_router.post("/projetos/{projeto_id}/importar/preview")
+async def preview_importacao_mrosc(
+    projeto_id: str,
+    request: Request,
+    file: UploadFile = File(...)
+):
+    """
+    Faz preview da importação sem salvar os dados.
+    Retorna os dados que seriam importados e eventuais erros.
+    """
+    user = await get_current_user(request)
+    
+    # Verificar se projeto existe
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Verificar tipo de arquivo
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Arquivo deve ser uma planilha Excel (.xlsx ou .xls)")
+    
+    # Ler arquivo
+    file_bytes = await file.read()
+    
+    # Importar
+    importer = MROSCExcelImporter()
+    result = importer.import_from_bytes(file_bytes)
+    
+    return {
+        'preview': True,
+        'projeto_id': projeto_id,
+        'projeto_nome': projeto.get('nome_projeto'),
+        **result
+    }
+
+@mrosc_router.post("/projetos/{projeto_id}/importar/confirmar")
+async def confirmar_importacao_mrosc(
+    projeto_id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    substituir_existentes: bool = False
+):
+    """
+    Confirma a importação e salva os dados no banco.
+    
+    Args:
+        projeto_id: ID do projeto
+        file: Arquivo Excel
+        substituir_existentes: Se True, remove dados existentes antes de importar
+    """
+    user = await get_current_user(request)
+    
+    # Verificar se projeto existe
+    projeto = await db.mrosc_projetos.find_one({'projeto_id': projeto_id}, {'_id': 0})
+    if not projeto:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado")
+    
+    # Verificar tipo de arquivo
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Arquivo deve ser uma planilha Excel (.xlsx ou .xls)")
+    
+    # Ler arquivo
+    file_bytes = await file.read()
+    
+    # Importar
+    importer = MROSCExcelImporter()
+    result = importer.import_from_bytes(file_bytes)
+    
+    if not result['success']:
+        raise HTTPException(status_code=400, detail=f"Erros na importação: {result['errors']}")
+    
+    # Se substituir, remover dados existentes
+    if substituir_existentes:
+        await db.mrosc_rh.delete_many({'projeto_id': projeto_id})
+        await db.mrosc_despesas.delete_many({'projeto_id': projeto_id})
+    
+    # Salvar RH
+    rh_inserted = 0
+    for rh_item in result['rh']['items']:
+        rh_item['projeto_id'] = projeto_id
+        rh_item['created_at'] = datetime.now(timezone.utc)
+        # Remover campo auxiliar
+        rh_item.pop('row_number', None)
+        await db.mrosc_rh.insert_one(rh_item)
+        rh_inserted += 1
+    
+    # Salvar Despesas
+    despesas_inserted = 0
+    for despesa_item in result['despesas']['items']:
+        despesa_item['projeto_id'] = projeto_id
+        despesa_item['created_at'] = datetime.now(timezone.utc)
+        # Remover campo auxiliar
+        despesa_item.pop('row_number', None)
+        await db.mrosc_despesas.insert_one(despesa_item)
+        despesas_inserted += 1
+    
+    # Registrar no histórico
+    historico = {
+        'historico_id': f"hist_{uuid.uuid4().hex[:12]}",
+        'projeto_id': projeto_id,
+        'acao': 'IMPORTACAO_EXCEL',
+        'usuario_id': user.user_id,
+        'usuario_nome': user.name,
+        'data': datetime.now(timezone.utc),
+        'observacao': f"Importados {rh_inserted} itens de RH e {despesas_inserted} despesas via planilha Excel"
+    }
+    await db.mrosc_historico.insert_one(historico)
+    
+    return {
+        'success': True,
+        'projeto_id': projeto_id,
+        'rh_inserted': rh_inserted,
+        'despesas_inserted': despesas_inserted,
+        'totals': result['totals'],
+        'message': f'Importação concluída: {rh_inserted} itens de RH e {despesas_inserted} despesas'
+    }
+
 # ===== RESUMO ORÇAMENTÁRIO =====
 @mrosc_router.get("/projetos/{projeto_id}/resumo")
 async def get_resumo_orcamentario_mrosc(projeto_id: str, request: Request):
