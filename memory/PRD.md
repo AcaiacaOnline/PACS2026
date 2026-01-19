@@ -27,24 +27,31 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 14)
+## Última Atualização: 19/01/2026 (Sessão 15)
 
-### Changelog - Sessão 14 (19/01/2026)
+### Changelog - Sessão 15 (19/01/2026) - CORREÇÃO LAYOUT PDF
 
-#### ✅ 1. LAYOUT DOEM PADRONIZADO EM TODOS OS PDFs
-- **Cabeçalho no estilo DOEM** conforme imagem de referência:
-  - Brasões espelhados nas laterais (esquerda E direita)
-  - "ACAIACA" em azul grande com efeito 3D/sombra no centro
-  - Linha cinza grossa separadora
-  - Informações de publicação em azul (URL | ANO - Nº - PÁGINAS | Data)
-  - Linha azul grossa inferior
-- **Rodapé no estilo DOEM**:
-  - Texto em cinza claro (marca d'água) centralizado
-  - "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90"
-  - "Praça Antônio Carlos, 10 - Centro - CEP: 35444-000"
-  - Número da página à direita
+#### ✅ 1. LAYOUT DOEM PADRONIZADO CONFORME `relatórios pdf.pdf`
+- **Cabeçalho corrigido conforme arquivo de referência do usuário:**
+  - Dois brasões (esquerdo E direito) - 20mm cada
+  - "ACAIACA" centralizado em AZUL ESCURO (#000080) - fonte Helvetica-Bold 28pt
+  - Primeira linha azul FINA (1pt) abaixo do título
+  - Informações de publicação: "ANO - Nº - PÁGINAS" (centro) + data por extenso (direita)
+  - Segunda linha azul GROSSA (2.5pt)
+  - URL do DOEM centralizada abaixo
+- **Rodapé padronizado em AZUL ESCURO:**
+  - 3 linhas centralizadas:
+    1. "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90"
+    2. "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000"
+    3. "Tel.: (31) 3887-1650 | Portal: https://acaiaca.mg.gov.br | E-mail: administracao@acaiaca.mg.gov.br"
+  - Número da página discreto à direita
 
-#### ✅ 2. PDFs ATUALIZADOS
+#### ✅ 2. ARQUIVO `pdf_utils.py` REESCRITO
+- Classe `DOEMTemplate` totalmente reescrita para corresponder ao layout de referência
+- Margens fixas para garantir consistência visual independente das margens do documento
+- Cores, fontes e posicionamentos ajustados conforme especificado pelo usuário
+
+#### ✅ 3. PDFs ATUALIZADOS
 - **Rotas Privadas (autenticadas):**
   - PAC Individual (`/api/pacs/{id}/export/pdf`)
   - PAC Geral (`/api/pacs-geral/{id}/export/pdf`)
