@@ -286,6 +286,10 @@ const Layout = ({ children }) => {
                   )}
                 </div>
               )}
+              
+              {/* Centro de Notificações */}
+              {user && <NotificationCenter userId={user.user_id} />}
+              
               <button
                 onClick={handleLogout}
                 data-testid="logout-btn"
