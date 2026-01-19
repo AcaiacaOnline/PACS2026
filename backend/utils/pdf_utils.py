@@ -1,6 +1,7 @@
 """
 PDF Utilities - Funções para geração e manipulação de PDFs
 Planejamento Acaiaca - Sistema de Gestão Municipal
+Estilo baseado no Diário Oficial Eletrônico Municipal
 """
 import uuid
 import logging
@@ -16,19 +17,25 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas as pdf_canvas
 
 # Diretório raiz do backend
 BACKEND_DIR = Path(__file__).parent.parent
 
+# Cores do tema DOEM
+AZUL_ROYAL = colors.HexColor('#1E3A8A')  # Azul royal para texto principal
+CINZA_LINHA = colors.HexColor('#D1D5DB')  # Cinza para linha separadora
+AZUL_LINK = colors.HexColor('#1E40AF')   # Azul para links
+
 # Informações institucionais padronizadas
 PREFEITURA_INFO = {
-    'nome': 'PREFEITURA MUNICIPAL DE ACAIACA',
+    'nome': 'ACAIACA',
     'estado': 'ESTADO DE MINAS GERAIS',
     'cnpj': '18.295.287/0001-90',
     'endereco': 'Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG',
     'cep': 'CEP: 35.438-000',
     'telefone': '(31) 3887-1650',
-    'portal': 'https://acaiaca.mg.gov.br',
+    'portal': 'https://pac.acaiaca.mg.gov.br/doem',
     'email': 'administracao@acaiaca.mg.gov.br'
 }
 
@@ -43,276 +50,14 @@ def get_brasao_path():
     return None
 
 
-def draw_standard_header(canvas, doc, show_brasao=True, title=None, subtitle=None):
-    """
-    Desenha o cabeçalho padronizado com brasão em todas as páginas do PDF.
-    
-    Args:
-        canvas: Canvas do reportlab
-        doc: Documento SimpleDocTemplate
-        show_brasao: Se True, exibe o brasão
-        title: Título opcional do documento
-        subtitle: Subtítulo opcional
-    """
-    page_width, page_height = doc.pagesize
-    
-    # Cores institucionais
-    azul_escuro = colors.HexColor('#1F4E78')
-    
-    # Margem superior
-    header_top = page_height - 10*mm
-    
-    # ===== BRASÃO =====
-    brasao_width = 0
-    if show_brasao:
-        brasao_path = get_brasao_path()
-        if brasao_path:
-            try:
-                brasao_size = 18*mm
-                brasao_x = doc.leftMargin
-                brasao_y = header_top - brasao_size
-                canvas.drawImage(
-                    brasao_path, 
-                    brasao_x, 
-                    brasao_y, 
-                    width=brasao_size, 
-                    height=brasao_size,
-                    preserveAspectRatio=True,
-                    mask='auto'
-                )
-                brasao_width = brasao_size + 5*mm
-            except Exception as e:
-                logging.warning(f"Erro ao carregar brasão: {e}")
-                brasao_width = 0
-    
-    # ===== TEXTOS DO CABEÇALHO =====
-    text_x = doc.leftMargin + brasao_width
-    text_width = page_width - text_x - doc.rightMargin
-    
-    # Nome da Prefeitura
-    canvas.setFillColor(azul_escuro)
-    canvas.setFont("Helvetica-Bold", 11)
-    canvas.drawString(text_x, header_top - 5*mm, PREFEITURA_INFO['nome'])
-    
-    # Estado
-    canvas.setFont("Helvetica", 9)
-    canvas.setFillColor(colors.HexColor('#4A5568'))
-    canvas.drawString(text_x, header_top - 9*mm, PREFEITURA_INFO['estado'])
-    
-    # Endereço e contato
-    canvas.setFont("Helvetica", 7)
-    canvas.setFillColor(colors.HexColor('#718096'))
-    endereco_linha = f"{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}"
-    canvas.drawString(text_x, header_top - 13*mm, endereco_linha)
-    
-    contato_linha = f"Tel.: {PREFEITURA_INFO['telefone']} | {PREFEITURA_INFO['portal']} | {PREFEITURA_INFO['email']}"
-    canvas.drawString(text_x, header_top - 17*mm, contato_linha)
-    
-    # Linha separadora
-    canvas.setStrokeColor(azul_escuro)
-    canvas.setLineWidth(1.5)
-    canvas.line(doc.leftMargin, header_top - 20*mm, page_width - doc.rightMargin, header_top - 20*mm)
-    
-    # Título do documento (se fornecido)
-    if title:
-        canvas.setFillColor(azul_escuro)
-        canvas.setFont("Helvetica-Bold", 12)
-        title_y = header_top - 28*mm
-        canvas.drawCentredString(page_width / 2, title_y, title)
-        
-        if subtitle:
-            canvas.setFont("Helvetica", 9)
-            canvas.setFillColor(colors.HexColor('#4A5568'))
-            canvas.drawCentredString(page_width / 2, title_y - 5*mm, subtitle)
-
-
-def draw_standard_footer(canvas, doc, page_number=None):
-    """
-    Desenha o rodapé padronizado em todas as páginas do PDF.
-    
-    Args:
-        canvas: Canvas do reportlab
-        doc: Documento SimpleDocTemplate
-        page_number: Número da página atual
-    """
-    page_width, page_height = doc.pagesize
-    
-    # Linha do rodapé
-    footer_y = 12*mm
-    
-    # Linha separadora
-    canvas.setStrokeColor(colors.HexColor('#E2E8F0'))
-    canvas.setLineWidth(0.5)
-    canvas.line(doc.leftMargin, footer_y + 3*mm, page_width - doc.rightMargin, footer_y + 3*mm)
-    
-    # CNPJ e dados
-    canvas.setFillColor(colors.HexColor('#718096'))
-    canvas.setFont("Helvetica", 7)
-    cnpj_text = f"CNPJ: {PREFEITURA_INFO['cnpj']} | {PREFEITURA_INFO['endereco']}"
-    canvas.drawCentredString(page_width / 2, footer_y, cnpj_text)
-    
-    # Número da página (se fornecido)
-    if page_number:
-        canvas.setFont("Helvetica", 8)
-        canvas.drawRightString(page_width - doc.rightMargin, footer_y, f"Página {page_number}")
-
-
-def create_header_elements(styles, title=None, subtitle=None, show_brasao=True):
-    """
-    Cria elementos do cabeçalho padronizado para uso com SimpleDocTemplate.build()
-    Retorna uma lista de elementos (Paragraph, Spacer, etc.)
-    
-    Args:
-        styles: Dicionário de estilos do documento
-        title: Título do documento
-        subtitle: Subtítulo do documento
-        show_brasao: Se True, inclui o brasão
-    """
-    elements = []
-    
-    # Estilo do título
-    titulo_style = ParagraphStyle(
-        'TituloPadrao',
-        fontSize=11,
-        fontName='Helvetica-Bold',
-        textColor=colors.HexColor('#1F4E78'),
-        alignment=TA_CENTER,
-        spaceAfter=2*mm
-    )
-    
-    estado_style = ParagraphStyle(
-        'EstadoPadrao',
-        fontSize=9,
-        fontName='Helvetica',
-        textColor=colors.HexColor('#4A5568'),
-        alignment=TA_CENTER,
-        spaceAfter=1*mm
-    )
-    
-    endereco_style = ParagraphStyle(
-        'EnderecoPadrao',
-        fontSize=7,
-        fontName='Helvetica',
-        textColor=colors.HexColor('#718096'),
-        alignment=TA_CENTER,
-        spaceAfter=1*mm
-    )
-    
-    # Criar tabela com brasão e texto lado a lado
-    brasao_path = get_brasao_path() if show_brasao else None
-    
-    if brasao_path:
-        try:
-            # Brasão com texto ao lado
-            brasao_img = Image(brasao_path, width=18*mm, height=18*mm)
-            
-            header_text = f"""
-            <b>{PREFEITURA_INFO['nome']}</b><br/>
-            <font size="9" color="#4A5568">{PREFEITURA_INFO['estado']}</font><br/>
-            <font size="7" color="#718096">{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}</font><br/>
-            <font size="7" color="#718096">Tel.: {PREFEITURA_INFO['telefone']} | {PREFEITURA_INFO['portal']}</font>
-            """
-            
-            header_para = Paragraph(header_text, ParagraphStyle(
-                'HeaderText',
-                fontSize=11,
-                fontName='Helvetica-Bold',
-                textColor=colors.HexColor('#1F4E78'),
-                leading=14
-            ))
-            
-            header_table = Table(
-                [[brasao_img, header_para]],
-                colWidths=[22*mm, None]
-            )
-            header_table.setStyle(TableStyle([
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-                ('TOPPADDING', (0, 0), (-1, -1), 0),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ]))
-            
-            elements.append(header_table)
-        except Exception as e:
-            logging.warning(f"Erro ao criar cabeçalho com brasão: {e}")
-            # Fallback: texto apenas
-            elements.append(Paragraph(PREFEITURA_INFO['nome'], titulo_style))
-            elements.append(Paragraph(PREFEITURA_INFO['estado'], estado_style))
-    else:
-        # Sem brasão - texto centralizado
-        elements.append(Paragraph(PREFEITURA_INFO['nome'], titulo_style))
-        elements.append(Paragraph(PREFEITURA_INFO['estado'], estado_style))
-        elements.append(Paragraph(
-            f"{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}",
-            endereco_style
-        ))
-        elements.append(Paragraph(
-            f"Tel.: {PREFEITURA_INFO['telefone']} | {PREFEITURA_INFO['portal']}",
-            endereco_style
-        ))
-    
-    # Linha separadora
-    elements.append(Spacer(1, 3*mm))
-    
-    # Título do documento
-    if title:
-        doc_titulo_style = ParagraphStyle(
-            'DocTitulo',
-            fontSize=14,
-            fontName='Helvetica-Bold',
-            textColor=colors.HexColor('#1F4E78'),
-            alignment=TA_CENTER,
-            spaceBefore=3*mm,
-            spaceAfter=2*mm
-        )
-        elements.append(Paragraph(title, doc_titulo_style))
-        
-        if subtitle:
-            doc_subtitulo_style = ParagraphStyle(
-                'DocSubtitulo',
-                fontSize=10,
-                fontName='Helvetica',
-                textColor=colors.HexColor('#4A5568'),
-                alignment=TA_CENTER,
-                spaceAfter=4*mm
-            )
-            elements.append(Paragraph(subtitle, doc_subtitulo_style))
-    
-    elements.append(Spacer(1, 4*mm))
-    
-    return elements
-
-
-def create_page_callback(show_header=True, show_footer=True, title=None, subtitle=None):
-    """
-    Cria função de callback para cabeçalho/rodapé em todas as páginas.
-    
-    Uso:
-        doc = SimpleDocTemplate(buffer, pagesize=A4, ...)
-        doc.build(elements, onFirstPage=callback, onLaterPages=callback)
-    """
-    def _header_footer(canvas, doc):
-        canvas.saveState()
-        if show_header:
-            draw_standard_header(canvas, doc, show_brasao=True, title=title, subtitle=subtitle)
-        if show_footer:
-            draw_standard_footer(canvas, doc)
-        canvas.restoreState()
-    
-    return _header_footer
-
-
 def mask_cpf(cpf: str) -> str:
     """Mascara o CPF para exibição (LGPD): ***456.789-**"""
     import re
     if not cpf:
         return "***.***.***-**"
-    # Remove formatação
     cpf_clean = re.sub(r'[^\d]', '', cpf)
     if len(cpf_clean) != 11:
         return "***.***.***-**"
-    # Exibe apenas os dígitos centrais: ***456.789-**
     return f"***{cpf_clean[3:6]}.{cpf_clean[6:9]}-**"
 
 
@@ -325,7 +70,6 @@ def get_professional_styles():
     """Retorna estilos profissionais para relatórios PDF"""
     styles = getSampleStyleSheet()
     
-    # Título principal
     styles.add(ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
@@ -335,7 +79,6 @@ def get_professional_styles():
         textColor=colors.HexColor('#1a365d')
     ))
     
-    # Subtítulo
     styles.add(ParagraphStyle(
         'CustomSubtitle',
         parent=styles['Heading2'],
@@ -347,7 +90,6 @@ def get_professional_styles():
         backColor=colors.HexColor('#f7fafc')
     ))
     
-    # Corpo do texto
     styles.add(ParagraphStyle(
         'CustomBody',
         parent=styles['Normal'],
@@ -356,7 +98,6 @@ def get_professional_styles():
         alignment=TA_JUSTIFY
     ))
     
-    # Texto pequeno
     styles.add(ParagraphStyle(
         'SmallText',
         parent=styles['Normal'],
@@ -364,7 +105,6 @@ def get_professional_styles():
         textColor=colors.HexColor('#718096')
     ))
     
-    # Cabeçalho de tabela
     styles.add(ParagraphStyle(
         'TableHeader',
         parent=styles['Normal'],
@@ -373,7 +113,6 @@ def get_professional_styles():
         alignment=TA_CENTER
     ))
     
-    # Célula de tabela
     styles.add(ParagraphStyle(
         'TableCell',
         parent=styles['Normal'],
@@ -384,21 +123,380 @@ def get_professional_styles():
     return styles
 
 
+def draw_doem_header(canvas, doc, ano=None, numero_edicao=None, num_paginas=None, data_publicacao=None, titulo_documento=None):
+    """
+    Desenha o cabeçalho no estilo DOEM (Diário Oficial Eletrônico Municipal)
+    Com brasão espelhado nas laterais e "ACAIACA" em azul grande no centro.
+    
+    Args:
+        canvas: Canvas do reportlab
+        doc: Documento SimpleDocTemplate
+        ano: Ano da publicação (ex: 134)
+        numero_edicao: Número da edição (ex: 10)
+        num_paginas: Total de páginas
+        data_publicacao: Data da publicação
+        titulo_documento: Título específico do documento (opcional)
+    """
+    page_width, page_height = doc.pagesize
+    
+    # Obter número da página atual
+    page_num = canvas.getPageNumber()
+    
+    # Se não tiver ano definido, usar ano atual
+    if not ano:
+        ano = datetime.now().year
+    if not numero_edicao:
+        numero_edicao = 1
+    if not num_paginas:
+        num_paginas = 1
+    if not data_publicacao:
+        data_publicacao = datetime.now()
+    
+    # Formatar data
+    dias_semana = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
+    meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    
+    if isinstance(data_publicacao, str):
+        try:
+            data_publicacao = datetime.fromisoformat(data_publicacao.replace('Z', '+00:00'))
+        except:
+            data_publicacao = datetime.now()
+    
+    dia_semana = dias_semana[data_publicacao.weekday()]
+    data_formatada = f"Acaiaca, {dia_semana}, {data_publicacao.day} de {meses[data_publicacao.month - 1]} de {data_publicacao.year}."
+    
+    # ===== CONFIGURAÇÃO DO CABEÇALHO =====
+    header_top = page_height - 8*mm
+    brasao_size = 25*mm
+    
+    # ===== DESENHAR BRASÃO ESQUERDO =====
+    brasao_path = get_brasao_path()
+    if brasao_path:
+        try:
+            brasao_x_left = doc.leftMargin
+            brasao_y = header_top - brasao_size
+            canvas.drawImage(
+                brasao_path, 
+                brasao_x_left, 
+                brasao_y, 
+                width=brasao_size, 
+                height=brasao_size,
+                preserveAspectRatio=True,
+                mask='auto'
+            )
+            
+            # Brasão direito (espelhado)
+            brasao_x_right = page_width - doc.rightMargin - brasao_size
+            canvas.drawImage(
+                brasao_path, 
+                brasao_x_right, 
+                brasao_y, 
+                width=brasao_size, 
+                height=brasao_size,
+                preserveAspectRatio=True,
+                mask='auto'
+            )
+        except Exception as e:
+            logging.warning(f"Erro ao carregar brasão: {e}")
+    
+    # ===== TEXTO "ACAIACA" CENTRAL EM AZUL GRANDE =====
+    canvas.setFillColor(AZUL_ROYAL)
+    canvas.setFont("Helvetica-Bold", 36)
+    canvas.drawCentredString(page_width / 2, header_top - 18*mm, "ACAIACA")
+    
+    # ===== LINHA CINZA SEPARADORA =====
+    linha_y = header_top - 28*mm
+    canvas.setStrokeColor(CINZA_LINHA)
+    canvas.setLineWidth(2)
+    canvas.line(doc.leftMargin, linha_y, page_width - doc.rightMargin, linha_y)
+    
+    # ===== INFORMAÇÕES DE PUBLICAÇÃO =====
+    info_y = linha_y - 6*mm
+    canvas.setFillColor(AZUL_ROYAL)
+    canvas.setFont("Helvetica", 9)
+    
+    # URL do portal
+    canvas.drawString(doc.leftMargin, info_y, PREFEITURA_INFO['portal'])
+    
+    # Informações centrais
+    info_central = f"ANO {ano} - Nº {numero_edicao} - {num_paginas} PÁGINA(S)"
+    canvas.drawCentredString(page_width / 2, info_y, info_central)
+    
+    # Data à direita
+    canvas.drawRightString(page_width - doc.rightMargin, info_y, data_formatada)
+    
+    # ===== LINHA AZUL INFERIOR =====
+    linha_azul_y = info_y - 5*mm
+    canvas.setStrokeColor(AZUL_ROYAL)
+    canvas.setLineWidth(3)
+    canvas.line(doc.leftMargin, linha_azul_y, page_width - doc.rightMargin, linha_azul_y)
+    
+    # ===== TÍTULO DO DOCUMENTO (se fornecido) =====
+    if titulo_documento:
+        canvas.setFillColor(colors.HexColor('#1F4E78'))
+        canvas.setFont("Helvetica-Bold", 12)
+        canvas.drawCentredString(page_width / 2, linha_azul_y - 8*mm, titulo_documento)
+
+
+def draw_doem_footer(canvas, doc, page_number=None, total_pages=None):
+    """
+    Desenha o rodapé padronizado no estilo DOEM.
+    
+    Args:
+        canvas: Canvas do reportlab
+        doc: Documento SimpleDocTemplate
+        page_number: Número da página atual
+        total_pages: Total de páginas
+    """
+    page_width, page_height = doc.pagesize
+    
+    # Posição do rodapé
+    footer_y = 15*mm
+    
+    # Linha separadora superior
+    canvas.setStrokeColor(CINZA_LINHA)
+    canvas.setLineWidth(0.5)
+    canvas.line(doc.leftMargin, footer_y + 8*mm, page_width - doc.rightMargin, footer_y + 8*mm)
+    
+    # Informações da prefeitura
+    canvas.setFillColor(colors.HexColor('#6B7280'))
+    canvas.setFont("Helvetica", 7)
+    
+    linha1 = f"Prefeitura Municipal de Acaiaca - MG | CNPJ: {PREFEITURA_INFO['cnpj']}"
+    linha2 = f"{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}"
+    linha3 = f"Tel.: {PREFEITURA_INFO['telefone']} | E-mail: {PREFEITURA_INFO['email']}"
+    
+    canvas.drawCentredString(page_width / 2, footer_y + 4*mm, linha1)
+    canvas.drawCentredString(page_width / 2, footer_y, linha2)
+    canvas.drawCentredString(page_width / 2, footer_y - 4*mm, linha3)
+    
+    # Número da página e data
+    if page_number:
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.HexColor('#374151'))
+        
+        # Data de geração à esquerda
+        data_geracao = datetime.now().strftime('%d/%m/%Y %H:%M')
+        canvas.drawString(doc.leftMargin, footer_y - 4*mm, f"Gerado em: {data_geracao}")
+        
+        # Página à direita
+        page_text = f"Página {page_number}"
+        if total_pages:
+            page_text = f"Página {page_number} de {total_pages}"
+        canvas.drawRightString(page_width - doc.rightMargin, footer_y - 4*mm, page_text)
+
+
+def create_header_elements(styles, title=None, subtitle=None, show_brasao=True, ano=None, numero_edicao=None, num_paginas=None, data_publicacao=None):
+    """
+    Cria elementos do cabeçalho DOEM para uso com SimpleDocTemplate.build()
+    Retorna uma lista de elementos (Paragraph, Spacer, Table, etc.)
+    """
+    from reportlab.platypus import HRFlowable
+    
+    elements = []
+    
+    # Obter caminho do brasão
+    brasao_path = get_brasao_path() if show_brasao else None
+    
+    # Valores padrão
+    if not ano:
+        ano = datetime.now().year
+    if not numero_edicao:
+        numero_edicao = 1
+    if not num_paginas:
+        num_paginas = 1
+    if not data_publicacao:
+        data_publicacao = datetime.now()
+    
+    # Formatar data
+    dias_semana = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
+    meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    
+    if isinstance(data_publicacao, str):
+        try:
+            data_publicacao = datetime.fromisoformat(data_publicacao.replace('Z', '+00:00'))
+        except:
+            data_publicacao = datetime.now()
+    
+    dia_semana = dias_semana[data_publicacao.weekday()]
+    data_formatada = f"Acaiaca, {dia_semana}, {data_publicacao.day} de {meses[data_publicacao.month - 1]} de {data_publicacao.year}."
+    
+    # ===== CABEÇALHO COM BRASÃO E NOME =====
+    if brasao_path:
+        try:
+            brasao_img_left = Image(brasao_path, width=22*mm, height=22*mm)
+            brasao_img_right = Image(brasao_path, width=22*mm, height=22*mm)
+            
+            # Texto central
+            nome_style = ParagraphStyle(
+                'NomeAcaiaca',
+                fontSize=32,
+                fontName='Helvetica-Bold',
+                textColor=AZUL_ROYAL,
+                alignment=TA_CENTER,
+                leading=36
+            )
+            nome_para = Paragraph('ACAIACA', nome_style)
+            
+            # Tabela com brasão | nome | brasão
+            header_table = Table(
+                [[brasao_img_left, nome_para, brasao_img_right]],
+                colWidths=[30*mm, None, 30*mm]
+            )
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+                ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+                ('TOPPADDING', (0, 0), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ]))
+            
+            elements.append(header_table)
+        except Exception as e:
+            logging.warning(f"Erro ao criar cabeçalho com brasão: {e}")
+            # Fallback
+            nome_style = ParagraphStyle(
+                'NomeAcaiaca',
+                fontSize=32,
+                fontName='Helvetica-Bold',
+                textColor=AZUL_ROYAL,
+                alignment=TA_CENTER
+            )
+            elements.append(Paragraph('ACAIACA', nome_style))
+    else:
+        nome_style = ParagraphStyle(
+            'NomeAcaiaca',
+            fontSize=32,
+            fontName='Helvetica-Bold',
+            textColor=AZUL_ROYAL,
+            alignment=TA_CENTER
+        )
+        elements.append(Paragraph('ACAIACA', nome_style))
+    
+    elements.append(Spacer(1, 3*mm))
+    
+    # ===== LINHA CINZA SEPARADORA =====
+    elements.append(HRFlowable(width="100%", thickness=2, color=CINZA_LINHA, spaceBefore=2*mm, spaceAfter=2*mm))
+    
+    # ===== INFORMAÇÕES DE PUBLICAÇÃO =====
+    info_style = ParagraphStyle(
+        'InfoPublicacao',
+        fontSize=9,
+        fontName='Helvetica',
+        textColor=AZUL_ROYAL,
+        alignment=TA_CENTER
+    )
+    
+    info_text = f"{PREFEITURA_INFO['portal']}    |    ANO {ano} - Nº {numero_edicao} - {num_paginas} PÁGINA(S)    |    {data_formatada}"
+    elements.append(Paragraph(info_text, info_style))
+    
+    # ===== LINHA AZUL INFERIOR =====
+    elements.append(HRFlowable(width="100%", thickness=3, color=AZUL_ROYAL, spaceBefore=2*mm, spaceAfter=4*mm))
+    
+    # ===== TÍTULO DO DOCUMENTO =====
+    if title:
+        titulo_style = ParagraphStyle(
+            'TituloDoc',
+            fontSize=14,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#1F4E78'),
+            alignment=TA_CENTER,
+            spaceBefore=4*mm,
+            spaceAfter=2*mm
+        )
+        elements.append(Paragraph(title, titulo_style))
+        
+        if subtitle:
+            subtitulo_style = ParagraphStyle(
+                'SubtituloDoc',
+                fontSize=10,
+                fontName='Helvetica',
+                textColor=colors.HexColor('#4A5568'),
+                alignment=TA_CENTER,
+                spaceAfter=4*mm
+            )
+            elements.append(Paragraph(subtitle, subtitulo_style))
+    
+    elements.append(Spacer(1, 4*mm))
+    
+    return elements
+
+
+def create_footer_elements(styles=None):
+    """
+    Cria elementos do rodapé para uso com SimpleDocTemplate.
+    """
+    from reportlab.platypus import HRFlowable
+    
+    elements = []
+    
+    # Linha separadora
+    elements.append(Spacer(1, 6*mm))
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=CINZA_LINHA, spaceBefore=2*mm, spaceAfter=2*mm))
+    
+    # Informações
+    footer_style = ParagraphStyle(
+        'Footer',
+        fontSize=7,
+        fontName='Helvetica',
+        textColor=colors.HexColor('#6B7280'),
+        alignment=TA_CENTER,
+        leading=10
+    )
+    
+    footer_text = f"""
+    Prefeitura Municipal de Acaiaca - MG | CNPJ: {PREFEITURA_INFO['cnpj']}<br/>
+    {PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}<br/>
+    Tel.: {PREFEITURA_INFO['telefone']} | E-mail: {PREFEITURA_INFO['email']}
+    """
+    
+    elements.append(Paragraph(footer_text, footer_style))
+    
+    return elements
+
+
+def create_page_callback(show_header=True, show_footer=True, ano=None, numero_edicao=None, num_paginas=None, data_publicacao=None, titulo_documento=None):
+    """
+    Cria função de callback para cabeçalho/rodapé em todas as páginas.
+    
+    Uso:
+        doc = SimpleDocTemplate(buffer, pagesize=A4, ...)
+        callback = create_page_callback(...)
+        doc.build(elements, onFirstPage=callback, onLaterPages=callback)
+    """
+    # Contador de páginas
+    page_counter = {'current': 0}
+    
+    def _header_footer(canvas, doc):
+        canvas.saveState()
+        page_counter['current'] += 1
+        
+        if show_header:
+            draw_doem_header(
+                canvas, doc, 
+                ano=ano, 
+                numero_edicao=numero_edicao, 
+                num_paginas=num_paginas,
+                data_publicacao=data_publicacao,
+                titulo_documento=titulo_documento
+            )
+        
+        if show_footer:
+            draw_doem_footer(canvas, doc, page_number=page_counter['current'], total_pages=num_paginas)
+        
+        canvas.restoreState()
+    
+    return _header_footer
+
+
 def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None, signature_date: str = None):
     """
     Desenha o selo de assinatura digital na LATERAL DIREITA da página.
     Layout profissional: QR Code no topo + 3 linhas de texto vertical vermelho.
-    
-    Args:
-        canvas: Canvas do reportlab
-        page_width: Largura da página
-        page_height: Altura da página
-        signers: Lista de dicts com dados dos assinantes (nome, cpf, cargo)
-        validation_code: Código para validação do documento
-        qr_code_url: URL para o QR Code de validação (opcional)
-        signature_date: Data da assinatura (formato DD/MM/YYYY HH:MM:SS)
     """
-    from reportlab.lib.utils import ImageReader
     import qrcode
     
     # Cor vermelho oficial
@@ -461,40 +559,25 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     
     start_y = qr_y - 3 * mm
     
-    # ===== DESENHAR LINHA 1 =====
-    canvas.saveState()
-    canvas.translate(x1, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica-Bold", font_size)
-    canvas.drawString(0, 0, texto_linha1)
-    canvas.restoreState()
-    
-    # ===== DESENHAR LINHA 2 =====
-    canvas.saveState()
-    canvas.translate(x2, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, texto_linha2)
-    canvas.restoreState()
-    
-    # ===== DESENHAR LINHA 3 =====
-    canvas.saveState()
-    canvas.translate(x3, start_y)
-    canvas.rotate(-90)
-    canvas.setFillColor(VERMELHO)
-    canvas.setFont("Helvetica", font_size)
-    canvas.drawString(0, 0, texto_linha3)
-    canvas.restoreState()
+    # ===== DESENHAR LINHAS =====
+    for idx, (x, texto, is_bold) in enumerate([
+        (x1, texto_linha1, True),
+        (x2, texto_linha2, False),
+        (x3, texto_linha3, False)
+    ]):
+        canvas.saveState()
+        canvas.translate(x, start_y)
+        canvas.rotate(-90)
+        canvas.setFillColor(VERMELHO)
+        canvas.setFont("Helvetica-Bold" if is_bold else "Helvetica", font_size)
+        canvas.drawString(0, 0, texto)
+        canvas.restoreState()
 
 
 def create_signature_page_mrosc(signers: list, validation_code: str, doc_info: dict = None) -> BytesIO:
     """
     Cria uma página de assinaturas no estilo do documento de referência (Lei 14.063).
     """
-    from reportlab.pdfgen import canvas as pdf_canvas
-    from reportlab.lib.utils import ImageReader
     import qrcode
     
     buffer = BytesIO()
