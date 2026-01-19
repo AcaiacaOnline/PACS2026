@@ -68,6 +68,22 @@ Sistema completo de gestão municipal que inclui:
 - Processos (público): ✓ ACAIACA, ✓ Rodapé
 - PAC Geral (autenticado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
 
+#### ✅ 6. OTIMIZAÇÃO DO BRASÃO
+- Tamanho original: 13MB (8000x6000px)
+- Tamanho otimizado: 172KB (500x375px)
+- **Redução de 98.7%**
+- Backup do original salvo em: `brasao_acaiaca_original.png`
+
+#### ✅ 7. REDUÇÃO DO TAMANHO DOS PDFs
+- PDF anterior: ~23MB
+- PDF novo: ~234KB
+- **Redução de 99%** no tamanho dos PDFs!
+
+#### ✅ 8. SISTEMA DE TEMAS CORRIGIDO
+- ThemeProvider atualizado para aplicar variáveis HSL do Tailwind
+- 7 temas disponíveis: Padrão, Governo, Minas Gerais, Moderno, Escuro, Terra, Oceano
+- Página de Configuracoes corrigida para usar `bg-background` do tema
+
 #### ✅ 5. PDFs ATUALIZADOS
 - **Rotas Privadas (autenticadas):**
   - PAC Individual (`/api/pacs/{id}/export/pdf`)
