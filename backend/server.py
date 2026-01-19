@@ -3124,13 +3124,21 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     # 5cm (esquerda/direita), 3cm (superior/inferior)
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
+        subtitulo='Lei Federal nº 14.133/2021',
+        total_pages=1
+    )
+    
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=REPORT_MARGIN_LEFT, 
-        rightMargin=REPORT_MARGIN_RIGHT, 
-        topMargin=REPORT_MARGIN_TOP, 
-        bottomMargin=REPORT_MARGIN_BOTTOM
+        leftMargin=20*mm, 
+        rightMargin=20*mm, 
+        topMargin=50*mm,  # Espaço para cabeçalho DOEM
+        bottomMargin=40*mm  # Espaço para rodapé DOEM
     )
     
     elements = []
@@ -3147,17 +3155,6 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
         textColor=colors.HexColor('#1F4788'), spaceAfter=6,
         alignment=TA_CENTER, fontName='Helvetica-Bold'
     )
-    
-    # ===== CABEÇALHO COM BRASÃO =====
-    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
-    header_elements = create_header_elements(
-        styles, 
-        title='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
-        subtitle='Lei Federal nº 14.133/2021',
-        show_brasao=True
-    )
-    elements.extend(header_elements)
-    elements.append(Spacer(1, 4*mm))
     
     # Tabela de processos - campos COMPLETOS
     if orientation.lower() == 'portrait':
