@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import NotificationCenter from './NotificationCenter';
 
 const DropdownMenu = ({ title, icon: Icon, items, isActive, color = 'primary' }) => {
   const [isOpen, setIsOpen] = useState(false);
