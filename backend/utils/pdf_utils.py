@@ -82,8 +82,9 @@ def format_data_extenso(data=None):
 class DOEMTemplate:
     """
     Template DOEM para geração de PDFs padronizados.
-    Cabeçalho: Brasões + ACAIACA + Linha + Info publicação + Linha
-    Rodapé: Informações da prefeitura centralizadas
+    Layout conforme arquivo de referência: relatórios pdf.pdf
+    Cabeçalho: Brasões (esq/dir) + ACAIACA (azul centralizado) + Linhas azuis + Info publicação
+    Rodapé: Informações da prefeitura centralizadas em 3 linhas
     """
     
     def __init__(self, titulo="DOCUMENTO", ano=134, numero=1, paginas=1, data=None):
@@ -102,13 +103,19 @@ class DOEMTemplate:
         canvas.restoreState()
     
     def _draw_header(self, canvas, doc):
-        """Desenha o cabeçalho no estilo DOEM"""
+        """Desenha o cabeçalho no estilo DOEM - Conforme arquivo de referência"""
         page_width, page_height = doc.pagesize
         self.page_count += 1
         
-        # Posições
-        header_top = page_height - 12*mm
-        brasao_size = 22*mm
+        # Margens fixas para o cabeçalho (independente das margens do documento)
+        margin_left = 15*mm
+        margin_right = 15*mm
+        
+        # Tamanho do brasão
+        brasao_size = 20*mm
+        
+        # Posição Y do topo do cabeçalho
+        header_y = page_height - 10*mm
         
         # ===== BRASÕES NAS LATERAIS =====
         brasao = get_brasao_path()
@@ -117,8 +124,8 @@ class DOEMTemplate:
                 # Brasão esquerdo
                 canvas.drawImage(
                     brasao,
-                    doc.leftMargin,
-                    header_top - brasao_size,
+                    margin_left,
+                    header_y - brasao_size,
                     width=brasao_size,
                     height=brasao_size,
                     preserveAspectRatio=True,
@@ -127,8 +134,8 @@ class DOEMTemplate:
                 # Brasão direito
                 canvas.drawImage(
                     brasao,
-                    page_width - doc.rightMargin - brasao_size,
-                    header_top - brasao_size,
+                    page_width - margin_right - brasao_size,
+                    header_y - brasao_size,
                     width=brasao_size,
                     height=brasao_size,
                     preserveAspectRatio=True,
@@ -137,74 +144,71 @@ class DOEMTemplate:
             except Exception as e:
                 logging.warning(f"Erro ao carregar brasão: {e}")
         
-        # ===== TEXTO "ACAIACA" CENTRALIZADO =====
+        # ===== TEXTO "ACAIACA" CENTRALIZADO EM AZUL ESCURO =====
         canvas.setFillColor(AZUL_DOEM)
-        canvas.setFont("Times-Bold", 32)
-        canvas.drawCentredString(page_width / 2, header_top - 18*mm, "ACAIACA")
+        canvas.setFont("Helvetica-Bold", 28)
+        acaiaca_y = header_y - 16*mm
+        canvas.drawCentredString(page_width / 2, acaiaca_y, "ACAIACA")
         
-        # ===== LINHA AZUL FINA =====
-        linha1_y = header_top - 24*mm
+        # ===== PRIMEIRA LINHA AZUL (FINA) =====
+        linha1_y = acaiaca_y - 6*mm
         canvas.setStrokeColor(AZUL_DOEM)
         canvas.setLineWidth(1)
-        canvas.line(doc.leftMargin + 5*mm, linha1_y, page_width - doc.rightMargin - 5*mm, linha1_y)
+        canvas.line(margin_left, linha1_y, page_width - margin_right, linha1_y)
         
-        # ===== INFORMAÇÕES DE PUBLICAÇÃO =====
-        info_y = linha1_y - 5*mm
-        canvas.setFont("Helvetica", 9)
+        # ===== INFORMAÇÕES DE PUBLICAÇÃO (entre as duas linhas) =====
+        info_y = linha1_y - 4*mm
+        canvas.setFont("Helvetica-Bold", 8)
         canvas.setFillColor(AZUL_DOEM)
-        
-        # URL à esquerda
-        canvas.drawString(doc.leftMargin + 5*mm, info_y, PREFEITURA_INFO['doem_url'])
         
         # ANO - Nº - PÁGINAS centralizado
         info_centro = f"ANO {self.ano} - Nº {self.numero} - {self.paginas} PÁGINAS"
         canvas.drawCentredString(page_width / 2, info_y, info_centro)
         
-        # Data à direita
+        # Data por extenso à direita
         data_texto = format_data_extenso(self.data)
-        canvas.drawRightString(page_width - doc.rightMargin - 5*mm, info_y, data_texto)
+        canvas.setFont("Helvetica", 8)
+        canvas.drawRightString(page_width - margin_right, info_y, data_texto)
         
-        # ===== LINHA AZUL GROSSA =====
-        linha2_y = info_y - 5*mm
-        canvas.setLineWidth(3)
-        canvas.line(doc.leftMargin, linha2_y, page_width - doc.rightMargin, linha2_y)
+        # ===== SEGUNDA LINHA AZUL (GROSSA) =====
+        linha2_y = info_y - 4*mm
+        canvas.setStrokeColor(AZUL_DOEM)
+        canvas.setLineWidth(2.5)
+        canvas.line(margin_left, linha2_y, page_width - margin_right, linha2_y)
         
-        # ===== TÍTULO DO DOCUMENTO =====
-        if self.titulo:
-            canvas.setFont("Helvetica-Bold", 11)
-            canvas.setFillColor(AZUL_DOEM)
-            canvas.drawCentredString(page_width / 2, linha2_y - 8*mm, self.titulo)
+        # ===== URL DO DOEM (abaixo da segunda linha) =====
+        url_y = linha2_y - 4*mm
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(AZUL_DOEM)
+        canvas.drawCentredString(page_width / 2, url_y, PREFEITURA_INFO['doem_url'])
     
     def _draw_footer(self, canvas, doc):
-        """Desenha o rodapé padronizado"""
+        """Desenha o rodapé padronizado - Conforme arquivo de referência"""
         page_width, page_height = doc.pagesize
         
-        footer_y = 18*mm
+        # Posição base do rodapé
+        footer_base_y = 22*mm
         
-        # Linha separadora
-        canvas.setStrokeColor(colors.HexColor('#CCCCCC'))
-        canvas.setLineWidth(0.5)
-        canvas.line(doc.leftMargin, footer_y + 12*mm, page_width - doc.rightMargin, footer_y + 12*mm)
-        
-        # Textos do rodapé em azul
+        # Textos do rodapé em azul escuro (3 linhas centralizadas)
         canvas.setFillColor(AZUL_DOEM)
         canvas.setFont("Helvetica", 8)
         
         # Linha 1: Prefeitura | CNPJ
         linha1 = f"Prefeitura Municipal de Acaiaca - MG | CNPJ: {PREFEITURA_INFO['cnpj']}"
-        canvas.drawCentredString(page_width / 2, footer_y + 6*mm, linha1)
+        canvas.drawCentredString(page_width / 2, footer_base_y + 8*mm, linha1)
         
-        # Linha 2: Endereço, CEP
+        # Linha 2: Endereço completo com CEP
         linha2 = f"{PREFEITURA_INFO['endereco']}, {PREFEITURA_INFO['cep']}"
-        canvas.drawCentredString(page_width / 2, footer_y + 1*mm, linha2)
+        canvas.drawCentredString(page_width / 2, footer_base_y + 3*mm, linha2)
         
-        # Linha 3: Tel | Portal | Email
+        # Linha 3: Telefone | Portal | E-mail
         linha3 = f"Tel.: {PREFEITURA_INFO['telefone']} | Portal: {PREFEITURA_INFO['portal']} | E-mail: {PREFEITURA_INFO['email']}"
-        canvas.drawCentredString(page_width / 2, footer_y - 4*mm, linha3)
+        canvas.drawCentredString(page_width / 2, footer_base_y - 2*mm, linha3)
         
-        # Número da página à direita
-        canvas.setFont("Helvetica", 8)
-        canvas.drawRightString(page_width - doc.rightMargin, footer_y - 4*mm, f"Página {self.page_count}")
+        # Número da página discreto
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(colors.HexColor('#666666'))
+        canvas.drawRightString(page_width - 15*mm, footer_base_y - 2*mm, f"Página {self.page_count}")
 
 
 def create_doem_callback(titulo="DOCUMENTO", ano=134, numero=1, paginas=1, data=None):
