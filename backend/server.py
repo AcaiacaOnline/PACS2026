@@ -8332,23 +8332,21 @@ async def export_relatorio_consolidado_pdf(request: Request):
     total_mrosc = sum(p.get('valor_total', 0) for p in projetos_mrosc)
     
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=20*mm)
+    
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='RELATÓRIO GERENCIAL CONSOLIDADO',
+        subtitulo=f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}',
+        total_pages=1
+    )
+    
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=50*mm, bottomMargin=40*mm)
     
     elements = []
     styles = getSampleStyleSheet()
     titulo_style = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#1F4E78'), alignment=TA_CENTER, spaceAfter=6*mm)
     subtitulo_style = ParagraphStyle('Subtitulo', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#2E7D32'), spaceBefore=6*mm, spaceAfter=3*mm)
-    
-    # Cabeçalho com brasão
-    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
-    header_elements = create_header_elements(
-        styles, 
-        title='RELATÓRIO GERENCIAL CONSOLIDADO',
-        subtitle=f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}',
-        show_brasao=True
-    )
-    elements.extend(header_elements)
-    elements.append(Spacer(1, 4*mm))
     
     # Resumo Executivo
     elements.append(Paragraph('1. RESUMO EXECUTIVO', subtitulo_style))
@@ -8399,14 +8397,15 @@ async def export_relatorio_consolidado_pdf(request: Request):
     ]))
     elements.append(status_table)
     
-    # Rodapé
+    # Assinatura
     elements.append(Spacer(1, 15*mm))
     user_name = user.name if hasattr(user, 'name') else user.get('name', 'Admin')
     elements.append(Paragraph('_' * 50, ParagraphStyle('Linha', alignment=TA_CENTER)))
     elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
     elements.append(Paragraph('Responsável pelo Relatório', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
     
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     filename = f"Relatorio_Consolidado_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
