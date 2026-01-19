@@ -266,9 +266,10 @@ const Layout = ({ children }) => {
                 title="Configurações"
                 icon={Settings}
                 color="teal"
-                isActive={isActive('/historico-assinaturas') || isActive('/usuarios') || isActive('/backup')}
+                isActive={isActive('/historico-assinaturas') || isActive('/usuarios') || isActive('/backup') || isActive('/configuracoes')}
                 items={[
                   { path: '/historico-assinaturas', label: 'Assinaturas', icon: FileSignature },
+                  { path: '/configuracoes', label: 'Aparência', icon: Settings },
                   ...(user?.is_admin ? [
                     { path: '/usuarios', label: 'Usuários', icon: Users },
                     { path: '/backup', label: 'Backup', icon: Database },
