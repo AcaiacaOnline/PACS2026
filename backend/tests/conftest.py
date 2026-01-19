@@ -27,7 +27,7 @@ def event_loop():
 @pytest.fixture(scope="session")
 def api_url():
     """Get API URL from environment"""
-    return os.environ.get('API_URL', 'https://acaiaca-gov-1.preview.emergentagent.com')
+    return os.environ.get('API_URL', 'https://planning-system-2.preview.emergentagent.com')
 
 
 @pytest.fixture(scope="session")
