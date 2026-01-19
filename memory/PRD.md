@@ -84,6 +84,38 @@ Sistema completo de gestão municipal que inclui:
 - 7 temas disponíveis: Padrão, Governo, Minas Gerais, Moderno, Escuro, Terra, Oceano
 - Página de Configuracoes corrigida para usar `bg-background` do tema
 
+#### ✅ 9. REFATORAÇÃO PARCIAL DO BACKEND
+- Criado módulo `/app/backend/routes/doem.py` com rotas do DOEM
+- Atualizado `/app/backend/routes/__init__.py` para exportar módulo DOEM
+- Total de 17 módulos de rotas na pasta `/routes/`
+- WebSocket para notificações já implementado em `/utils/websocket.py`
+- NotificationCenter já integrado no Layout.jsx
+
+#### 📊 ARQUITETURA ATUAL
+```
+/app/backend/
+├── server.py (8565 linhas - arquivo principal)
+├── routes/ (17 módulos - 4868 linhas)
+│   ├── auth.py
+│   ├── users.py
+│   ├── pac.py, pac_geral.py, pac_obras.py
+│   ├── processos.py, gestao_processual.py
+│   ├── doem.py (NOVO)
+│   ├── mrosc.py
+│   ├── public.py
+│   ├── analytics.py
+│   └── ...
+├── models/ (modelos Pydantic)
+└── utils/
+    ├── pdf_utils.py (geração de PDFs)
+    └── websocket.py (notificações em tempo real)
+```
+
+#### 📋 DÍVIDA TÉCNICA RESTANTE
+- O `server.py` ainda contém rotas duplicadas com os módulos em `/routes/`
+- Recomendação: migração gradual removendo rotas duplicadas do server.py
+- Os módulos em `/routes/` já estão funcionais e podem ser usados como referência
+
 #### ✅ 5. PDFs ATUALIZADOS
 - **Rotas Privadas (autenticadas):**
   - PAC Individual (`/api/pacs/{id}/export/pdf`)
