@@ -26,7 +26,41 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 11 - Completa)
+## Última Atualização: 19/01/2026 (Sessão 12)
+
+### Changelog - Sessão 12 (19/01/2026)
+
+#### ✅ REFORMULAÇÃO COMPLETA DO SISTEMA DOEM
+
+**Visual Inspirado no Diário Oficial de Minas Gerais:**
+
+1. **Header Vermelho Escuro (#8B0000)**
+   - Seletor de data estilo calendário com dia grande destacado
+   - Barra de pesquisa avançada integrada
+   - Navegação rápida para Portal e Admin
+
+2. **Sidebar de Filtros à Esquerda**
+   - Categorias em accordion:
+     - Diário do Executivo (Decretos, Portarias, Resoluções, Editais, Processos)
+     - Diário dos Municípios (Prestações de Contas, Leis)
+     - Diário de Terceiros (Publicações do Terceiro Setor, Legislativo)
+   - Lista de edições do mês selecionado
+   - Filtro ativo com remoção fácil
+
+3. **Visualizador de Documento Central**
+   - Toolbar com navegação de páginas, busca interna e zoom
+   - Documento estilizado como diário oficial real
+   - Cabeçalho "MINAS GERAIS" / "DIÁRIO OFICIAL ELETRÔNICO MUNICIPAL"
+   - Assinatura digital destacada
+
+4. **Sistema de Filtros Implementado**
+   - Filtro por data (calendário interativo)
+   - Filtro por categoria/segmento
+   - Pesquisa avançada com resultados em modal
+
+**Arquivo Modificado:** `/app/frontend/src/pages/DOEMPublico.jsx`
+
+---
 
 ### Changelog - Sessão 11 (19/01/2026)
 
