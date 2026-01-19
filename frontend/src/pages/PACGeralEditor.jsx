@@ -78,12 +78,22 @@ const PACGeralEditor = () => {
       fetchPACData();
     }
     loadUser();
+    fetchCurrentUser();
   }, [id]);
 
   const loadUser = () => {
     const userData = localStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
+    }
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar usuário:', error);
     }
   };
 
