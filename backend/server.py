@@ -158,6 +158,15 @@ from utils.websocket import (
 # Importar logging
 from utils.logging_config import get_logger, log_info, log_error, request_logger
 
+# Importar utilitários de PDF (funções refatoradas)
+from utils.pdf_utils import (
+    mask_cpf as mask_cpf_util,
+    generate_validation_code as generate_validation_code_util,
+    get_professional_styles as get_professional_styles_util,
+    draw_signature_seal as draw_signature_seal_util,
+    create_signature_page_mrosc as create_signature_page_mrosc_util
+)
+
 logger = get_logger("server")
 
 api_router = APIRouter(prefix="/api")
