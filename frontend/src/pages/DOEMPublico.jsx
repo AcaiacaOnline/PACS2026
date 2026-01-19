@@ -541,36 +541,44 @@ const DOEMPublico = () => {
                 className="bg-white shadow-xl rounded-lg max-w-4xl w-full"
                 style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
               >
-                {/* Cabeçalho do Documento */}
-                <div className="border-b-4 border-[#8B0000] p-8">
-                  <div className="flex items-center justify-center gap-8 mb-6">
+                {/* Cabeçalho DOEM - Estilo Oficial */}
+                <div className="p-6 pb-4">
+                  {/* Brasão + ACAIACA + Brasão */}
+                  <div className="flex items-center justify-center gap-4 mb-4">
                     <img 
                       src="/brasao-acaiaca.png" 
                       alt="Brasão" 
-                      className="h-20 w-auto"
+                      className="h-16 w-auto"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
-                    <div className="text-center">
-                      <h1 className="text-3xl font-bold tracking-wide text-[#1a365d]">MINAS GERAIS</h1>
-                      <div className="h-1 bg-[#8B0000] my-2"></div>
-                      <p className="text-sm text-gray-600">www.acaiaca.mg.gov.br</p>
-                    </div>
+                    <h1 className="text-4xl font-bold tracking-wider text-[#1E3A8A]" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.1)'}}>
+                      ACAIACA
+                    </h1>
                     <img 
-                      src="/brasao-mg.png" 
-                      alt="Brasão MG" 
-                      className="h-20 w-auto"
+                      src="/brasao-acaiaca.png" 
+                      alt="Brasão" 
+                      className="h-16 w-auto"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   </div>
                   
-                  <div className="text-center text-sm text-gray-600 mb-4">
-                    ANO {selectedEdicao.ano} – Nº {selectedEdicao.numero_edicao} – {totalPages} PÁGINA(S)
-                    <span className="float-right">
-                      ACAIACA, {formatDate(selectedEdicao.data_publicacao).toUpperCase()}
+                  {/* Linha cinza separadora */}
+                  <div className="h-0.5 bg-gray-300 my-3"></div>
+                  
+                  {/* Informações de publicação */}
+                  <div className="flex flex-wrap items-center justify-between text-[#1E3A8A] text-sm gap-2">
+                    <span>https://pac.acaiaca.mg.gov.br/doem</span>
+                    <span className="font-medium">
+                      ANO {selectedEdicao.ano} - Nº {selectedEdicao.numero_edicao} - {totalPages} PÁGINA(S)
                     </span>
+                    <span>ACAIACA, {formatDate(selectedEdicao.data_publicacao).toUpperCase()}</span>
                   </div>
-
-                  <div className="bg-[#1a365d] text-white py-3 px-6 text-center text-lg font-bold tracking-widest">
+                  
+                  {/* Linha azul inferior */}
+                  <div className="h-1 bg-[#1E3A8A] mt-3"></div>
+                  
+                  {/* Título DOEM */}
+                  <div className="bg-[#1E3A8A] text-white py-3 px-6 text-center text-lg font-bold tracking-widest mt-4 rounded">
                     DIÁRIO OFICIAL ELETRÔNICO MUNICIPAL
                   </div>
                 </div>
