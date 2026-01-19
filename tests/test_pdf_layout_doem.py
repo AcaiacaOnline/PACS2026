@@ -275,9 +275,11 @@ class TestDOEMTemplateElements:
             PREFEITURA_INFO
         )
         
-        # Verify AZUL_DOEM is navy blue
-        assert str(AZUL_DOEM) == "#000080" or "000080" in str(AZUL_DOEM).lower(), \
-            f"AZUL_DOEM should be navy blue (#000080), got {AZUL_DOEM}"
+        # Verify AZUL_DOEM is navy blue (RGB values should be close to 0, 0, 0.5)
+        # The color is represented as Color(0,0,.501961,1) which is navy blue
+        color_str = str(AZUL_DOEM).lower()
+        assert "color" in color_str and "0,0," in color_str, \
+            f"AZUL_DOEM should be navy blue, got {AZUL_DOEM}"
         
         # Verify PREFEITURA_INFO has required fields
         required_fields = ['nome', 'cnpj', 'endereco', 'cep', 'telefone', 'portal', 'email', 'doem_url']
