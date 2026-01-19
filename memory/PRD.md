@@ -26,7 +26,25 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 18/01/2026 (Sessão 10)
+## Última Atualização: 19/01/2026 (Sessão 11)
+
+### Changelog - Sessão 11 (19/01/2026)
+
+#### ✅ 1. REFORMULAÇÃO COMPLETA DA ASSINATURA DIGITAL
+- **Layout profissional em 3 linhas verticais** na margem direita:
+  - **Linha 1 (externa)**: `ASSINADO DIGITALMENTE: NOME (Cargo)`
+  - **Linha 2 (meio)**: `CPF: ***456.789-** • Data: DD/MM/YYYY HH:MM:SS`
+  - **Linha 3 (interna)**: `Código: DOC-XXXXXX • Valide: pac.acaiaca.mg.gov.br/validar`
+- **Cor vermelha (#DC2626)** aplicada corretamente em todo o texto
+- **QR Code vermelho** no canto superior direito para validação
+- **Sem sobreposição** com o conteúdo principal do documento
+- **Arquivo modificado**: `/app/backend/server.py` - função `draw_signature_seal()`
+
+#### ✅ 2. TESTES VALIDADOS (34/34)
+- Todos os testes unitários passando
+- Nenhuma regressão identificada
+
+---
 
 ### Changelog - Sessão 10 (18/01/2026)
 
