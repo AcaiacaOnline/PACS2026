@@ -3194,25 +3194,16 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
         alignment=TA_CENTER, fontName='Helvetica-Bold'
     )
     
-    # Logotipo proporcional
-    logo_path = ROOT_DIR / 'brasao_acaiaca.jpg'
-    if logo_path.exists():
-        try:
-            from PIL import Image as PILImage
-            pil_img = PILImage.open(str(logo_path))
-            img_width, img_height = pil_img.size
-            aspect_ratio = img_height / img_width
-            max_logo_width = 2*cm
-            logo_width = max_logo_width
-            logo_height = logo_width * aspect_ratio
-            logo = Image(str(logo_path), width=logo_width, height=logo_height)
-            elements.append(logo)
-        except:
-            pass
-    
-    elements.append(Paragraph('PREFEITURA MUNICIPAL DE ACAIACA - MG', title_style))
-    elements.append(Paragraph('GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS', subtitle_style))
-    elements.append(Paragraph('<i>Lei Federal nº 14.133/2021</i>', ParagraphStyle('Legal', parent=styles['Normal'], fontSize=7, alignment=TA_CENTER, textColor=colors.grey, spaceAfter=6)))
+    # ===== CABEÇALHO COM BRASÃO =====
+    from utils.pdf_utils import create_header_elements, PREFEITURA_INFO
+    header_elements = create_header_elements(
+        styles, 
+        title='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
+        subtitle='Lei Federal nº 14.133/2021',
+        show_brasao=True
+    )
+    elements.extend(header_elements)
+    elements.append(Spacer(1, 4*mm))
     
     # Tabela de processos - campos COMPLETOS
     if orientation.lower() == 'portrait':
