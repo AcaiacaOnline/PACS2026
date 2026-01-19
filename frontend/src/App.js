@@ -138,12 +138,14 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <div className="App">
-      <Toaster position="top-right" />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <Toaster position="top-right" />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </div>
+    </ThemeProvider>
   );
 }
 
