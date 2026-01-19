@@ -29,7 +29,7 @@ Sistema completo de gestão municipal que inclui:
 
 ## Última Atualização: 19/01/2026 (Sessão 15)
 
-### Changelog - Sessão 15 (19/01/2026) - CORREÇÃO LAYOUT PDF
+### Changelog - Sessão 15 (19/01/2026) - CORREÇÃO LAYOUT PDF COMPLETA
 
 #### ✅ 1. LAYOUT DOEM PADRONIZADO CONFORME `relatórios pdf.pdf`
 - **Cabeçalho corrigido conforme arquivo de referência do usuário:**
@@ -51,7 +51,24 @@ Sistema completo de gestão municipal que inclui:
 - Margens fixas para garantir consistência visual independente das margens do documento
 - Cores, fontes e posicionamentos ajustados conforme especificado pelo usuário
 
-#### ✅ 3. PDFs ATUALIZADOS
+#### ✅ 3. FUNÇÃO `gerar_pdf_doem` ATUALIZADA (server.py)
+- Callback `draw_header_footer` reescrito com layout padronizado
+- Dois brasões nas laterais usando brasao_acaiaca.png
+- "ACAIACA" centralizado em azul escuro
+- Linhas azuis (fina e grossa) com informações de publicação
+- Rodapé com 3 linhas da Prefeitura
+- Assinatura digital mantida (QR Code + texto vermelho)
+- Margens ajustadas: topMargin=45mm, bottomMargin=35mm
+
+#### ✅ 4. PDFs VALIDADOS - TODOS FUNCIONANDO
+- PAC Individual (autenticado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
+- PAC Individual (público): ✓ ACAIACA, ✓ Rodapé
+- DOEM (autenticado): ✓ ACAIACA, ✓ ANO-Nº, ✓ Rodapé
+- DOEM (público-publicado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
+- Processos (público): ✓ ACAIACA, ✓ Rodapé
+- PAC Geral (autenticado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
+
+#### ✅ 5. PDFs ATUALIZADOS
 - **Rotas Privadas (autenticadas):**
   - PAC Individual (`/api/pacs/{id}/export/pdf`)
   - PAC Geral (`/api/pacs-geral/{id}/export/pdf`)
