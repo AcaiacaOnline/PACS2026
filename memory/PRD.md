@@ -23,10 +23,54 @@ Sistema completo de gestão municipal que inclui:
 - **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 - **Assinatura Digital Lei 14.063** - Página de assinaturas no estilo oficial ✅ NOVO
+- **Cabeçalho Padronizado com Brasão** - Todos os PDFs com identidade visual oficial ✅ NOVO
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 13)
+## Última Atualização: 19/01/2026 (Sessão 14)
+
+### Changelog - Sessão 14 (19/01/2026)
+
+#### ✅ 1. CABEÇALHO PADRONIZADO COM BRASÃO EM TODOS OS PDFs
+- **Implementação completa** do cabeçalho institucional em todos os PDFs gerados pelo sistema
+- **Componentes:**
+  - Brasão oficial da Prefeitura de Acaiaca (baixado e armazenado em `/app/backend/static/brasao_acaiaca.png`)
+  - Nome: "PREFEITURA MUNICIPAL DE ACAIACA"
+  - Estado: "ESTADO DE MINAS GERAIS"
+  - Endereço: "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000"
+  - Contatos: "Tel.: (31) 3887-1650 | https://acaiaca.mg.gov.br | administracao@acaiaca.mg.gov.br"
+- **PDFs Atualizados:**
+  - PAC Individual (`export_pdf`)
+  - PAC Geral (`export_pac_geral_pdf`)
+  - PAC Obras e Serviços (`export_pac_geral_obras_pdf`)
+  - Relatório de Processos (`export_processos_pdf`)
+  - Relatório MROSC (`export_relatorio_mrosc_pdf`)
+  - Relatório Gerencial Consolidado (`export_relatorio_consolidado_pdf`)
+- **Novo módulo:** `/app/backend/utils/pdf_utils.py` expandido com funções:
+  - `get_brasao_path()` - Localiza o arquivo do brasão
+  - `create_header_elements()` - Cria elementos do cabeçalho para SimpleDocTemplate
+  - `draw_standard_header()` - Desenha cabeçalho via Canvas
+  - `draw_standard_footer()` - Desenha rodapé padronizado
+  - `PREFEITURA_INFO` - Dicionário com dados institucionais centralizados
+
+#### ✅ 2. CORREÇÃO DO ENDEREÇO NO DOEM PÚBLICO
+- **Página `/doem-publico`** atualizada com endereço correto
+- **Rodapé corrigido** de "Praça Antônio Carlos, 10" para "Praça Tancredo Neves, Número 35"
+- **Informações de contato adicionadas:** Telefone, Portal e E-mail
+
+#### ✅ 3. TESTES
+- **34/34 testes pytest passando** após todas as alterações
+- **PDFs testados e validados:**
+  - PDF de Processos: ~23MB com brasão e endereço corretos
+  - PDF MROSC: ~23MB com brasão e endereço corretos
+
+#### ✅ 4. ARQUIVOS CRIADOS/MODIFICADOS
+- `/app/backend/static/brasao_acaiaca.png` - NOVO (12.47 MB)
+- `/app/backend/utils/pdf_utils.py` - EXPANDIDO (funções de cabeçalho)
+- `/app/backend/server.py` - MODIFICADO (integração do cabeçalho em múltiplas funções)
+- `/app/frontend/src/pages/DOEMPublico.jsx` - CORRIGIDO (endereço no rodapé)
+
+---
 
 ### Changelog - Sessão 13 (19/01/2026)
 
