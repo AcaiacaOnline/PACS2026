@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import ClassificacaoSelector from '../components/ClassificacaoSelector';
 import QuantidadeSecretarias from '../components/QuantidadeSecretarias';
 import Pagination, { usePagination } from '../components/Pagination';
+import SignatureModal from '../components/SignatureModal';
 import { ArrowLeft, Save, Plus, Edit, Trash2, FileText, FileSpreadsheet, Download, Upload, X } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -13,6 +14,9 @@ const PACGeralEditor = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id && id !== 'new';
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [pdfOrientation, setPdfOrientation] = useState('landscape');
+  const [currentUser, setCurrentUser] = useState(null);
   
   // Paginação de itens
   const { currentPage, setCurrentPage, pageSize, setPageSize, resetPage } = usePagination(15);
