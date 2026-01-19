@@ -4270,7 +4270,7 @@ async def public_get_pac_geral_obras_items(pac_obras_id: str):
 
 @public_router.get("/pacs-geral-obras/{pac_obras_id}/export/pdf")
 async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str = "landscape"):
-    """Exporta PAC Geral Obras para PDF (público)"""
+    """Exporta PAC Geral Obras para PDF (público) - Formato DOEM"""
     pac = await db.pacs_geral_obras.find_one({'pac_obras_id': pac_obras_id}, {'_id': 0})
     if not pac:
         raise HTTPException(status_code=404, detail="PAC Geral Obras not found")
@@ -4280,74 +4280,75 @@ async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str 
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='PAC GERAL - OBRAS E SERVIÇOS DE ENGENHARIA',
+        subtitulo=f'Lei Federal nº 14.133/2021 | {pac.get("nome_secretaria", "")}',
+        total_pages=1
+    )
+    
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=REPORT_MARGIN_LEFT, 
-        rightMargin=REPORT_MARGIN_RIGHT, 
-        topMargin=REPORT_MARGIN_TOP, 
-        bottomMargin=REPORT_MARGIN_BOTTOM
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=55*mm,
+        bottomMargin=35*mm
     )
     
     elements = []
     styles = getSampleStyleSheet()
     
-    # Cabeçalho
-    elements.append(Paragraph('<b>PREFEITURA MUNICIPAL DE ACAIACA - MG</b>', ParagraphStyle('Center', fontSize=12, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('<b>PAC GERAL OBRAS E SERVIÇOS</b>', ParagraphStyle('Center', fontSize=10, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('Lei Federal nº 14.133/2021', ParagraphStyle('Center', fontSize=8, alignment=1)))
-    elements.append(Paragraph(f'Secretaria: {pac.get("nome_secretaria", "")}', ParagraphStyle('Center', fontSize=9, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph(f'Data de Geração: {datetime.now().strftime("%d/%m/%Y às %H:%M")}', ParagraphStyle('Center', fontSize=8, alignment=1)))
-    elements.append(Spacer(1, 4*mm))
-    
     # Dados do PAC
     info_style = ParagraphStyle('Info', fontSize=8)
-    elements.append(Paragraph(f'<b>Responsável:</b> {pac.get("secretario", "")}', info_style))
-    elements.append(Paragraph(f'<b>Fiscal:</b> {pac.get("fiscal_contrato", "-")}', info_style))
-    elements.append(Paragraph(f'<b>Email:</b> {pac.get("email", "")}', info_style))
-    elements.append(Paragraph(f'<b>Ano:</b> {pac.get("ano", "2026")}', info_style))
+    elements.append(Paragraph(f'<b>Responsável:</b> {pac.get("secretario", "")} | <b>Fiscal:</b> {pac.get("fiscal_contrato", "-")}', info_style))
+    elements.append(Paragraph(f'<b>Email:</b> {pac.get("email", "")} | <b>Ano:</b> {pac.get("ano", "2026")}', info_style))
     elements.append(Spacer(1, 4*mm))
     
     # Tabela de itens
     if items:
         valor_total = sum(item.get('valorTotal', 0) for item in items)
-        elements.append(Paragraph(f'<b>Total de Itens: {len(items)} | Valor Total: R$ {valor_total:,.2f}</b>', ParagraphStyle('Info', fontSize=9, fontName='Helvetica-Bold')))
+        elements.append(Paragraph(f'<b>Total de Itens: {len(items)} | Valor Total: R$ {valor_total:,.2f}</b>'.replace(',', 'X').replace('.', ',').replace('X', '.'), ParagraphStyle('Info', fontSize=9, fontName='Helvetica-Bold')))
         elements.append(Spacer(1, 2*mm))
         
-        table_data = [['#', 'Descrição', 'Classificação', 'Unidade', 'Qtd', 'Valor Unit.', 'Valor Total']]
+        table_data = [['#', 'Descrição', 'Classificação', 'Und', 'Qtd', 'V.Unit', 'V.Total']]
         for idx, item in enumerate(items, start=1):
             table_data.append([
                 str(idx),
-                Paragraph(f"<font size=6>{item.get('descricao', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{item.get('codigo_classificacao', '')} - {item.get('subitem_classificacao', '')}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{item.get('descricao', '')[:60]}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{item.get('codigo_classificacao', '')} - {item.get('subitem_classificacao', '')}</font>", styles['Normal']),
                 item.get('unidade', ''),
                 str(item.get('quantidade_total', 0)),
-                f"R$ {item.get('valorUnitario', 0):,.2f}",
-                f"R$ {item.get('valorTotal', 0):,.2f}"
+                f"R$ {item.get('valorUnitario', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                f"R$ {item.get('valorTotal', 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
             ])
         
-        col_widths = [0.5*cm, 6*cm, 5*cm, 1.5*cm, 1*cm, 2*cm, 2.5*cm] if orientation.lower() == 'landscape' else [0.5*cm, 4*cm, 3.5*cm, 1*cm, 0.8*cm, 1.5*cm, 2*cm]
+        col_widths = [0.5*cm, 6*cm, 5*cm, 1.2*cm, 1*cm, 2*cm, 2.5*cm] if orientation.lower() == 'landscape' else [0.5*cm, 3.5*cm, 3*cm, 0.8*cm, 0.7*cm, 1.5*cm, 2*cm]
         
         table = Table(table_data, colWidths=col_widths, repeatRows=1)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F4E78')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 7),
+            ('FONTSIZE', (0, 0), (-1, 0), 6),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('FONTSIZE', (0, 1), (-1, -1), 6),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BOX', (0, 0), (-1, -1), 1, colors.black),
             ('ALIGN', (-2, 1), (-1, -1), 'RIGHT'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
         ]))
         
         elements.append(table)
     else:
         elements.append(Paragraph('Nenhum item cadastrado.', ParagraphStyle('Center', fontSize=10, alignment=1)))
     
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     filename = f'PAC_Obras_{pac.get("nome_secretaria", "").replace(" ", "_")}.pdf'
@@ -4355,34 +4356,31 @@ async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str 
 
 @public_router.get("/processos/export/pdf")
 async def public_export_processos_pdf(orientation: str = "landscape"):
-    """Exporta todos os processos para PDF (público)."""
+    """Exporta todos os processos para PDF (público) - Formato DOEM."""
     processos = await db.processos.find({}, {'_id': 0}).to_list(1000)
     
     buffer = BytesIO()
-    
-    # Margens padronizadas conforme Lei 14.133/2021
-    # 5cm (esquerda/direita), 3cm (superior/inferior)
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
+    
+    # Criar callback para cabeçalho/rodapé DOEM
+    from utils.pdf_utils import create_page_callback
+    doem_callback = create_page_callback(
+        titulo_documento='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
+        subtitulo=f'Lei Federal nº 14.133/2021 | Total: {len(processos)} processos',
+        total_pages=1
+    )
     
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=REPORT_MARGIN_LEFT, 
-        rightMargin=REPORT_MARGIN_RIGHT, 
-        topMargin=REPORT_MARGIN_TOP, 
-        bottomMargin=REPORT_MARGIN_BOTTOM
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=55*mm,
+        bottomMargin=35*mm
     )
     
     elements = []
     styles = getSampleStyleSheet()
-    
-    # Cabeçalho
-    elements.append(Paragraph('<b>PREFEITURA MUNICIPAL DE ACAIACA - MG</b>', ParagraphStyle('Center', fontSize=12, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('<b>GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS</b>', ParagraphStyle('Center', fontSize=10, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Paragraph('Lei Federal nº 14.133/2021', ParagraphStyle('Center', fontSize=8, alignment=1)))
-    elements.append(Paragraph(f'Data de Geração: {datetime.now().strftime("%d/%m/%Y às %H:%M")}', ParagraphStyle('Center', fontSize=8, alignment=1)))
-    elements.append(Paragraph(f'Total de Processos: {len(processos)}', ParagraphStyle('Center', fontSize=8, fontName='Helvetica-Bold', alignment=1)))
-    elements.append(Spacer(1, 4*mm))
     
     # Tabela de processos
     if orientation.lower() == 'portrait':
@@ -4392,11 +4390,11 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
                 str(idx),
                 p.get('numero_processo', ''),
                 p.get('status', ''),
-                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal'])
+                Paragraph(f"<font size=5>{p.get('modalidade', '')}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{p.get('objeto', '')[:50]}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{p.get('secretaria', '')}</font>", styles['Normal'])
             ])
-        col_widths = [0.5*cm, 2*cm, 1.8*cm, 3*cm, 5.5*cm, 3.5*cm]
+        col_widths = [0.5*cm, 1.8*cm, 1.5*cm, 2.5*cm, 5*cm, 3*cm]
     else:
         table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Responsável', 'Secretaria', 'Observações']]
         for idx, p in enumerate(processos, start=1):
