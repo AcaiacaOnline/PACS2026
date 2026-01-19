@@ -7499,12 +7499,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
     elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
     elements.append(Paragraph(f'Responsável pela Prestação de Contas', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
     
-    # ===== RODAPÉ =====
-    elements.append(Spacer(1, 10*mm))
-    data_geracao = datetime.now(timezone.utc).strftime('%d/%m/%Y às %H:%M')
-    elements.append(Paragraph(f'Documento gerado em {data_geracao} | Planejamento Acaiaca © 2026', ParagraphStyle('Rodape', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
-    
-    doc.build(elements)
+    # Build com callback DOEM
+    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
