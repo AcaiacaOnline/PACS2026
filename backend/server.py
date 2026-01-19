@@ -5631,46 +5631,83 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
         textColor=colors.HexColor('#666666')
     )
     
-    # Função para desenhar cabeçalho e rodapé em cada página
+    # Função para desenhar cabeçalho e rodapé em cada página - Layout DOEM padronizado
     def draw_header_footer(canvas, doc):
         canvas.saveState()
         page_width, page_height = A4
         
-        # === CABEÇALHO ===
-        # Desenhar brasão
-        if brasao_path.exists():
+        # Cor azul escuro padrão DOEM
+        AZUL_DOEM = colors.HexColor('#000080')
+        
+        # Margens fixas para o cabeçalho
+        margin_left = 15*mm
+        margin_right = 15*mm
+        brasao_size = 20*mm
+        header_y = page_height - 10*mm
+        
+        # === CABEÇALHO - BRASÕES NAS LATERAIS ===
+        brasao_oficial = ROOT_DIR / 'static' / 'brasao_acaiaca.png'
+        if brasao_oficial.exists():
             try:
-                pil_img = PILImage.open(str(brasao_path))
-                img_width, img_height = pil_img.size
-                aspect_ratio = img_height / img_width
-                logo_width = 22*mm
-                logo_height = logo_width * aspect_ratio
-                canvas.drawImage(str(brasao_path), left_margin, page_height - 28*mm, 
-                               width=logo_width, height=logo_height, preserveAspectRatio=True)
+                # Brasão esquerdo
+                canvas.drawImage(str(brasao_oficial), margin_left, header_y - brasao_size,
+                               width=brasao_size, height=brasao_size, preserveAspectRatio=True, mask='auto')
+                # Brasão direito
+                canvas.drawImage(str(brasao_oficial), page_width - margin_right - brasao_size, header_y - brasao_size,
+                               width=brasao_size, height=brasao_size, preserveAspectRatio=True, mask='auto')
             except Exception as e:
                 logging.error(f"Erro ao carregar brasão: {e}")
         
-        # Texto do cabeçalho ao lado do brasão
-        # Cores do brasão: azul #1F4E78 e verde #2E5A1F
-        text_x = left_margin + 26*mm
-        text_y = page_height - 12*mm
+        # === TEXTO "ACAIACA" CENTRALIZADO EM AZUL ESCURO ===
+        canvas.setFillColor(AZUL_DOEM)
+        canvas.setFont("Helvetica-Bold", 28)
+        acaiaca_y = header_y - 16*mm
+        canvas.drawCentredString(page_width / 2, acaiaca_y, "ACAIACA")
         
-        canvas.setFont('Helvetica-Bold', 12)
-        canvas.setFillColor(colors.HexColor('#1F4E78'))
-        canvas.drawString(text_x, text_y, "DOEM")
-        
-        canvas.setFont('Helvetica-Bold', 10)
-        canvas.setFillColor(colors.HexColor('#2E5A1F'))
-        canvas.drawString(text_x, text_y - 12, "Diário Oficial Eletrônico Municipal")
-        
-        canvas.setFont('Helvetica', 9)
-        canvas.setFillColor(colors.HexColor('#1F4E78'))
-        canvas.drawString(text_x, text_y - 23, "de Acaiaca - MG")
-        
-        # Linha divisória
-        canvas.setStrokeColor(colors.HexColor('#1F4E78'))
+        # === PRIMEIRA LINHA AZUL (FINA) ===
+        linha1_y = acaiaca_y - 6*mm
+        canvas.setStrokeColor(AZUL_DOEM)
         canvas.setLineWidth(1)
-        canvas.line(left_margin, page_height - 32*mm, page_width - right_margin, page_height - 32*mm)
+        canvas.line(margin_left, linha1_y, page_width - margin_right, linha1_y)
+        
+        # === INFORMAÇÕES DE PUBLICAÇÃO ===
+        info_y = linha1_y - 4*mm
+        canvas.setFont("Helvetica-Bold", 8)
+        canvas.setFillColor(AZUL_DOEM)
+        
+        # ANO - Nº - PÁGINAS centralizado
+        ano = edicao.get('ano', datetime.now().year)
+        numero = edicao.get('numero_edicao', 1)
+        info_centro = f"ANO {ano} - Nº {numero} - {doc.page} PÁGINAS"
+        canvas.drawCentredString(page_width / 2, info_y, info_centro)
+        
+        # Data por extenso à direita
+        data_pub = edicao.get('data_publicacao')
+        if isinstance(data_pub, str):
+            try:
+                data_pub = datetime.fromisoformat(data_pub.replace('Z', '+00:00'))
+            except:
+                data_pub = datetime.now()
+        elif not data_pub:
+            data_pub = datetime.now()
+        
+        dias = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
+        meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+        data_texto = f"Acaiaca, {dias[data_pub.weekday()]}, {data_pub.day} de {meses[data_pub.month - 1]} de {data_pub.year}."
+        canvas.setFont("Helvetica", 8)
+        canvas.drawRightString(page_width - margin_right, info_y, data_texto)
+        
+        # === SEGUNDA LINHA AZUL (GROSSA) ===
+        linha2_y = info_y - 4*mm
+        canvas.setStrokeColor(AZUL_DOEM)
+        canvas.setLineWidth(2.5)
+        canvas.line(margin_left, linha2_y, page_width - margin_right, linha2_y)
+        
+        # === URL DO DOEM ===
+        url_y = linha2_y - 4*mm
+        canvas.setFont("Helvetica", 7)
+        canvas.setFillColor(AZUL_DOEM)
+        canvas.drawCentredString(page_width / 2, url_y, "https://pac.acaiaca.mg.gov.br/doem")
         
         # === SELO DE ASSINATURA DIGITAL ===
         assinatura = edicao.get('assinatura_digital')
@@ -5680,7 +5717,6 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
             # Verificar se há múltiplos assinantes (assinatura em lote)
             assinantes_lote = assinatura.get('assinantes', [])
             if assinantes_lote and len(assinantes_lote) > 0:
-                # Usar lista de assinantes do lote
                 signers = []
                 for assinante in assinantes_lote:
                     signers.append({
@@ -5691,7 +5727,6 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                         'data_hora': assinante.get('data_hora', datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S'))
                     })
             else:
-                # Assinante único (compatibilidade com versão anterior)
                 signers = [{
                     'nome': assinatura.get('titular', 'Prefeitura Municipal de Acaiaca'),
                     'cargo': assinatura.get('cargo', 'Órgão Publicador'),
@@ -5700,32 +5735,31 @@ async def gerar_pdf_doem(edicao: dict) -> BytesIO:
                     'data_hora': assinatura.get('data_assinatura', datetime.now(timezone.utc)).strftime('%d/%m/%Y %H:%M:%S') if isinstance(assinatura.get('data_assinatura'), datetime) else datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
                 }]
             
-            # URL para validação
             qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
-            # Pegar data da assinatura do primeiro assinante
             signature_date = signers[0].get('data_hora') if signers else None
             draw_signature_seal(canvas, page_width, page_height, signers, validation_code, qr_url, signature_date)
         
-        # === RODAPÉ ===
-        if rodape_path.exists():
-            try:
-                pil_img = PILImage.open(str(rodape_path))
-                img_width, img_height = pil_img.size
-                aspect_ratio = img_height / img_width
-                rodape_width = page_width - left_margin - right_margin
-                rodape_height = rodape_width * aspect_ratio
-                if rodape_height > 20*mm:
-                    rodape_height = 20*mm
-                    rodape_width = rodape_height / aspect_ratio
-                canvas.drawImage(str(rodape_path), left_margin, 5*mm, 
-                               width=rodape_width, height=rodape_height, preserveAspectRatio=True)
-            except Exception as e:
-                logging.error(f"Erro ao carregar rodapé: {e}")
+        # === RODAPÉ - 3 LINHAS CENTRALIZADAS ===
+        footer_base_y = 22*mm
+        canvas.setFillColor(AZUL_DOEM)
+        canvas.setFont("Helvetica", 8)
+        
+        # Linha 1: Prefeitura | CNPJ
+        canvas.drawCentredString(page_width / 2, footer_base_y + 8*mm, 
+            "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90")
+        
+        # Linha 2: Endereço
+        canvas.drawCentredString(page_width / 2, footer_base_y + 3*mm, 
+            "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000")
+        
+        # Linha 3: Contatos
+        canvas.drawCentredString(page_width / 2, footer_base_y - 2*mm, 
+            "Tel.: (31) 3887-1650 | Portal: https://acaiaca.mg.gov.br | E-mail: administracao@acaiaca.mg.gov.br")
         
         # Número da página
-        canvas.setFont('Helvetica', 8)
+        canvas.setFont("Helvetica", 7)
         canvas.setFillColor(colors.HexColor('#666666'))
-        canvas.drawCentredString(page_width / 2, 3*mm, f"Página {doc.page}")
+        canvas.drawRightString(page_width - margin_right, footer_base_y - 2*mm, f"Página {doc.page}")
         
         canvas.restoreState()
     
