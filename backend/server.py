@@ -5065,7 +5065,8 @@ async def save_document_signature(doc_id: str, doc_type: str, signers: list, has
 def draw_signature_seal(canvas, page_width, page_height, signers: list, validation_code: str, qr_code_url: str = None, signature_date: str = None):
     """
     Desenha o selo de assinatura digital na LATERAL DIREITA da página.
-    Texto VERTICAL em VERMELHO, do cabeçalho ao rodapé, no limite da margem direita.
+    Texto VERTICAL em VERMELHO, distribuído em 3 linhas do cabeçalho ao rodapé.
+    Layout profissional com QR Code no canto superior direito.
     
     Args:
         canvas: Canvas do reportlab
@@ -5079,8 +5080,9 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
     from reportlab.lib.utils import ImageReader
     import qrcode
     
-    # Cor VERMELHA para o texto
-    cor_vermelho = colors.HexColor("#DC2626")  # Vermelho
+    # Cores
+    cor_vermelho = colors.HexColor("#DC2626")  # Vermelho vibrante
+    cor_vermelho_claro = colors.HexColor("#FEE2E2")  # Fundo suave
     
     # Usar a data da assinatura fornecida ou a atual
     if signature_date:
@@ -5099,17 +5101,15 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
         cpf_masked = '***.***.***-**'
         cargo = ''
     
-    # Posição X - no limite da margem direita
-    text_x = page_width - 6 * mm  # 6mm da borda direita
-    
-    # QR Code pequeno no topo da lateral direita
-    qr_size = 12 * mm
-    qr_x = page_width - qr_size - 3 * mm
-    qr_y = page_height - qr_size - 10 * mm
+    # ===== QR CODE NO CANTO SUPERIOR DIREITO =====
+    qr_size = 15 * mm
+    qr_margin = 8 * mm
+    qr_x = page_width - qr_size - qr_margin
+    qr_y = page_height - qr_size - qr_margin
     
     if qr_code_url:
         try:
-            qr = qrcode.QRCode(version=1, box_size=2, border=1)
+            qr = qrcode.QRCode(version=1, box_size=3, border=1)
             qr.add_data(qr_code_url)
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="#DC2626", back_color="#ffffff")
@@ -5118,36 +5118,84 @@ def draw_signature_seal(canvas, page_width, page_height, signers: list, validati
             qr_img.save(qr_buffer, format='PNG')
             qr_buffer.seek(0)
             
+            # Desenhar borda sutil ao redor do QR
+            canvas.saveState()
+            canvas.setStrokeColor(cor_vermelho)
+            canvas.setLineWidth(0.5)
+            canvas.rect(qr_x - 1*mm, qr_y - 1*mm, qr_size + 2*mm, qr_size + 2*mm)
+            canvas.restoreState()
+            
             canvas.drawImage(ImageReader(qr_buffer), qr_x, qr_y, width=qr_size, height=qr_size)
         except Exception as e:
             logging.error(f"Erro ao gerar QR Code: {e}")
     
-    # Montar texto da assinatura em uma linha
-    texto_assinatura = f"ASSINADO DIGITALMENTE por {nome}"
+    # ===== PREPARAR AS 3 LINHAS DE TEXTO =====
+    # Linha 1: Assinante e cargo
+    linha1 = f"ASSINADO DIGITALMENTE por {nome}"
     if cargo:
-        texto_assinatura += f" - {cargo}"
-    texto_assinatura += f" | CPF: {cpf_masked} | Data: {data_assinatura} | Código: {validation_code} | Verifique em: pac.acaiaca.mg.gov.br/validar"
+        linha1 += f" - {cargo}"
     
-    # Salvar estado do canvas
+    # Linha 2: CPF e Data
+    linha2 = f"CPF: {cpf_masked}  •  Data: {data_assinatura}"
+    
+    # Linha 3: Código e validação
+    linha3 = f"Código: {validation_code}  •  Verifique: pac.acaiaca.mg.gov.br/validar"
+    
+    # ===== CONFIGURAÇÕES DE POSICIONAMENTO =====
+    # Margem direita - 3 linhas verticais
+    margin_right = 5 * mm
+    line_spacing = 3.5 * mm  # Espaçamento entre linhas
+    
+    # Posições X para cada linha (da borda direita para dentro)
+    x_linha1 = page_width - margin_right
+    x_linha2 = x_linha1 - line_spacing
+    x_linha3 = x_linha2 - line_spacing
+    
+    # Posição Y - do topo (abaixo do QR) até o rodapé
+    start_y = qr_y - 8 * mm  # Começa abaixo do QR Code
+    end_y = 15 * mm  # Margem inferior
+    
+    # Tamanho da fonte ajustado para caber
+    font_size = 6
+    
+    # ===== DESENHAR FAIXA DE FUNDO SUTIL =====
     canvas.saveState()
+    canvas.setFillColor(cor_vermelho_claro)
+    canvas.setStrokeColor(cor_vermelho)
+    canvas.setLineWidth(0.3)
+    # Faixa vertical na margem direita
+    faixa_width = 12 * mm
+    faixa_x = page_width - faixa_width - 2 * mm
+    faixa_y = end_y - 5 * mm
+    faixa_height = start_y - end_y + 10 * mm
+    canvas.roundRect(faixa_x, faixa_y, faixa_width, faixa_height, 2*mm, fill=1, stroke=1)
+    canvas.restoreState()
     
-    # Rotacionar 90 graus (texto vertical, de cima para baixo)
-    # Posicionar abaixo do QR Code
-    start_y = qr_y - 5 * mm
-    
-    # Mover para posição e rotacionar
-    canvas.translate(text_x, start_y)
-    canvas.rotate(-90)  # Rotação para texto vertical (cabeçalho -> rodapé)
-    
-    # IMPORTANTE: Definir cor e fonte APÓS as transformações
-    # para garantir que sejam aplicadas corretamente ao texto
+    # ===== DESENHAR LINHA 1 (mais externa) =====
+    canvas.saveState()
+    canvas.translate(x_linha1, start_y)
+    canvas.rotate(-90)
     canvas.setFillColor(cor_vermelho)
-    canvas.setFont("Helvetica-Bold", 5.5)
+    canvas.setFont("Helvetica-Bold", font_size)
+    canvas.drawString(0, 0, linha1)
+    canvas.restoreState()
     
-    # Desenhar texto (agora na horizontal após rotação)
-    canvas.drawString(0, 0, texto_assinatura)
+    # ===== DESENHAR LINHA 2 (meio) =====
+    canvas.saveState()
+    canvas.translate(x_linha2, start_y)
+    canvas.rotate(-90)
+    canvas.setFillColor(cor_vermelho)
+    canvas.setFont("Helvetica", font_size)
+    canvas.drawString(0, 0, linha2)
+    canvas.restoreState()
     
-    # Restaurar estado do canvas
+    # ===== DESENHAR LINHA 3 (mais interna) =====
+    canvas.saveState()
+    canvas.translate(x_linha3, start_y)
+    canvas.rotate(-90)
+    canvas.setFillColor(cor_vermelho)
+    canvas.setFont("Helvetica", font_size)
+    canvas.drawString(0, 0, linha3)
     canvas.restoreState()
 
 async def get_doem_config() -> dict:
