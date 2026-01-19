@@ -31,50 +31,41 @@ Sistema completo de gestão municipal que inclui:
 
 ### Changelog - Sessão 14 (19/01/2026)
 
-#### ✅ 1. CABEÇALHO ESTILO DOEM EM TODOS OS PDFs
-- **Layout padronizado** baseado na imagem de referência do Diário Oficial
-- **Componentes do cabeçalho:**
-  - Brasões espelhados nas laterais (esquerda e direita)
-  - Texto "ACAIACA" em azul royal grande (36pt) no centro
-  - Linha cinza separadora
-  - Informações de publicação: URL, ANO, Nº páginas, Data formatada
+#### ✅ 1. LAYOUT DOEM PADRONIZADO EM TODOS OS PDFs
+- **Cabeçalho no estilo DOEM** conforme imagem de referência:
+  - Brasões espelhados nas laterais (esquerda E direita)
+  - "ACAIACA" em azul grande com efeito 3D/sombra no centro
+  - Linha cinza grossa separadora
+  - Informações de publicação em azul (URL | ANO - Nº - PÁGINAS | Data)
   - Linha azul grossa inferior
-  - Título do documento específico
-- **PDFs Atualizados:**
-  - PAC Individual e PAC Geral
-  - PAC Obras e Serviços de Engenharia
-  - Relatório de Processos
-  - Relatório MROSC (Prestação de Contas)
-  - Relatório Gerencial Consolidado
+- **Rodapé no estilo DOEM**:
+  - Texto em cinza claro (marca d'água) centralizado
+  - "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90"
+  - "Praça Antônio Carlos, 10 - Centro - CEP: 35444-000"
+  - Número da página à direita
 
-#### ✅ 2. RODAPÉ PADRONIZADO EM TODOS OS PDFs
-- **Elementos:**
-  - Linha cinza separadora
-  - CNPJ e dados da prefeitura centralizados
-  - Endereço: "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000"
-  - Contatos: Telefone e e-mail
-  - Número da página e data de geração
+#### ✅ 2. PDFs ATUALIZADOS
+- **Rotas Privadas (autenticadas):**
+  - PAC Individual (`/api/pacs/{id}/export/pdf`)
+  - PAC Geral (`/api/pacs-geral/{id}/export/pdf`)
+  - PAC Obras (`/api/pacs-geral-obras/{id}/export/pdf`)
+  - Relatório de Processos (`/api/processos/export/pdf`)
+  - Relatório MROSC (`/api/mrosc/projetos/{id}/relatorio/pdf`)
+  - Relatório Consolidado (`/api/relatorios/consolidado/pdf`)
+- **Rotas Públicas (transparência):**
+  - PAC Individual Público (`/api/public/pacs/{id}/export/pdf`)
+  - PAC Geral Público (`/api/public/pacs-geral/{id}/export/pdf`)
+  - PAC Obras Público (`/api/public/pacs-geral-obras/{id}/export/pdf`)
+  - Processos Público (`/api/public/processos/export/pdf`)
 
-#### ✅ 3. CORREÇÃO DO DOEM PÚBLICO
-- **Cabeçalho reformulado** seguindo o layout da imagem de referência
-- **Endereço corrigido** no rodapé
-- **Brasão exibido** nas laterais
+#### ✅ 3. CLASSE DOEMPageTemplate
+- Callback reutilizável para cabeçalho/rodapé em todas as páginas
+- Parâmetros configuráveis: título, subtítulo, ano, número, páginas, data
+- Assinatura digital mantida como estava
 
-#### ✅ 4. MENU RESPONSIVO MELHORADO
-- **Desktop (lg+):** Menu compacto com todos os itens visíveis
-- **Mobile (< lg):** Menu expansível com grid de ícones
-- **Ajustes de espaçamento** para evitar elementos fora da tela
-
-#### ✅ 5. ARQUIVOS MODIFICADOS
-- `/app/backend/utils/pdf_utils.py` - REESCRITO com funções DOEM completas
-- `/app/backend/server.py` - Atualizado `create_professional_header`
-- `/app/frontend/src/pages/DOEMPublico.jsx` - Novo cabeçalho estilo oficial
-- `/app/frontend/src/components/Layout.jsx` - Menu responsivo com mobile
-- `/app/frontend/public/brasao-acaiaca.png` - Copiado para uso no frontend
-
-#### ✅ 6. TESTES
-- **34/34 testes pytest passando** após todas as alterações
-- **PDFs validados** com cabeçalho e rodapé corretos
+#### ✅ 4. TESTES
+- **34/34 testes pytest passando**
+- **PDFs validados** com layout correto
 
 ---
 
