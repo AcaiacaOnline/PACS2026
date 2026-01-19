@@ -158,150 +158,199 @@ const Layout = ({ children }) => {
       {/* Overlay */}
       <div className="min-h-screen flex flex-col bg-background/85 backdrop-blur-[1px]">
         <header className="bg-primary text-primary-foreground shadow-lg no-print">
-          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="bg-primary-foreground p-2 rounded">
-                <Building2 className="text-primary w-6 h-6" />
+          <div className="container mx-auto px-2 lg:px-4 py-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
+                <div className="bg-primary-foreground p-1.5 lg:p-2 rounded">
+                  <Building2 className="text-primary w-5 h-5 lg:w-6 lg:h-6" />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg lg:text-xl font-heading font-bold">Planejamento Acaiaca</h1>
+                  <div className="text-xs opacity-90">Planejamento e Contratações</div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-heading font-bold">Planejamento Acaiaca</h1>
-                <div className="text-xs opacity-90">Planejamento e Contratações</div>
+              
+              {/* Menu Desktop */}
+              <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2 flex-wrap justify-end">
+                <Link
+                  to="/"
+                  data-testid="nav-portal-btn"
+                  className="flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors hover:bg-primary/80 border border-primary-foreground/20"
+                  title="Portal Público"
+                >
+                  <Globe size={16} />
+                  <span className="hidden xl:inline">Portal</span>
+                </Link>
+                <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
+                <Link
+                  to="/dashboard"
+                  data-testid="nav-dashboard-btn"
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
+                    isActive('/dashboard') ? 'bg-primary/80' : 'hover:bg-primary/80'
+                  }`}
+                >
+                  <LayoutDashboard size={16} />
+                  <span className="hidden xl:inline">Dashboard</span>
+                </Link>
+
+                <Link
+                  to="/dashboard-analitico"
+                  data-testid="nav-analitico-btn"
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-blue-500/50 ${
+                    isActive('/dashboard-analitico') ? 'bg-blue-600/80' : 'hover:bg-blue-600/80'
+                  }`}
+                >
+                  <BarChart3 size={16} />
+                  <span className="hidden xl:inline">Analítico</span>
+                </Link>
+
+                <Link
+                  to="/analytics"
+                  data-testid="nav-analytics-realtime-btn"
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
+                    isActive('/analytics') ? 'bg-green-600/80' : 'hover:bg-green-600/80'
+                  }`}
+                  title="Métricas em Tempo Real"
+                >
+                  <Bell size={16} />
+                </Link>
+                
+                {/* Menu PACS */}
+                <DropdownMenu
+                  title="PACs"
+                  icon={FileText}
+                  isActive={isActive('/pacs') || isActive('/pacs-geral')}
+                  items={[
+                    { path: '/pacs', label: 'PAC Individual', icon: List },
+                    { path: '/pacs-geral', label: 'PAC Geral', icon: Building2 },
+                    { path: '/pacs-geral-obras', label: 'PAC Geral Obras', icon: Hammer },
+                  ]}
+                />
+
+                {/* Menu Processos */}
+                <DropdownMenu
+                  title="Processos"
+                  icon={ClipboardList}
+                  color="amber"
+                  isActive={isActive('/gestao-processual') || isActive('/processos')}
+                  items={[
+                    { path: '/gestao-processual', label: 'Gestão Processual', icon: ClipboardList },
+                    { path: '/processos/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                  ]}
+                />
+
+                {/* Menu Diário Oficial */}
+                <DropdownMenu
+                  title="DOEM"
+                  icon={Newspaper}
+                  color="purple"
+                  isActive={isActive('/doem')}
+                  items={[
+                    { path: '/doem', label: 'Edições', icon: Newspaper },
+                    { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
+                  ]}
+                />
+
+                {/* Menu Prestação de Contas */}
+                <Link
+                  to="/prestacao-contas"
+                  data-testid="nav-prestacao-contas-btn"
+                  className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
+                    isActive('/prestacao-contas') ? 'bg-green-600' : 'hover:bg-green-600/80'
+                  }`}
+                  title="Prestação de Contas MROSC"
+                >
+                  <DollarSign size={16} />
+                </Link>
+
+                {/* Menu Configurações */}
+                <DropdownMenu
+                  title="Config"
+                  icon={Settings}
+                  color="teal"
+                  isActive={isActive('/historico-assinaturas') || isActive('/usuarios') || isActive('/backup') || isActive('/configuracoes')}
+                  items={[
+                    { path: '/historico-assinaturas', label: 'Assinaturas', icon: FileSignature },
+                    { path: '/configuracoes', label: 'Aparência', icon: Settings },
+                    ...(user?.is_admin ? [
+                      { path: '/usuarios', label: 'Usuários', icon: Users },
+                      { path: '/backup', label: 'Backup', icon: Database },
+                    ] : []),
+                  ]}
+                />
+
+                <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
+                {user && (
+                  <div className="hidden 2xl:flex items-center gap-2 text-sm bg-primary/50 px-2 py-1.5 rounded-lg">
+                    <User size={14} />
+                    <span className="font-medium max-w-[80px] truncate">{user.name?.split(' ')[0]}</span>
+                    {user.is_admin && (
+                      <Shield size={14} className="text-amber-400" title="Administrador" />
+                    )}
+                  </div>
+                )}
+                
+                {/* Centro de Notificações */}
+                {user && <NotificationCenter userId={user.user_id} />}
+                
+                <button
+                  onClick={handleLogout}
+                  data-testid="logout-btn"
+                  className="flex items-center gap-1 px-2 py-2 bg-red-500/80 hover:bg-red-600 rounded-lg transition-colors text-sm"
+                  title="Sair"
+                >
+                  <LogOut size={16} />
+                </button>
+              </nav>
+              
+              {/* Menu Mobile Button */}
+              <div className="flex lg:hidden items-center gap-2">
+                {user && <NotificationCenter userId={user.user_id} />}
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 rounded-lg hover:bg-primary/80"
+                >
+                  <ChevronDown size={20} className={`transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 bg-red-500/80 hover:bg-red-600 rounded-lg"
+                  title="Sair"
+                >
+                  <LogOut size={16} />
+                </button>
               </div>
             </div>
-            <nav className="flex items-center space-x-1 md:space-x-2">
-              <Link
-                to="/"
-                data-testid="nav-portal-btn"
-                className="flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors hover:bg-primary/80 border border-primary-foreground/20"
-                title="Portal Público"
-              >
-                <Globe size={16} />
-                <span className="hidden lg:inline">Portal</span>
-              </Link>
-              <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
-              <Link
-                to="/dashboard"
-                data-testid="nav-dashboard-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm ${
-                  isActive('/dashboard') ? 'bg-primary/80' : 'hover:bg-primary/80'
-                }`}
-              >
-                <LayoutDashboard size={16} />
-                <span className="hidden lg:inline">Dashboard</span>
-              </Link>
-
-              <Link
-                to="/dashboard-analitico"
-                data-testid="nav-analitico-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-blue-500/50 ${
-                  isActive('/dashboard-analitico') ? 'bg-blue-600/80' : 'hover:bg-blue-600/80'
-                }`}
-              >
-                <BarChart3 size={16} />
-                <span className="hidden lg:inline">Analítico</span>
-              </Link>
-
-              <Link
-                to="/analytics"
-                data-testid="nav-analytics-realtime-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
-                  isActive('/analytics') ? 'bg-green-600/80' : 'hover:bg-green-600/80'
-                }`}
-                title="Métricas em Tempo Real"
-              >
-                <Bell size={16} />
-                <span className="hidden lg:inline">Tempo Real</span>
-              </Link>
-              
-              {/* Menu PACS */}
-              <DropdownMenu
-                title="PACs"
-                icon={FileText}
-                isActive={isActive('/pacs') || isActive('/pacs-geral')}
-                items={[
-                  { path: '/pacs', label: 'PAC Individual', icon: List },
-                  { path: '/pacs-geral', label: 'PAC Geral', icon: Building2 },
-                  { path: '/pacs-geral-obras', label: 'PAC Geral Obras', icon: Hammer },
-                ]}
-              />
-
-              {/* Menu Processos */}
-              <DropdownMenu
-                title="Processos"
-                icon={ClipboardList}
-                color="amber"
-                isActive={isActive('/gestao-processual') || isActive('/processos')}
-                items={[
-                  { path: '/gestao-processual', label: 'Gestão Processual', icon: ClipboardList },
-                  { path: '/processos/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-                ]}
-              />
-
-              {/* Menu Diário Oficial */}
-              <DropdownMenu
-                title="DOEM"
-                icon={Newspaper}
-                color="purple"
-                isActive={isActive('/doem')}
-                items={[
-                  { path: '/doem', label: 'Edições', icon: Newspaper },
-                  { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
-                ]}
-              />
-
-              {/* Menu Prestação de Contas */}
-              <Link
-                to="/prestacao-contas"
-                data-testid="nav-prestacao-contas-btn"
-                className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-colors text-sm border border-green-500/50 ${
-                  isActive('/prestacao-contas') ? 'bg-green-600' : 'hover:bg-green-600/80'
-                }`}
-                title="Prestação de Contas MROSC"
-              >
-                <DollarSign size={16} />
-                <span className="hidden xl:inline">MROSC</span>
-              </Link>
-
-              {/* Menu Configurações */}
-              <DropdownMenu
-                title="Configurações"
-                icon={Settings}
-                color="teal"
-                isActive={isActive('/historico-assinaturas') || isActive('/usuarios') || isActive('/backup') || isActive('/configuracoes')}
-                items={[
-                  { path: '/historico-assinaturas', label: 'Assinaturas', icon: FileSignature },
-                  { path: '/configuracoes', label: 'Aparência', icon: Settings },
-                  ...(user?.is_admin ? [
-                    { path: '/usuarios', label: 'Usuários', icon: Users },
-                    { path: '/backup', label: 'Backup', icon: Database },
-                  ] : []),
-                ]}
-              />
-
-              <div className="h-6 w-px bg-primary-foreground/20 mx-1"></div>
-              {user && (
-                <div className="hidden xl:flex items-center gap-2 text-sm bg-primary/50 px-3 py-1.5 rounded-lg">
-                  <User size={14} />
-                  <span className="font-medium">{user.name?.split(' ')[0]}</span>
-                  {user.is_admin && (
-                    <Shield size={14} className="text-amber-400" title="Administrador" />
-                  )}
-                </div>
-              )}
-              
-              {/* Centro de Notificações */}
-              {user && <NotificationCenter userId={user.user_id} />}
-              
-              <button
-                onClick={handleLogout}
-                data-testid="logout-btn"
-                className="flex items-center gap-1 px-3 py-2 bg-red-500/80 hover:bg-red-600 rounded-lg transition-colors text-sm"
-                title="Sair"
-              >
-                <LogOut size={16} />
-                <span className="hidden md:inline">Sair</span>
-              </button>
-            </nav>
+            
+            {/* Menu Mobile Expandido */}
+            {isMobileMenuOpen && (
+              <nav className="lg:hidden mt-3 pt-3 border-t border-primary-foreground/20 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                <Link to="/" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <Globe size={18} /><span>Portal</span>
+                </Link>
+                <Link to="/dashboard" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <LayoutDashboard size={18} /><span>Dashboard</span>
+                </Link>
+                <Link to="/dashboard-analitico" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <BarChart3 size={18} /><span>Analítico</span>
+                </Link>
+                <Link to="/pacs" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <FileText size={18} /><span>PACs</span>
+                </Link>
+                <Link to="/gestao-processual" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <ClipboardList size={18} /><span>Processos</span>
+                </Link>
+                <Link to="/doem" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <Newspaper size={18} /><span>DOEM</span>
+                </Link>
+                <Link to="/prestacao-contas" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <DollarSign size={18} /><span>MROSC</span>
+                </Link>
+                <Link to="/configuracoes" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                  <Settings size={18} /><span>Config</span>
+                </Link>
+              </nav>
+            )}
           </div>
         </header>
         <main className="flex-grow container mx-auto px-4 py-6">
