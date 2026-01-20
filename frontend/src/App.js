@@ -248,28 +248,18 @@ const AppRoutes = () => {
 };
 
 function App() {
-  // Debug: Mostrar informações da URL para diagnóstico
-  const currentUrl = window.location.href;
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  // Detect session_id synchronously during render (NOT in useEffect)
+  // Check URL fragment (hash) for session_id - user lands at {redirect_url}#session_id={session_id}
   const currentHash = window.location.hash;
   const currentSearch = window.location.search;
   
-  console.log('App init - URL:', currentUrl);
-  console.log('App init - Hash:', currentHash);
-  console.log('App init - Search:', currentSearch);
-  
-  // Verificar OAuth callback - pode vir no hash (#session_id=) ou na query string (?session_id=)
+  // Parse both hash and search params
   const hashParams = new URLSearchParams(currentHash.substring(1));
   const searchParams = new URLSearchParams(currentSearch);
   
-  const sessionIdFromHash = hashParams.get('session_id');
-  const sessionIdFromSearch = searchParams.get('session_id');
-  const sessionId = sessionIdFromHash || sessionIdFromSearch;
-  
+  const sessionId = hashParams.get('session_id') || searchParams.get('session_id');
   const isOAuthCallback = !!sessionId;
-  
-  console.log('Session ID from hash:', sessionIdFromHash);
-  console.log('Session ID from search:', sessionIdFromSearch);
-  console.log('Is OAuth callback:', isOAuthCallback);
   
   if (isOAuthCallback) {
     return (
