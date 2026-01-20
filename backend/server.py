@@ -377,12 +377,26 @@ async def oauth_session(request: Request, response: Response):
             auth_response.raise_for_status()
             data = auth_response.json()
         except Exception as e:
+            logging.error(f"OAuth error: {str(e)}")
             raise HTTPException(status_code=401, detail=f"OAuth failed: {str(e)}")
+    
+    # Buscar ou criar usuário
     user_doc = await db.users.find_one({'email': data['email']}, {'_id': 0})
     if not user_doc:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
-        user_doc = {'user_id': user_id, 'email': data['email'], 'name': data['name'], 'password_hash': None, 'is_admin': False, 'is_active': True, 'picture': data.get('picture'), 'created_at': datetime.now(timezone.utc)}
+        user_doc = {
+            'user_id': user_id, 
+            'email': data['email'], 
+            'name': data['name'], 
+            'password_hash': None, 
+            'is_admin': False, 
+            'is_active': True, 
+            'picture': data.get('picture'), 
+            'created_at': datetime.now(timezone.utc)
+        }
         await db.users.insert_one(user_doc)
+        # Remover _id após insert
+        user_doc.pop('_id', None)
     
     # Criar JWT token para o usuário OAuth
     token_data = {
@@ -391,10 +405,23 @@ async def oauth_session(request: Request, response: Response):
     }
     jwt_token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
     
-    session_doc = {'user_id': user_doc['user_id'], 'session_token': data['session_token'], 'expires_at': datetime.now(timezone.utc)+timedelta(days=7), 'created_at': datetime.now(timezone.utc)}
+    # Criar sessão
+    session_doc = {
+        'user_id': user_doc['user_id'], 
+        'session_token': data['session_token'], 
+        'expires_at': datetime.now(timezone.utc) + timedelta(days=7), 
+        'created_at': datetime.now(timezone.utc)
+    }
     await db.user_sessions.insert_one(session_doc)
     response.set_cookie(key='session_token', value=data['session_token'], httponly=True, secure=True, samesite='none', max_age=7*24*60*60, path='/')
+    
+    # Preparar resposta (remover campos sensíveis)
     user_doc.pop('password_hash', None)
+    user_doc.pop('_id', None)
+    
+    # Converter datetime para string se necessário
+    if 'created_at' in user_doc and isinstance(user_doc['created_at'], datetime):
+        user_doc['created_at'] = user_doc['created_at'].isoformat()
     
     # Retornar usuário com token
     return {
