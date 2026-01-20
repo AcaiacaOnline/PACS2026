@@ -5368,6 +5368,54 @@ async def import_rtf(file: UploadFile = File(...), request: Request = None):
         'publicacoes': publicacoes
     }
 
+@doem_router.post("/import-pdf")
+async def import_pdf(file: UploadFile = File(...), request: Request = None):
+    """Importa um arquivo PDF e extrai o texto para publicação"""
+    if request:
+        await get_current_user(request)
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos")
+    
+    try:
+        from PyPDF2 import PdfReader
+        from io import BytesIO
+        
+        content = await file.read()
+        pdf_buffer = BytesIO(content)
+        reader = PdfReader(pdf_buffer)
+        
+        # Extrair texto de todas as páginas
+        texto_completo = ""
+        for page in reader.pages:
+            texto_completo += page.extract_text() + "\n\n"
+        
+        texto_completo = texto_completo.strip()
+        
+        if not texto_completo:
+            raise HTTPException(status_code=400, detail="Não foi possível extrair texto do PDF. O arquivo pode ser uma imagem escaneada.")
+        
+        # Tentar extrair título do conteúdo (primeira linha não vazia)
+        linhas = [l.strip() for l in texto_completo.split('\n') if l.strip()]
+        titulo = linhas[0][:100] if linhas else file.filename.replace('.pdf', '')
+        
+        # Criar publicação extraída
+        publicacao = {
+            'titulo': titulo,
+            'texto': texto_completo,
+            'paginas': len(reader.pages)
+        }
+        
+        return {
+            'filename': file.filename,
+            'paginas': len(reader.pages),
+            'publicacoes_extraidas': 1,
+            'publicacoes': [publicacao]
+        }
+    except Exception as e:
+        logging.error(f"Erro ao processar PDF: {e}")
+        raise HTTPException(status_code=400, detail=f"Erro ao processar PDF: {str(e)}")
+
 @doem_router.post("/edicoes/{edicao_id}/publicar")
 async def publicar_edicao(edicao_id: str, request: Request, background_tasks: BackgroundTasks, enviar_notificacao: bool = True):
     """Publica uma edição e gera PDF assinado, opcionalmente envia notificações"""
