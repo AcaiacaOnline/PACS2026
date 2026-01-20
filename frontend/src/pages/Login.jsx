@@ -88,7 +88,8 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    const redirectUrl = window.location.origin + '/dashboard';
+    // Usar a URL raiz como callback - o App.js vai detectar o hash e processar
+    const redirectUrl = window.location.origin;
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
