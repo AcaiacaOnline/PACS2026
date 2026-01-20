@@ -33,24 +33,31 @@ import './App.css';
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const processSession = async () => {
       try {
         const hash = window.location.hash;
+        console.log('OAuth callback - hash:', hash);
+        
         const params = new URLSearchParams(hash.substring(1));
         const sessionId = params.get('session_id');
+        console.log('OAuth callback - sessionId:', sessionId);
 
         if (!sessionId) {
-          throw new Error('No session ID found');
+          throw new Error('No session ID found in URL');
         }
 
+        console.log('Calling /auth/oauth/session...');
         const response = await api.get('/auth/oauth/session', {
           headers: {
             'X-Session-ID': sessionId
           },
           withCredentials: true
         });
+        
+        console.log('OAuth response:', response.data);
 
         // Salvar dados do usuário e token
         localStorage.setItem('user', JSON.stringify(response.data));
@@ -59,17 +66,25 @@ const OAuthCallback = () => {
         // Se houver token na resposta, salvar
         if (response.data.token) {
           localStorage.setItem('token', response.data.token);
+          console.log('Token saved to localStorage');
         }
         
+        // Marcar como recém autenticado
+        sessionStorage.setItem('just_authenticated', 'true');
+        
         // Limpar o hash da URL
-        window.history.replaceState(null, '', window.location.pathname);
+        window.history.replaceState(null, '', '/dashboard');
         
         toast.success('Login realizado com sucesso!');
         navigate('/dashboard', { replace: true });
       } catch (error) {
         console.error('OAuth error:', error);
-        toast.error('Erro ao autenticar com Google');
-        navigate('/login', { replace: true });
+        console.error('OAuth error details:', error.response?.data);
+        setError(error.response?.data?.detail || error.message || 'Erro desconhecido');
+        toast.error('Erro ao autenticar com Google: ' + (error.response?.data?.detail || error.message));
+        setTimeout(() => {
+          navigate('/login', { replace: true });
+        }, 3000);
       } finally {
         setProcessing(false);
       }
@@ -77,6 +92,19 @@ const OAuthCallback = () => {
 
     processSession();
   }, [navigate]);
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Erro na autenticação</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-sm text-muted-foreground">Redirecionando para login...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (processing) {
     return (
