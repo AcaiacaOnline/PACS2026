@@ -25,10 +25,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Não redirecionar para login durante OAuth callback
+    const isOAuthRequest = error.config?.url?.includes('/auth/oauth/');
+    
+    if (error.response?.status === 401 && !isOAuthRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem('auth_type');
+      // Só redirecionar se não estiver na página de login ou callback
+      if (!window.location.pathname.includes('/login') && !window.location.hash.includes('session_id')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
