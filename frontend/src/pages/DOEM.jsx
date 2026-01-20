@@ -986,7 +986,7 @@ const DOEM = () => {
             <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-foreground">Importar Arquivo RTF</h3>
+                  <h3 className="text-xl font-bold text-foreground">Importar Arquivo</h3>
                   <button onClick={() => { setShowImportModal(false); setImportedPubs([]); }} className="text-muted-foreground hover:text-foreground">
                     <X size={24} />
                   </button>
@@ -995,25 +995,47 @@ const DOEM = () => {
               
               <div className="p-6 space-y-4">
                 <p className="text-muted-foreground text-sm">
-                  Selecione um arquivo RTF para extrair as publicações. O formato esperado usa === TÍTULO === para separar publicações.
+                  Selecione um arquivo RTF ou PDF para extrair as publicações.
                 </p>
                 
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload size={48} className="mx-auto text-muted-foreground mb-4" />
-                  <p className="text-foreground font-semibold mb-2">Formato: Arial, tamanho 9</p>
-                  <p className="text-sm text-muted-foreground mb-4">Extensão .rtf</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Importar RTF */}
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                    <FileText size={40} className="mx-auto text-orange-500 mb-3" />
+                    <p className="text-foreground font-semibold mb-1">Arquivo RTF</p>
+                    <p className="text-xs text-muted-foreground mb-3">Formato padrão com separadores</p>
+                    
+                    <label className="cursor-pointer">
+                      <span className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors inline-block text-sm">
+                        Selecionar RTF
+                      </span>
+                      <input
+                        type="file"
+                        accept=".rtf"
+                        onChange={handleImportRTF}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                   
-                  <label className="cursor-pointer">
-                    <span className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors inline-block">
-                      Selecionar Arquivo RTF
-                    </span>
-                    <input
-                      type="file"
-                      accept=".rtf"
-                      onChange={handleImportRTF}
-                      className="hidden"
-                    />
-                  </label>
+                  {/* Importar PDF */}
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                    <FileText size={40} className="mx-auto text-red-500 mb-3" />
+                    <p className="text-foreground font-semibold mb-1">Arquivo PDF</p>
+                    <p className="text-xs text-muted-foreground mb-3">Extrai texto do documento</p>
+                    
+                    <label className="cursor-pointer">
+                      <span className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors inline-block text-sm">
+                        Selecionar PDF
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleImportPDF}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 </div>
                 
                 {importedPubs.length > 0 && (
@@ -1025,6 +1047,7 @@ const DOEM = () => {
                       <div key={i} className="bg-muted/50 p-3 rounded-lg mb-2">
                         <h5 className="font-medium text-foreground">{pub.titulo}</h5>
                         <p className="text-sm text-muted-foreground line-clamp-2">{pub.texto}</p>
+                        {pub.paginas && <p className="text-xs text-muted-foreground mt-1">{pub.paginas} página(s)</p>}
                       </div>
                     ))}
                     
