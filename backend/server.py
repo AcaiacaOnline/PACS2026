@@ -403,7 +403,7 @@ async def oauth_session(request: Request, response: Response):
         "user_id": user_doc['user_id'],
         "exp": datetime.now(timezone.utc) + timedelta(days=7)
     }
-    jwt_token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
+    jwt_token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
     
     # Criar sessão
     session_doc = {
