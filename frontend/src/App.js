@@ -39,11 +39,17 @@ const OAuthCallback = () => {
     const processSession = async () => {
       try {
         const hash = window.location.hash;
-        console.log('OAuth callback - hash:', hash);
+        const search = window.location.search;
         
-        const params = new URLSearchParams(hash.substring(1));
-        const sessionId = params.get('session_id');
-        console.log('OAuth callback - sessionId:', sessionId);
+        console.log('OAuthCallback - hash:', hash);
+        console.log('OAuthCallback - search:', search);
+        
+        // Tentar pegar session_id do hash ou da query string
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const searchParams = new URLSearchParams(search);
+        
+        const sessionId = hashParams.get('session_id') || searchParams.get('session_id');
+        console.log('OAuthCallback - sessionId:', sessionId);
 
         if (!sessionId) {
           throw new Error('No session ID found in URL');
@@ -112,6 +118,90 @@ const OAuthCallback = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-foreground">Processando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// Componente OAuth com sessionId como prop (para quando já temos o ID)
+const OAuthCallbackWithId = ({ sessionId }) => {
+  const navigate = useNavigate();
+  const [processing, setProcessing] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const processSession = async () => {
+      try {
+        console.log('OAuthCallbackWithId - sessionId:', sessionId);
+
+        if (!sessionId) {
+          throw new Error('No session ID provided');
+        }
+
+        console.log('Calling /auth/oauth/session with sessionId:', sessionId);
+        const response = await api.get('/auth/oauth/session', {
+          headers: {
+            'X-Session-ID': sessionId
+          },
+          withCredentials: true
+        });
+        
+        console.log('OAuth response:', response.data);
+
+        // Salvar dados do usuário e token
+        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('auth_type', 'oauth');
+        
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+          console.log('Token saved to localStorage');
+        }
+        
+        sessionStorage.setItem('just_authenticated', 'true');
+        window.history.replaceState(null, '', '/dashboard');
+        
+        toast.success('Login realizado com sucesso!');
+        navigate('/dashboard', { replace: true });
+      } catch (error) {
+        console.error('OAuth error:', error);
+        console.error('OAuth error details:', error.response?.data);
+        setError(error.response?.data?.detail || error.message || 'Erro desconhecido');
+        toast.error('Erro ao autenticar com Google: ' + (error.response?.data?.detail || error.message));
+        setTimeout(() => {
+          navigate('/login', { replace: true });
+        }, 3000);
+      } finally {
+        setProcessing(false);
+      }
+    };
+
+    processSession();
+  }, [navigate, sessionId]);
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Erro na autenticação</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-sm text-muted-foreground">Redirecionando para login...</p>
+          <p className="text-xs text-muted-foreground mt-4">URL: {window.location.href}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (processing) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-foreground">Processando autenticação...</p>
+          <p className="text-sm text-muted-foreground mt-2">Session ID: {sessionId?.substring(0, 20)}...</p>
         </div>
       </div>
     );
