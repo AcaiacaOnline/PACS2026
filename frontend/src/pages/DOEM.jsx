@@ -369,6 +369,25 @@ const DOEM = () => {
     }
   };
 
+  const handleImportPDF = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const response = await api.post('/doem/import-pdf', formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      setImportedPubs(response.data.publicacoes);
+      toast.success(`${response.data.publicacoes_extraidas} publicação(ões) extraída(s) do PDF (${response.data.paginas} páginas)`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao importar arquivo PDF');
+    }
+  };
+
   const handleUseImported = () => {
     const newPubs = importedPubs.map((p, i) => ({
       titulo: p.titulo,
