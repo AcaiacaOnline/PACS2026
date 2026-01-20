@@ -120,15 +120,8 @@ const OAuthCallback = () => {
   return null;
 };
 
-// Wrapper para detectar OAuth callback
+// Wrapper para rotas normais
 const AppRoutes = () => {
-  // Verificar se é um callback OAuth
-  const isOAuthCallback = window.location.hash && window.location.hash.includes('session_id=');
-
-  if (isOAuthCallback) {
-    return <OAuthCallback />;
-  }
-
   return (
     <Routes>
       {/* Rota Pública - Portal de Transparência (PÁGINA INICIAL) */}
