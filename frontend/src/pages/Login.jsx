@@ -88,8 +88,8 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Usar a URL raiz como callback - o App.js vai detectar o hash e processar
-    const redirectUrl = window.location.origin;
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    const redirectUrl = window.location.origin + '/dashboard';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
