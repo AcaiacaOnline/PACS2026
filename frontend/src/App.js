@@ -128,7 +128,6 @@ const OAuthCallback = () => {
 
 // Componente OAuth com sessionId como prop (para quando já temos o ID)
 const OAuthCallbackWithId = ({ sessionId }) => {
-  const navigate = useNavigate();
   const [processing, setProcessing] = useState(true);
   const [error, setError] = useState(null);
 
@@ -161,17 +160,18 @@ const OAuthCallbackWithId = ({ sessionId }) => {
         }
         
         sessionStorage.setItem('just_authenticated', 'true');
-        window.history.replaceState(null, '', '/dashboard');
         
         toast.success('Login realizado com sucesso!');
-        navigate('/dashboard', { replace: true });
+        
+        // Usar window.location para forçar navegação completa
+        window.location.href = '/dashboard';
       } catch (error) {
         console.error('OAuth error:', error);
         console.error('OAuth error details:', error.response?.data);
         setError(error.response?.data?.detail || error.message || 'Erro desconhecido');
         toast.error('Erro ao autenticar com Google: ' + (error.response?.data?.detail || error.message));
         setTimeout(() => {
-          navigate('/login', { replace: true });
+          window.location.href = '/login';
         }, 3000);
       } finally {
         setProcessing(false);
@@ -179,7 +179,7 @@ const OAuthCallbackWithId = ({ sessionId }) => {
     };
 
     processSession();
-  }, [navigate, sessionId]);
+  }, [sessionId]);
 
   if (error) {
     return (
