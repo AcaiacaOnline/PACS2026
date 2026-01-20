@@ -383,11 +383,24 @@ async def oauth_session(request: Request, response: Response):
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_doc = {'user_id': user_id, 'email': data['email'], 'name': data['name'], 'password_hash': None, 'is_admin': False, 'is_active': True, 'picture': data.get('picture'), 'created_at': datetime.now(timezone.utc)}
         await db.users.insert_one(user_doc)
+    
+    # Criar JWT token para o usuário OAuth
+    token_data = {
+        "user_id": user_doc['user_id'],
+        "exp": datetime.now(timezone.utc) + timedelta(days=7)
+    }
+    jwt_token = jwt.encode(token_data, SECRET_KEY, algorithm="HS256")
+    
     session_doc = {'user_id': user_doc['user_id'], 'session_token': data['session_token'], 'expires_at': datetime.now(timezone.utc)+timedelta(days=7), 'created_at': datetime.now(timezone.utc)}
     await db.user_sessions.insert_one(session_doc)
     response.set_cookie(key='session_token', value=data['session_token'], httponly=True, secure=True, samesite='none', max_age=7*24*60*60, path='/')
     user_doc.pop('password_hash', None)
-    return User(**user_doc)
+    
+    # Retornar usuário com token
+    return {
+        **user_doc,
+        "token": jwt_token
+    }
 
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response):
