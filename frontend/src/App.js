@@ -158,8 +158,28 @@ const AppRoutes = () => {
 };
 
 function App() {
-  // Verificar OAuth callback ANTES do BrowserRouter
-  const isOAuthCallback = window.location.hash && window.location.hash.includes('session_id=');
+  // Debug: Mostrar informações da URL para diagnóstico
+  const currentUrl = window.location.href;
+  const currentHash = window.location.hash;
+  const currentSearch = window.location.search;
+  
+  console.log('App init - URL:', currentUrl);
+  console.log('App init - Hash:', currentHash);
+  console.log('App init - Search:', currentSearch);
+  
+  // Verificar OAuth callback - pode vir no hash (#session_id=) ou na query string (?session_id=)
+  const hashParams = new URLSearchParams(currentHash.substring(1));
+  const searchParams = new URLSearchParams(currentSearch);
+  
+  const sessionIdFromHash = hashParams.get('session_id');
+  const sessionIdFromSearch = searchParams.get('session_id');
+  const sessionId = sessionIdFromHash || sessionIdFromSearch;
+  
+  const isOAuthCallback = !!sessionId;
+  
+  console.log('Session ID from hash:', sessionIdFromHash);
+  console.log('Session ID from search:', sessionIdFromSearch);
+  console.log('Is OAuth callback:', isOAuthCallback);
   
   if (isOAuthCallback) {
     return (
@@ -167,7 +187,7 @@ function App() {
         <div className="App">
           <Toaster position="top-right" />
           <BrowserRouter>
-            <OAuthCallback />
+            <OAuthCallbackWithId sessionId={sessionId} />
           </BrowserRouter>
         </div>
       </ThemeProvider>
