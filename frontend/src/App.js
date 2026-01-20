@@ -165,6 +165,22 @@ const AppRoutes = () => {
 };
 
 function App() {
+  // Verificar OAuth callback ANTES do BrowserRouter
+  const isOAuthCallback = window.location.hash && window.location.hash.includes('session_id=');
+  
+  if (isOAuthCallback) {
+    return (
+      <ThemeProvider>
+        <div className="App">
+          <Toaster position="top-right" />
+          <BrowserRouter>
+            <OAuthCallback />
+          </BrowserRouter>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <div className="App">
