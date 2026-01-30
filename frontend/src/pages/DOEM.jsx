@@ -927,14 +927,23 @@ const DOEM = () => {
                     />
                   </div>
                   
-                  <div className="flex items-end">
+                  <div className="flex items-end gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setShowImportModal(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Upload size={18} />
-                      Importar Arquivo
+                      Importar RTF/PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowUploadPdfModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      title="Anexar PDF completo para publicação com assinatura digital"
+                    >
+                      <FilePlus size={18} />
+                      Anexar PDF Assinado
                     </button>
                   </div>
                 </div>
