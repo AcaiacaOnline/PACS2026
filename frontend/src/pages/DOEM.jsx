@@ -266,10 +266,78 @@ const DOEM = () => {
     toast.success('Publicação adicionada');
   };
 
-  const handleRemovePub = (index) => {
+  const handleRemovePub = async (index) => {
+    // Se estiver editando uma edição existente, excluir no backend
+    if (editingEdicao) {
+      try {
+        await api.delete(`/doem/edicoes/${editingEdicao.edicao_id}/publicacoes/${index}`);
+        toast.success('Publicação excluída com sucesso');
+      } catch (error) {
+        toast.error(error.response?.data?.detail || 'Erro ao excluir publicação');
+        return;
+      }
+    }
+    
+    // Remover da lista local
     const newPubs = [...formData.publicacoes];
     newPubs.splice(index, 1);
     setFormData({ ...formData, publicacoes: newPubs });
+  };
+
+  // Função para upload de PDF com assinatura programada
+  const handleUploadPdfAssinado = async () => {
+    if (!uploadPdfData.file || !uploadPdfData.titulo) {
+      toast.error('Selecione um arquivo PDF e informe o título');
+      return;
+    }
+
+    if (!editingEdicao) {
+      toast.error('Primeiro salve a edição antes de anexar PDFs');
+      return;
+    }
+
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', uploadPdfData.file);
+    formDataUpload.append('titulo', uploadPdfData.titulo);
+    formDataUpload.append('orgao', uploadPdfData.orgao);
+    formDataUpload.append('segmento', uploadPdfData.segmento);
+    if (uploadPdfData.data_assinatura) {
+      formDataUpload.append('data_assinatura', new Date(uploadPdfData.data_assinatura).toISOString());
+    }
+
+    try {
+      const response = await api.post(
+        `/doem/edicoes/${editingEdicao.edicao_id}/upload-pdf-assinado`,
+        formDataUpload,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      
+      toast.success(`PDF anexado: ${response.data.paginas} página(s)`);
+      
+      // Adicionar à lista local
+      const novaPub = {
+        publicacao_id: response.data.publicacao_id,
+        titulo: uploadPdfData.titulo,
+        tipo: 'PDF Anexado',
+        orgao: uploadPdfData.orgao,
+        segmento: uploadPdfData.segmento,
+        texto: `[PDF ANEXADO - ${response.data.paginas} página(s)]`,
+        pdf_anexado: true
+      };
+      setFormData({ ...formData, publicacoes: [...formData.publicacoes, novaPub] });
+      
+      // Limpar form
+      setUploadPdfData({
+        titulo: '',
+        orgao: 'Prefeitura Municipal de Acaiaca',
+        segmento: 'Atos Oficiais',
+        data_assinatura: '',
+        file: null
+      });
+      setShowUploadPdfModal(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao fazer upload do PDF');
+    }
   };
 
   const handleSubmit = async (e) => {
