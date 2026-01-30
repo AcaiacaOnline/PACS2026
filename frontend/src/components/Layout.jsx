@@ -40,17 +40,49 @@ const DropdownMenu = ({ title, icon: Icon, items, isActive, color = 'primary' })
         }`}
       >
         <Icon size={16} />
-        <span className="hidden lg:inline">{title}</span>
+        <span className="hidden xl:inline">{title}</span>
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[180px] z-50">
+        <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[180px] z-50 max-h-[70vh] overflow-y-auto">
           {items.map((item, index) => (
             <Link
               key={index}
               to={item.path}
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              {item.icon && <item.icon size={14} />}
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Menu Mobile Accordion
+const MobileMenuSection = ({ title, icon: Icon, items, isOpen, onToggle }) => {
+  return (
+    <div className="border-b border-primary-foreground/10 last:border-b-0">
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-between w-full p-3 text-left hover:bg-primary/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Icon size={18} />
+          <span className="font-medium">{title}</span>
+        </div>
+        <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="bg-primary/30 px-2 pb-2">
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-primary/50 transition-colors"
             >
               {item.icon && <item.icon size={14} />}
               {item.label}
