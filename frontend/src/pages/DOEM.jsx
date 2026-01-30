@@ -1169,6 +1169,134 @@ const DOEM = () => {
           </div>
         )}
 
+        {/* Modal de Upload de PDF com Assinatura Digital */}
+        {showUploadPdfModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl shadow-xl max-w-lg w-full">
+              <div className="p-6 border-b border-border">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <FilePlus size={24} className="text-purple-600" />
+                    Anexar PDF para Publicação
+                  </h3>
+                  <button onClick={() => setShowUploadPdfModal(false)} className="text-muted-foreground hover:text-foreground">
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      O PDF será publicado <strong>sem alterações no conteúdo</strong>. A assinatura digital será adicionada como uma camada sobreposta na data especificada.
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-1">Título da Publicação *</label>
+                  <input
+                    type="text"
+                    value={uploadPdfData.titulo}
+                    onChange={(e) => setUploadPdfData({ ...uploadPdfData, titulo: e.target.value })}
+                    placeholder="Ex: Decreto nº 001/2026"
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1">Órgão</label>
+                    <input
+                      type="text"
+                      value={uploadPdfData.orgao}
+                      onChange={(e) => setUploadPdfData({ ...uploadPdfData, orgao: e.target.value })}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-1">Segmento</label>
+                    <select
+                      value={uploadPdfData.segmento}
+                      onChange={(e) => setUploadPdfData({ ...uploadPdfData, segmento: e.target.value })}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                    >
+                      {DOEM_SEGMENTOS.map(seg => (
+                        <option key={seg} value={seg}>{seg}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-1">Data da Assinatura Digital</label>
+                  <input
+                    type="datetime-local"
+                    value={uploadPdfData.data_assinatura}
+                    onChange={(e) => setUploadPdfData({ ...uploadPdfData, data_assinatura: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring outline-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Deixe em branco para usar a data atual na publicação</p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-1">Arquivo PDF *</label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                    {uploadPdfData.file ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <FileText size={24} className="text-purple-600" />
+                        <span className="text-foreground">{uploadPdfData.file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setUploadPdfData({ ...uploadPdfData, file: null })}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload size={32} className="text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Clique para selecionar ou arraste o PDF</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) => setUploadPdfData({ ...uploadPdfData, file: e.target.files[0] })}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowUploadPdfModal(false)}
+                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUploadPdfAssinado}
+                    disabled={!uploadPdfData.file || !uploadPdfData.titulo}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Upload size={18} />
+                    Anexar PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de Assinantes em Lote */}
         {showAssinantesModal && edicaoParaAssinar && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
