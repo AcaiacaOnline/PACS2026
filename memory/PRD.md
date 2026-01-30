@@ -27,7 +27,23 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 30/01/2026 (Sessão 16)
+## Última Atualização: 30/01/2026 (Sessão 17)
+
+### Changelog - Sessão 17 (30/01/2026) - BUG FIX CRÍTICO
+
+#### ✅ 1. BUG FIX: CRIAÇÃO DE PROCESSOS COM ANO INCORRETO (P0 - CRÍTICO)
+- **Problema**: Processos criados para anos como 2026 ou 2027 eram salvos incorretamente em 2025
+- **Causa raiz**: A função `create_processo` em `/app/backend/server.py` usava `if not processo_doc.get('ano')` que retornava True para valores válidos como 0
+- **Correção aplicada**:
+  1. Atualizado modelo `ProcessoCreate` em `/app/backend/models/processo.py`: `ano: int = None` → `ano: Optional[int] = None`
+  2. Corrigida lógica em `server.py` (linha 2953): verifica explicitamente `if ano_fornecido is None or ano_fornecido == 0`
+- **Testes realizados**:
+  - ✅ Criação com ano explícito (2026, 2027, 2030) - ano salvo corretamente
+  - ✅ Criação sem ano (extração do numero_processo) - continua funcionando
+  - ✅ Fallback para ano atual quando não há informação - continua funcionando
+- **Status**: RESOLVIDO E TESTADO
+
+---
 
 ### Changelog - Sessão 16 (30/01/2026) - TAREFAS CRÍTICAS EXECUTADAS
 
