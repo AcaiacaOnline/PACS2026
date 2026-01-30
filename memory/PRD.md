@@ -43,6 +43,14 @@ Sistema completo de gestão municipal que inclui:
   - ✅ Fallback para ano atual quando não há informação - continua funcionando
 - **Status**: RESOLVIDO E TESTADO
 
+#### ✅ 2. MELHORIA: EXCLUSÃO DE PUBLICAÇÕES DO DOEM (EDIÇÕES ANTIGAS)
+- **Solicitação**: Permitir exclusão de publicações mesmo em edições já publicadas
+- **Alteração**: Rota `DELETE /api/doem/edicoes/{edicao_id}/publicacoes/{index}` agora permite:
+  - Administradores: podem excluir de qualquer edição (rascunho ou publicada)
+  - Usuários comuns: apenas de edições em rascunho
+- **Arquivo alterado**: `/app/backend/server.py` (linha 5449-5467)
+- **Status**: IMPLEMENTADO E TESTADO
+
 ---
 
 ### Changelog - Sessão 16 (30/01/2026) - TAREFAS CRÍTICAS EXECUTADAS
