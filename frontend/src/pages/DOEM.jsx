@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Newspaper, Plus, Search, Edit, Trash2, FileText, 
-  Upload, X, Save, Calendar, Eye, Download, CheckCircle, Clock, Send, Users, Mail, UserPlus, PenTool
+  Upload, X, Save, Calendar, Eye, Download, CheckCircle, Clock, Send, Users, Mail, UserPlus, PenTool, FilePlus, AlertCircle
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import api from '../utils/api';
