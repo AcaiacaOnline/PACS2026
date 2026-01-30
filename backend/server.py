@@ -2951,7 +2951,9 @@ async def create_processo(processo_data: ProcessoCreate, request: Request):
     }
     
     # Extrair ano do numero_processo se não fornecido (ex: PRC - 0006/2025)
-    if not processo_doc.get('ano'):
+    # Usar o ano do payload se fornecido explicitamente
+    ano_fornecido = processo_doc.get('ano')
+    if ano_fornecido is None or ano_fornecido == 0:
         numero = processo_doc.get('numero_processo', '')
         match = re.search(r'/(\d{4})$', numero)
         if match:

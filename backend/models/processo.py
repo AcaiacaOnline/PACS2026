@@ -40,7 +40,7 @@ class ProcessoCreate(BaseModel):
     data_contrato: Optional[datetime] = None
     secretaria: str
     secretario: str
-    ano: int = None  # Será extraído do numero_processo se não fornecido
+    ano: Optional[int] = None  # Será extraído do numero_processo se não fornecido
     observacoes: Optional[str] = None
 
 class ProcessoUpdate(BaseModel):
