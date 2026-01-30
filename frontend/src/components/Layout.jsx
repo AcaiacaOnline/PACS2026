@@ -99,6 +99,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileSection, setOpenMobileSection] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -111,6 +112,12 @@ const Layout = ({ children }) => {
     };
     fetchUser();
   }, []);
+
+  // Fechar menu mobile ao mudar de rota
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setOpenMobileSection(null);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
