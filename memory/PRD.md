@@ -27,94 +27,47 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 19/01/2026 (Sessão 15)
+## Última Atualização: 30/01/2026 (Sessão 16)
 
-### Changelog - Sessão 15 (19/01/2026) - CORREÇÃO LAYOUT PDF COMPLETA
+### Changelog - Sessão 16 (30/01/2026) - TAREFAS CRÍTICAS EXECUTADAS
 
-#### ✅ 1. LAYOUT DOEM PADRONIZADO CONFORME `relatórios pdf.pdf`
-- **Cabeçalho corrigido conforme arquivo de referência do usuário:**
-  - Dois brasões (esquerdo E direito) - 20mm cada
-  - "ACAIACA" centralizado em AZUL ESCURO (#000080) - fonte Helvetica-Bold 28pt
-  - Primeira linha azul FINA (1pt) abaixo do título
-  - Informações de publicação: "ANO - Nº - PÁGINAS" (centro) + data por extenso (direita)
-  - Segunda linha azul GROSSA (2.5pt)
-  - URL do DOEM centralizada abaixo
-- **Rodapé padronizado em AZUL ESCURO:**
-  - 3 linhas centralizadas:
-    1. "Prefeitura Municipal de Acaiaca - MG | CNPJ: 18.295.287/0001-90"
-    2. "Praça Tancredo Neves, Número 35, Centro de Acaiaca - MG, CEP: 35.438-000"
-    3. "Tel.: (31) 3887-1650 | Portal: https://acaiaca.mg.gov.br | E-mail: administracao@acaiaca.mg.gov.br"
-  - Número da página discreto à direita
+#### ✅ 1. CORREÇÃO DE RESPONSIVIDADE DO MENU
+- Menu mobile completamente redesenhado com accordion expansível
+- Seções colapsáveis: PACs, Processos, DOEM, Configurações
+- Links rápidos no topo: Portal, Dashboard, Analítico, Alertas
+- Ícone hamburger (Menu/X) para toggle
+- Informações do usuário visíveis no mobile
+- Fechamento automático ao navegar
 
-#### ✅ 2. ARQUIVO `pdf_utils.py` REESCRITO
-- Classe `DOEMTemplate` totalmente reescrita para corresponder ao layout de referência
-- Margens fixas para garantir consistência visual independente das margens do documento
-- Cores, fontes e posicionamentos ajustados conforme especificado pelo usuário
+#### ✅ 2. MIGRAÇÃO PARCIAL DO SERVER.PY
+- Módulo `/routes/doem.py` criado com rotas básicas
+- Total de 17 módulos na pasta `/routes/`
+- server.py ainda contém rotas principais (8653 linhas)
+- Migração gradual em andamento
 
-#### ✅ 3. FUNÇÃO `gerar_pdf_doem` ATUALIZADA (server.py)
-- Callback `draw_header_footer` reescrito com layout padronizado
-- Dois brasões nas laterais usando brasao_acaiaca.png
-- "ACAIACA" centralizado em azul escuro
-- Linhas azuis (fina e grossa) com informações de publicação
-- Rodapé com 3 linhas da Prefeitura
-- Assinatura digital mantida (QR Code + texto vermelho)
-- Margens ajustadas: topMargin=45mm, bottomMargin=35mm
+#### ✅ 3. DOCUMENTAÇÃO SWAGGER ATUALIZADA
+- 16 tags documentadas
+- 133 endpoints catalogados
+- Descrições detalhadas para cada categoria
+- Nova tag: Validação de Documentos
 
-#### ✅ 4. PDFs VALIDADOS - TODOS FUNCIONANDO
-- PAC Individual (autenticado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
-- PAC Individual (público): ✓ ACAIACA, ✓ Rodapé
-- DOEM (autenticado): ✓ ACAIACA, ✓ ANO-Nº, ✓ Rodapé
-- DOEM (público-publicado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
-- Processos (público): ✓ ACAIACA, ✓ Rodapé
-- PAC Geral (autenticado): ✓ ACAIACA, ✓ Assinatura, ✓ Rodapé
+#### ✅ 4. FUNCIONALIDADE: EXCLUIR PUBLICAÇÕES DO DOEM
+- Rota: `DELETE /api/doem/edicoes/{edicao_id}/publicacoes/{index}`
+- Validação: Apenas edições em rascunho
+- Auditoria: Log da publicação excluída
+- Frontend atualizado com confirmação
 
-#### ✅ 6. OTIMIZAÇÃO DO BRASÃO
-- Tamanho original: 13MB (8000x6000px)
-- Tamanho otimizado: 172KB (500x375px)
-- **Redução de 98.7%**
-- Backup do original salvo em: `brasao_acaiaca_original.png`
-
-#### ✅ 7. REDUÇÃO DO TAMANHO DOS PDFs
-- PDF anterior: ~23MB
-- PDF novo: ~234KB
-- **Redução de 99%** no tamanho dos PDFs!
-
-#### ✅ 8. SISTEMA DE TEMAS CORRIGIDO
-- ThemeProvider atualizado para aplicar variáveis HSL do Tailwind
-- 7 temas disponíveis: Padrão, Governo, Minas Gerais, Moderno, Escuro, Terra, Oceano
-- Página de Configuracoes corrigida para usar `bg-background` do tema
-
-#### ✅ 9. REFATORAÇÃO PARCIAL DO BACKEND
-- Criado módulo `/app/backend/routes/doem.py` com rotas do DOEM
-- Atualizado `/app/backend/routes/__init__.py` para exportar módulo DOEM
-- Total de 17 módulos de rotas na pasta `/routes/`
-- WebSocket para notificações já implementado em `/utils/websocket.py`
-- NotificationCenter já integrado no Layout.jsx
-
-#### 📊 ARQUITETURA ATUAL
-```
-/app/backend/
-├── server.py (8565 linhas - arquivo principal)
-├── routes/ (17 módulos - 4868 linhas)
-│   ├── auth.py
-│   ├── users.py
-│   ├── pac.py, pac_geral.py, pac_obras.py
-│   ├── processos.py, gestao_processual.py
-│   ├── doem.py (NOVO)
-│   ├── mrosc.py
-│   ├── public.py
-│   ├── analytics.py
-│   └── ...
-├── models/ (modelos Pydantic)
-└── utils/
-    ├── pdf_utils.py (geração de PDFs)
-    └── websocket.py (notificações em tempo real)
-```
-
-#### 📋 DÍVIDA TÉCNICA RESTANTE
-- O `server.py` ainda contém rotas duplicadas com os módulos em `/routes/`
-- Recomendação: migração gradual removendo rotas duplicadas do server.py
-- Os módulos em `/routes/` já estão funcionais e podem ser usados como referência
+#### ✅ 5. FUNCIONALIDADE: PUBLICAR PDF COM ASSINATURA DIGITAL
+- Rota: `POST /api/doem/edicoes/{edicao_id}/upload-pdf-assinado`
+- PDF anexado SEM modificação de conteúdo
+- Assinatura digital programada para data específica
+- Armazenamento em base64 no banco
+- Rota de download: `GET /api/doem/edicoes/{edicao_id}/publicacoes/{pub_id}/pdf`
+- Modal de upload no frontend com:
+  - Título obrigatório
+  - Órgão e segmento configuráveis
+  - Data de assinatura programável
+  - Preview do arquivo selecionado
 
 #### ✅ 5. PDFs ATUALIZADOS
 - **Rotas Privadas (autenticadas):**
