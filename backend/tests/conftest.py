@@ -27,7 +27,7 @@ def event_loop():
 @pytest.fixture(scope="session")
 def api_url():
     """Get API URL from environment"""
-    return os.environ.get('API_URL', 'https://doem-pdf-system.preview.emergentagent.com')
+    return os.environ.get('API_URL', 'https://structurefix-1.preview.emergentagent.com')
 
 
 @pytest.fixture(scope="session")

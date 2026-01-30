@@ -6900,7 +6900,7 @@ def enviar_notificacao_mrosc(destinatario: str, assunto: str, projeto_nome: str,
                     <p style="margin: 0; color: #666;"><strong>Ação:</strong> {acao}</p>
                 </div>
                 <p style="font-size: 12px; color: #888;">
-                    Acesse o sistema para mais detalhes: <a href="https://doem-pdf-system.preview.emergentagent.com/prestacao-contas">Planejamento Acaiaca</a>
+                    Acesse o sistema para mais detalhes: <a href="https://structurefix-1.preview.emergentagent.com/prestacao-contas">Planejamento Acaiaca</a>
                 </p>
             </div>
             <div style="background: #1F4E78; color: white; padding: 10px; text-align: center; font-size: 12px;">
