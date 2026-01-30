@@ -5443,6 +5443,171 @@ async def import_pdf(file: UploadFile = File(...), request: Request = None):
         logging.error(f"Erro ao processar PDF: {e}")
         raise HTTPException(status_code=400, detail=f"Erro ao processar PDF: {str(e)}")
 
+@doem_router.delete("/edicoes/{edicao_id}/publicacoes/{publicacao_index}")
+async def excluir_publicacao(edicao_id: str, publicacao_index: int, request: Request):
+    """
+    Exclui uma publicação específica de uma edição do DOEM.
+    Apenas edições em rascunho podem ter publicações excluídas.
+    """
+    user = await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') == 'publicado':
+        raise HTTPException(status_code=400, detail="Não é possível excluir publicações de edições já publicadas")
+    
+    publicacoes = edicao.get('publicacoes', [])
+    if publicacao_index < 0 or publicacao_index >= len(publicacoes):
+        raise HTTPException(status_code=404, detail="Publicação não encontrada")
+    
+    # Registrar qual publicação foi excluída para auditoria
+    publicacao_excluida = publicacoes[publicacao_index]
+    logging.info(f"Publicação '{publicacao_excluida.get('titulo', 'Sem título')}' excluída da edição {edicao_id} por {user.user_id}")
+    
+    # Remover publicação
+    publicacoes.pop(publicacao_index)
+    
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {
+            '$set': {
+                'publicacoes': publicacoes,
+                'updated_at': datetime.now(timezone.utc),
+                'updated_by': user.user_id
+            }
+        }
+    )
+    
+    return {
+        "message": "Publicação excluída com sucesso",
+        "publicacoes_restantes": len(publicacoes)
+    }
+
+@doem_router.post("/edicoes/{edicao_id}/upload-pdf-assinado")
+async def upload_pdf_para_publicacao(
+    edicao_id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    titulo: str = Form(...),
+    data_assinatura: str = Form(None),
+    orgao: str = Form("Prefeitura Municipal de Acaiaca"),
+    segmento: str = Form("Atos Oficiais")
+):
+    """
+    Faz upload de um PDF já pronto para ser publicado no DOEM.
+    O PDF não será modificado em seu conteúdo, apenas a assinatura digital será adicionada
+    como uma camada sobreposta na data especificada.
+    """
+    user = await get_current_user(request)
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos")
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    if edicao.get('status') == 'publicado':
+        raise HTTPException(status_code=400, detail="Não é possível adicionar publicações a edições já publicadas")
+    
+    # Ler o PDF
+    pdf_content = await file.read()
+    
+    # Validar PDF
+    try:
+        from PyPDF2 import PdfReader
+        pdf_buffer = BytesIO(pdf_content)
+        reader = PdfReader(pdf_buffer)
+        num_pages = len(reader.pages)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PDF inválido ou corrompido: {str(e)}")
+    
+    # Converter para base64 para armazenamento
+    import base64
+    pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+    
+    # Processar data de assinatura
+    if data_assinatura:
+        try:
+            data_assinatura_dt = datetime.fromisoformat(data_assinatura.replace('Z', '+00:00'))
+        except:
+            data_assinatura_dt = datetime.now(timezone.utc)
+    else:
+        data_assinatura_dt = datetime.now(timezone.utc)
+    
+    # Criar publicação com PDF anexado
+    nova_publicacao = {
+        'publicacao_id': f"pub_{uuid.uuid4().hex[:12]}",
+        'titulo': titulo,
+        'orgao': orgao,
+        'segmento': segmento,
+        'tipo': 'pdf_anexado',
+        'texto': f"[PDF ANEXADO - {num_pages} página(s)]",
+        'pdf_anexado': {
+            'filename': file.filename,
+            'content_base64': pdf_base64,
+            'num_pages': num_pages,
+            'size_bytes': len(pdf_content),
+            'data_assinatura_programada': data_assinatura_dt.isoformat()
+        },
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'created_by': user.user_id
+    }
+    
+    # Adicionar à edição
+    publicacoes = edicao.get('publicacoes', [])
+    publicacoes.append(nova_publicacao)
+    
+    await db.doem_edicoes.update_one(
+        {'edicao_id': edicao_id},
+        {
+            '$set': {
+                'publicacoes': publicacoes,
+                'updated_at': datetime.now(timezone.utc),
+                'updated_by': user.user_id
+            }
+        }
+    )
+    
+    return {
+        "message": "PDF anexado com sucesso",
+        "publicacao_id": nova_publicacao['publicacao_id'],
+        "titulo": titulo,
+        "paginas": num_pages,
+        "data_assinatura_programada": data_assinatura_dt.isoformat(),
+        "total_publicacoes": len(publicacoes)
+    }
+
+@doem_router.get("/edicoes/{edicao_id}/publicacoes/{publicacao_id}/pdf")
+async def download_pdf_publicacao(edicao_id: str, publicacao_id: str, request: Request):
+    """Download do PDF anexado de uma publicação específica"""
+    await get_current_user(request)
+    
+    edicao = await db.doem_edicoes.find_one({'edicao_id': edicao_id}, {'_id': 0})
+    if not edicao:
+        raise HTTPException(status_code=404, detail="Edição não encontrada")
+    
+    publicacoes = edicao.get('publicacoes', [])
+    publicacao = next((p for p in publicacoes if p.get('publicacao_id') == publicacao_id), None)
+    
+    if not publicacao:
+        raise HTTPException(status_code=404, detail="Publicação não encontrada")
+    
+    pdf_anexado = publicacao.get('pdf_anexado')
+    if not pdf_anexado:
+        raise HTTPException(status_code=404, detail="Esta publicação não possui PDF anexado")
+    
+    import base64
+    pdf_content = base64.b64decode(pdf_anexado['content_base64'])
+    
+    return StreamingResponse(
+        BytesIO(pdf_content),
+        media_type="application/pdf",
+        headers={'Content-Disposition': f'attachment; filename="{pdf_anexado["filename"]}"'}
+    )
+
 @doem_router.post("/edicoes/{edicao_id}/publicar")
 async def publicar_edicao(edicao_id: str, request: Request, background_tasks: BackgroundTasks, enviar_notificacao: bool = True):
     """Publica uma edição e gera PDF assinado, opcionalmente envia notificações"""
