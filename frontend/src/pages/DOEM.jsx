@@ -59,6 +59,7 @@ const DOEM = () => {
   
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showUploadPdfModal, setShowUploadPdfModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showAssinantesModal, setShowAssinantesModal] = useState(false);
   const [editingEdicao, setEditingEdicao] = useState(null);
@@ -68,6 +69,13 @@ const DOEM = () => {
   const [usuariosDisponiveis, setUsuariosDisponiveis] = useState([]);
   const [assinantesEdicao, setAssinantesEdicao] = useState([]);
   const [edicaoParaAssinar, setEdicaoParaAssinar] = useState(null);
+  const [uploadPdfData, setUploadPdfData] = useState({
+    titulo: '',
+    orgao: 'Prefeitura Municipal de Acaiaca',
+    segmento: 'Atos Oficiais',
+    data_assinatura: '',
+    file: null
+  });
   
   const [formData, setFormData] = useState({
     data_publicacao: '',
