@@ -347,16 +347,19 @@ const Layout = ({ children }) => {
                 {user && <NotificationCenter userId={user.user_id} />}
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 rounded-lg hover:bg-primary/80"
+                  className="p-2 rounded-lg hover:bg-primary/80 transition-colors"
+                  aria-label="Menu"
+                  data-testid="mobile-menu-toggle"
                 >
-                  <ChevronDown size={20} className={`transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
+                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="p-2 bg-red-500/80 hover:bg-red-600 rounded-lg"
+                  className="p-2 bg-red-500/80 hover:bg-red-600 rounded-lg transition-colors"
                   title="Sair"
+                  data-testid="logout-btn-mobile"
                 >
-                  <LogOut size={16} />
+                  <LogOut size={18} />
                 </button>
               </div>
             </div>
