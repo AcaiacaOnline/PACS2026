@@ -361,33 +361,101 @@ const Layout = ({ children }) => {
               </div>
             </div>
             
-            {/* Menu Mobile Expandido */}
+            {/* Menu Mobile Expandido - Melhorado */}
             {isMobileMenuOpen && (
-              <nav className="lg:hidden mt-3 pt-3 border-t border-primary-foreground/20 grid grid-cols-3 sm:grid-cols-4 gap-2">
-                <Link to="/" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <Globe size={18} /><span>Portal</span>
+              <nav className="lg:hidden mt-3 pt-3 border-t border-primary-foreground/20 space-y-1 max-h-[70vh] overflow-y-auto">
+                {/* Links Rápidos */}
+                <div className="grid grid-cols-4 gap-2 pb-3 border-b border-primary-foreground/10">
+                  <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                    <Globe size={20} /><span>Portal</span>
+                  </Link>
+                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                    <LayoutDashboard size={20} /><span>Dashboard</span>
+                  </Link>
+                  <Link to="/dashboard-analitico" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                    <BarChart3 size={20} /><span>Analítico</span>
+                  </Link>
+                  <Link to="/analytics" onClick={() => setIsMobileMenuOpen(false)} className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
+                    <Bell size={20} /><span>Alertas</span>
+                  </Link>
+                </div>
+                
+                {/* PACs Section */}
+                <MobileMenuSection
+                  title="PACs"
+                  icon={FileText}
+                  isOpen={openMobileSection === 'pacs'}
+                  onToggle={() => setOpenMobileSection(openMobileSection === 'pacs' ? null : 'pacs')}
+                  items={[
+                    { path: '/pacs', label: 'PAC Individual', icon: List },
+                    { path: '/pacs-geral', label: 'PAC Geral', icon: Building2 },
+                    { path: '/pacs-geral-obras', label: 'PAC Geral Obras', icon: Hammer },
+                  ]}
+                />
+                
+                {/* Processos Section */}
+                <MobileMenuSection
+                  title="Processos"
+                  icon={ClipboardList}
+                  isOpen={openMobileSection === 'processos'}
+                  onToggle={() => setOpenMobileSection(openMobileSection === 'processos' ? null : 'processos')}
+                  items={[
+                    { path: '/gestao-processual', label: 'Gestão Processual', icon: ClipboardList },
+                    { path: '/processos/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                  ]}
+                />
+                
+                {/* DOEM Section */}
+                <MobileMenuSection
+                  title="DOEM - Diário Oficial"
+                  icon={Newspaper}
+                  isOpen={openMobileSection === 'doem'}
+                  onToggle={() => setOpenMobileSection(openMobileSection === 'doem' ? null : 'doem')}
+                  items={[
+                    { path: '/doem', label: 'Edições', icon: Newspaper },
+                    { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
+                  ]}
+                />
+                
+                {/* MROSC */}
+                <Link 
+                  to="/prestacao-contas" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 p-3 hover:bg-primary/50 transition-colors rounded-lg"
+                >
+                  <DollarSign size={18} />
+                  <span className="font-medium">Prestação de Contas (MROSC)</span>
                 </Link>
-                <Link to="/dashboard" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <LayoutDashboard size={18} /><span>Dashboard</span>
-                </Link>
-                <Link to="/dashboard-analitico" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <BarChart3 size={18} /><span>Analítico</span>
-                </Link>
-                <Link to="/pacs" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <FileText size={18} /><span>PACs</span>
-                </Link>
-                <Link to="/gestao-processual" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <ClipboardList size={18} /><span>Processos</span>
-                </Link>
-                <Link to="/doem" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <Newspaper size={18} /><span>DOEM</span>
-                </Link>
-                <Link to="/prestacao-contas" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <DollarSign size={18} /><span>MROSC</span>
-                </Link>
-                <Link to="/configuracoes" className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-primary/80 text-xs">
-                  <Settings size={18} /><span>Config</span>
-                </Link>
+                
+                {/* Config Section */}
+                <MobileMenuSection
+                  title="Configurações"
+                  icon={Settings}
+                  isOpen={openMobileSection === 'config'}
+                  onToggle={() => setOpenMobileSection(openMobileSection === 'config' ? null : 'config')}
+                  items={[
+                    { path: '/historico-assinaturas', label: 'Assinaturas', icon: FileSignature },
+                    { path: '/configuracoes', label: 'Aparência', icon: Settings },
+                    ...(user?.is_admin ? [
+                      { path: '/usuarios', label: 'Usuários', icon: Users },
+                      { path: '/backup', label: 'Backup', icon: Database },
+                    ] : []),
+                  ]}
+                />
+                
+                {/* User Info Mobile */}
+                {user && (
+                  <div className="pt-3 border-t border-primary-foreground/10 flex items-center justify-between p-3">
+                    <div className="flex items-center gap-2">
+                      <User size={18} />
+                      <div>
+                        <div className="font-medium text-sm">{user.name}</div>
+                        <div className="text-xs opacity-75">{user.email}</div>
+                      </div>
+                      {user.is_admin && <Shield size={14} className="text-amber-400" />}
+                    </div>
+                  </div>
+                )}
               </nav>
             )}
           </div>
