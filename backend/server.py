@@ -5450,7 +5450,8 @@ async def import_pdf(file: UploadFile = File(...), request: Request = None):
 async def excluir_publicacao(edicao_id: str, publicacao_index: int, request: Request):
     """
     Exclui uma publicação específica de uma edição do DOEM.
-    Apenas edições em rascunho podem ter publicações excluídas.
+    Administradores podem excluir publicações de qualquer edição.
+    Usuários comuns só podem excluir de edições em rascunho.
     """
     user = await get_current_user(request)
     
@@ -5458,8 +5459,9 @@ async def excluir_publicacao(edicao_id: str, publicacao_index: int, request: Req
     if not edicao:
         raise HTTPException(status_code=404, detail="Edição não encontrada")
     
-    if edicao.get('status') == 'publicado':
-        raise HTTPException(status_code=400, detail="Não é possível excluir publicações de edições já publicadas")
+    # Administradores podem excluir de qualquer edição, usuários comuns apenas de rascunhos
+    if edicao.get('status') == 'publicado' and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem excluir publicações de edições já publicadas")
     
     publicacoes = edicao.get('publicacoes', [])
     if publicacao_index < 0 or publicacao_index >= len(publicacoes):
