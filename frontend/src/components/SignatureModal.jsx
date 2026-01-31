@@ -82,7 +82,7 @@ const SignatureModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 pt-8 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4">

@@ -1061,7 +1061,7 @@ const PrestacaoContasEditor = () => {
 
         {/* Modal RH */}
         {showRHModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Adicionar Recurso Humano</h3>
               
@@ -1196,7 +1196,7 @@ const PrestacaoContasEditor = () => {
 
         {/* Modal Despesa */}
         {showDespesaModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Adicionar Despesa</h3>
               
@@ -1371,7 +1371,7 @@ const PrestacaoContasEditor = () => {
 
         {/* Modal Documento */}
         {showDocumentoModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg">
               <h3 className="text-lg font-semibold mb-4">Anexar Documento</h3>
               
@@ -1478,7 +1478,7 @@ const PrestacaoContasEditor = () => {
 
         {/* Modal Editar Projeto */}
         {showProjetoModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Editar Dados do Projeto</h3>
               
@@ -1493,7 +1493,7 @@ const PrestacaoContasEditor = () => {
 
         {/* Modal de Confirmação de Assinatura */}
         {showAssinaturaModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8 overflow-y-auto">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-red-100 rounded-full">
