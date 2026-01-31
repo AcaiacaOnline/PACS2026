@@ -6195,6 +6195,276 @@ async def public_get_doem_anos():
     anos.sort(reverse=True)
     return {'anos': anos}
 
+# ===== Sistema de Backup DOEM =====
+
+@doem_router.get("/backup/export")
+async def export_doem_backup(request: Request, ano: int = None, incluir_pdfs: bool = True):
+    """
+    Exporta backup completo do módulo DOEM.
+    Inclui: edições, publicações, configurações e newsletter.
+    
+    Parâmetros:
+    - ano: Filtrar por ano específico (opcional)
+    - incluir_pdfs: Incluir PDFs anexados em base64 (default: True)
+    
+    Apenas administradores podem fazer backup.
+    """
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem fazer backup do DOEM")
+    
+    try:
+        # Query para edições
+        edicoes_query = {}
+        if ano:
+            edicoes_query['ano'] = ano
+        
+        # Buscar edições
+        edicoes_cursor = db.doem_edicoes.find(edicoes_query, {'_id': 0})
+        edicoes = await edicoes_cursor.to_list(10000)
+        
+        # Se não incluir PDFs, remover dados base64 grandes
+        if not incluir_pdfs:
+            for edicao in edicoes:
+                for pub in edicao.get('publicacoes', []):
+                    if pub.get('pdf_data'):
+                        pub['pdf_data'] = '[PDF_REMOVED_FROM_BACKUP]'
+                        pub['pdf_size_original'] = len(pub.get('pdf_data', ''))
+        
+        # Buscar configurações
+        config_cursor = db.doem_config.find({}, {'_id': 0})
+        config = await config_cursor.to_list(100)
+        
+        # Buscar newsletter
+        newsletter_cursor = db.doem_newsletter.find({}, {'_id': 0})
+        newsletter = await newsletter_cursor.to_list(10000)
+        
+        # Buscar assinaturas relacionadas ao DOEM
+        assinaturas_cursor = db.document_signatures.find(
+            {'document_type': {'$regex': 'doem', '$options': 'i'}},
+            {'_id': 0}
+        )
+        assinaturas = await assinaturas_cursor.to_list(10000)
+        
+        # Estatísticas do backup
+        total_publicacoes = sum(len(e.get('publicacoes', [])) for e in edicoes)
+        edicoes_publicadas = len([e for e in edicoes if e.get('status') == 'publicado'])
+        edicoes_rascunho = len([e for e in edicoes if e.get('status') == 'rascunho'])
+        
+        backup_data = {
+            'metadata': {
+                'version': '1.0',
+                'type': 'DOEM_BACKUP',
+                'exported_at': datetime.now(timezone.utc).isoformat(),
+                'exported_by': user.email,
+                'system': 'Planejamento Acaiaca - DOEM',
+                'filtro_ano': ano,
+                'incluiu_pdfs': incluir_pdfs
+            },
+            'statistics': {
+                'total_edicoes': len(edicoes),
+                'edicoes_publicadas': edicoes_publicadas,
+                'edicoes_rascunho': edicoes_rascunho,
+                'total_publicacoes': total_publicacoes,
+                'total_assinaturas': len(assinaturas),
+                'total_newsletter': len(newsletter)
+            },
+            'doem_edicoes': [serialize_for_json(e) for e in edicoes],
+            'doem_config': [serialize_for_json(c) for c in config],
+            'doem_newsletter': [serialize_for_json(n) for n in newsletter],
+            'doem_assinaturas': [serialize_for_json(a) for a in assinaturas]
+        }
+        
+        json_content = json.dumps(backup_data, ensure_ascii=False, indent=2, default=str)
+        buffer = BytesIO(json_content.encode('utf-8'))
+        
+        ano_str = f"_{ano}" if ano else "_todos"
+        filename = f"backup_doem{ano_str}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        
+        logging.info(f"Backup DOEM exportado por {user.email}: {len(edicoes)} edições, {total_publicacoes} publicações")
+        
+        return StreamingResponse(
+            buffer,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        logging.error(f"Erro ao gerar backup DOEM: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar backup: {str(e)}")
+
+
+@doem_router.post("/backup/restore")
+async def restore_doem_backup(request: Request, file: UploadFile = File(...), modo: str = "merge"):
+    """
+    Restaura dados do DOEM a partir de um arquivo de backup JSON.
+    
+    Parâmetros:
+    - file: Arquivo JSON de backup
+    - modo: 
+      - "merge" (default): Adiciona/atualiza dados existentes
+      - "replace": Substitui todos os dados (CUIDADO: apaga dados atuais!)
+    
+    Apenas administradores podem restaurar backup.
+    """
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem restaurar backup do DOEM")
+    
+    if modo not in ['merge', 'replace']:
+        raise HTTPException(status_code=400, detail="Modo deve ser 'merge' ou 'replace'")
+    
+    try:
+        contents = await file.read()
+        backup_data = json.loads(contents.decode('utf-8'))
+        
+        # Validar estrutura do backup
+        if 'metadata' not in backup_data or backup_data['metadata'].get('type') != 'DOEM_BACKUP':
+            raise HTTPException(status_code=400, detail="Arquivo de backup inválido. Use um backup gerado pelo sistema DOEM.")
+        
+        results = {
+            'edicoes_restauradas': 0,
+            'edicoes_atualizadas': 0,
+            'config_restaurada': 0,
+            'newsletter_restaurados': 0,
+            'assinaturas_restauradas': 0,
+            'erros': []
+        }
+        
+        # Se modo replace, limpar dados existentes
+        if modo == 'replace':
+            await db.doem_edicoes.delete_many({})
+            await db.doem_config.delete_many({})
+            await db.doem_newsletter.delete_many({})
+            logging.warning(f"Backup DOEM em modo REPLACE: dados anteriores removidos por {user.email}")
+        
+        # Restaurar edições
+        for edicao in backup_data.get('doem_edicoes', []):
+            try:
+                edicao_id = edicao.get('edicao_id')
+                existing = await db.doem_edicoes.find_one({'edicao_id': edicao_id})
+                
+                if existing and modo == 'merge':
+                    # Atualizar existente
+                    await db.doem_edicoes.update_one(
+                        {'edicao_id': edicao_id},
+                        {'$set': edicao}
+                    )
+                    results['edicoes_atualizadas'] += 1
+                else:
+                    # Inserir nova
+                    await db.doem_edicoes.insert_one(edicao)
+                    results['edicoes_restauradas'] += 1
+            except Exception as e:
+                results['erros'].append(f"Edição {edicao.get('edicao_id', 'N/A')}: {str(e)}")
+        
+        # Restaurar configurações
+        for config in backup_data.get('doem_config', []):
+            try:
+                config_id = config.get('config_id')
+                if config_id:
+                    await db.doem_config.update_one(
+                        {'config_id': config_id},
+                        {'$set': config},
+                        upsert=True
+                    )
+                    results['config_restaurada'] += 1
+            except Exception as e:
+                results['erros'].append(f"Config: {str(e)}")
+        
+        # Restaurar newsletter
+        for news in backup_data.get('doem_newsletter', []):
+            try:
+                email = news.get('email')
+                if email:
+                    existing = await db.doem_newsletter.find_one({'email': email})
+                    if not existing:
+                        await db.doem_newsletter.insert_one(news)
+                        results['newsletter_restaurados'] += 1
+            except Exception as e:
+                results['erros'].append(f"Newsletter: {str(e)}")
+        
+        # Restaurar assinaturas (apenas em modo merge, para não duplicar)
+        if modo == 'merge':
+            for assinatura in backup_data.get('doem_assinaturas', []):
+                try:
+                    sig_id = assinatura.get('signature_id')
+                    if sig_id:
+                        existing = await db.document_signatures.find_one({'signature_id': sig_id})
+                        if not existing:
+                            await db.document_signatures.insert_one(assinatura)
+                            results['assinaturas_restauradas'] += 1
+                except Exception as e:
+                    results['erros'].append(f"Assinatura: {str(e)}")
+        
+        logging.info(f"Backup DOEM restaurado por {user.email}: {results}")
+        
+        return {
+            "message": "Backup restaurado com sucesso",
+            "modo": modo,
+            "results": results
+        }
+        
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Arquivo JSON inválido")
+    except Exception as e:
+        logging.error(f"Erro ao restaurar backup DOEM: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao restaurar backup: {str(e)}")
+
+
+@doem_router.get("/backup/info")
+async def get_doem_backup_info(request: Request):
+    """
+    Retorna informações sobre os dados do DOEM para backup.
+    Útil para estimar tamanho do backup antes de exportar.
+    """
+    user = await get_current_user(request)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem ver informações de backup")
+    
+    # Contar edições por ano
+    pipeline_anos = [
+        {'$group': {'_id': '$ano', 'count': {'$sum': 1}}},
+        {'$sort': {'_id': -1}}
+    ]
+    edicoes_por_ano = await db.doem_edicoes.aggregate(pipeline_anos).to_list(100)
+    
+    # Contar edições por status
+    pipeline_status = [
+        {'$group': {'_id': '$status', 'count': {'$sum': 1}}}
+    ]
+    edicoes_por_status = await db.doem_edicoes.aggregate(pipeline_status).to_list(10)
+    
+    # Total de publicações
+    pipeline_pubs = [
+        {'$project': {'num_pubs': {'$size': {'$ifNull': ['$publicacoes', []]}}}},
+        {'$group': {'_id': None, 'total': {'$sum': '$num_pubs'}}}
+    ]
+    total_pubs_result = await db.doem_edicoes.aggregate(pipeline_pubs).to_list(1)
+    total_publicacoes = total_pubs_result[0]['total'] if total_pubs_result else 0
+    
+    # Contar outros
+    total_edicoes = await db.doem_edicoes.count_documents({})
+    total_config = await db.doem_config.count_documents({})
+    total_newsletter = await db.doem_newsletter.count_documents({})
+    total_assinaturas = await db.document_signatures.count_documents(
+        {'document_type': {'$regex': 'doem', '$options': 'i'}}
+    )
+    
+    return {
+        'total_edicoes': total_edicoes,
+        'total_publicacoes': total_publicacoes,
+        'edicoes_por_ano': {str(item['_id']): item['count'] for item in edicoes_por_ano},
+        'edicoes_por_status': {item['_id']: item['count'] for item in edicoes_por_status},
+        'total_config': total_config,
+        'total_newsletter': total_newsletter,
+        'total_assinaturas': total_assinaturas,
+        'estimativa_tamanho': {
+            'sem_pdfs': f"~{(total_edicoes * 5 + total_publicacoes * 2)} KB",
+            'com_pdfs': "Varia conforme PDFs anexados"
+        }
+    }
+
 # ===== Histórico de Assinaturas por Usuário =====
 
 @api_router.get("/assinaturas/historico")
