@@ -677,17 +677,27 @@ const DOEM = () => {
             </button>
             
             {user?.is_admin && (
-              <button
-                onClick={() => setActiveTab(activeTab === 'newsletter' ? 'edicoes' : 'newsletter')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === 'newsletter' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                }`}
-              >
-                <Mail size={18} />
-                Newsletter
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab(activeTab === 'newsletter' ? 'edicoes' : 'newsletter')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'newsletter' 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  }`}
+                >
+                  <Mail size={18} />
+                  Newsletter
+                </button>
+                
+                <button
+                  onClick={openBackupModal}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                >
+                  <Database size={18} />
+                  Backup
+                </button>
+              </>
             )}
           </div>
         </div>
