@@ -168,6 +168,82 @@ const DOEM = () => {
     }
   };
 
+  // ===== Funções de Backup DOEM =====
+  const fetchBackupInfo = async () => {
+    try {
+      const response = await api.get('/doem/backup/info');
+      setBackupInfo(response.data);
+    } catch (error) {
+      toast.error('Erro ao carregar informações de backup');
+    }
+  };
+
+  const openBackupModal = async () => {
+    setShowBackupModal(true);
+    await fetchBackupInfo();
+  };
+
+  const handleExportBackup = async (incluirPdfs = true, anoFiltro = null) => {
+    setBackupLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('incluir_pdfs', incluirPdfs);
+      if (anoFiltro) params.append('ano', anoFiltro);
+      
+      const response = await api.get(`/doem/backup/export?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      
+      const now = new Date();
+      const anoStr = anoFiltro ? `_${anoFiltro}` : '_todos';
+      const filename = `backup_doem${anoStr}_${now.toISOString().slice(0,10)}.json`;
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Backup exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleRestoreBackup = async (file, modo = 'merge') => {
+    if (!file) {
+      toast.error('Selecione um arquivo de backup');
+      return;
+    }
+    
+    setBackupLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await api.post(`/doem/backup/restore?modo=${modo}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const results = response.data.results;
+      toast.success(
+        `Backup restaurado! ${results.edicoes_restauradas} novas, ${results.edicoes_atualizadas} atualizadas`
+      );
+      
+      await fetchBackupInfo();
+      await fetchEdicoes();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erro ao restaurar backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   // ===== Funções de Assinatura em Lote =====
   const fetchUsuariosDisponiveis = async () => {
     try {
