@@ -62,6 +62,9 @@ const DOEM = () => {
   const [showUploadPdfModal, setShowUploadPdfModal] = useState(false);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
   const [showAssinantesModal, setShowAssinantesModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [backupInfo, setBackupInfo] = useState(null);
+  const [backupLoading, setBackupLoading] = useState(false);
   const [editingEdicao, setEditingEdicao] = useState(null);
   const [importedPubs, setImportedPubs] = useState([]);
   const [inscritos, setInscritos] = useState([]);
