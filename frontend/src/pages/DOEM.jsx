@@ -1502,6 +1502,185 @@ const DOEM = () => {
             </div>
           </div>
         )}
+
+        {/* Modal de Backup DOEM */}
+        {showBackupModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Database size={20} className="text-emerald-600" />
+                  Backup do DOEM
+                </h3>
+                <button
+                  onClick={() => setShowBackupModal(false)}
+                  className="p-1 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-4 overflow-y-auto flex-1 space-y-6">
+                {/* Informações do Backup */}
+                {backupInfo && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-600">{backupInfo.total_edicoes}</div>
+                      <div className="text-sm text-blue-700 dark:text-blue-400">Edições</div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-green-600">{backupInfo.total_publicacoes}</div>
+                      <div className="text-sm text-green-700 dark:text-green-400">Publicações</div>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-purple-600">{backupInfo.total_assinaturas}</div>
+                      <div className="text-sm text-purple-700 dark:text-purple-400">Assinaturas</div>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-orange-600">{backupInfo.total_newsletter}</div>
+                      <div className="text-sm text-orange-700 dark:text-orange-400">Newsletter</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Edições por Status */}
+                {backupInfo?.edicoes_por_status && (
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <HardDrive size={16} />
+                      Edições por Status
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.entries(backupInfo.edicoes_por_status).map(([status, count]) => (
+                        <span 
+                          key={status}
+                          className={`px-3 py-1 rounded-full text-sm ${
+                            status === 'publicado' 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {status}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Exportar Backup */}
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4 rounded-lg">
+                  <h4 className="font-semibold text-emerald-700 dark:text-emerald-300 mb-3 flex items-center gap-2">
+                    <Download size={16} />
+                    Exportar Backup
+                  </h4>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-4">
+                    Exporte todos os dados do DOEM para um arquivo JSON. Útil para migração ou backup de segurança.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => handleExportBackup(false)}
+                      disabled={backupLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    >
+                      {backupLoading ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
+                      Exportar (sem PDFs)
+                    </button>
+                    <button
+                      onClick={() => handleExportBackup(true)}
+                      disabled={backupLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 disabled:opacity-50 transition-colors"
+                    >
+                      {backupLoading ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
+                      Exportar Completo (com PDFs)
+                    </button>
+                    {anoSelecionado && (
+                      <button
+                        onClick={() => handleExportBackup(false, anoSelecionado)}
+                        disabled={backupLoading}
+                        className="flex items-center gap-2 px-4 py-2 border border-emerald-600 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+                      >
+                        <Download size={16} />
+                        Apenas {anoSelecionado}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Restaurar Backup */}
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+                  <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
+                    <Upload size={16} />
+                    Restaurar Backup
+                  </h4>
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+                    Restaure dados de um arquivo de backup JSON exportado anteriormente.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept=".json"
+                      id="backup-file-input"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          if (window.confirm('Deseja restaurar este backup em modo MERGE (atualizar/adicionar dados)?')) {
+                            handleRestoreBackup(file, 'merge');
+                          }
+                        }
+                        e.target.value = '';
+                      }}
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => document.getElementById('backup-file-input').click()}
+                        disabled={backupLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                      >
+                        {backupLoading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
+                        Selecionar Arquivo
+                      </button>
+                    </div>
+                    
+                    <div className="text-xs text-amber-600 dark:text-amber-400">
+                      <strong>Modo Merge:</strong> Atualiza dados existentes e adiciona novos. Dados atuais não são removidos.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Aviso */}
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+                  <h4 className="font-semibold text-red-700 dark:text-red-300 mb-2 flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    Atenção
+                  </h4>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    Sempre faça backup antes de qualquer operação de restauração ou migração de dados.
+                    O backup inclui todas as edições, publicações, configurações e assinaturas digitais do DOEM.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center p-4 border-t border-border bg-muted/50">
+                <button
+                  onClick={fetchBackupInfo}
+                  disabled={backupLoading}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <RefreshCw size={14} className={backupLoading ? 'animate-spin' : ''} />
+                  Atualizar
+                </button>
+                <button
+                  onClick={() => setShowBackupModal(false)}
+                  className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
