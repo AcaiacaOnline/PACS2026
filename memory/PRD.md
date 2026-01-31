@@ -52,12 +52,20 @@ Sistema completo de gestão municipal que inclui:
 - **Status**: IMPLEMENTADO E TESTADO
 
 #### ✅ 3. NOVO: SISTEMA DE BACKUP DEDICADO PARA O DOEM
-- **Rotas criadas**:
+- **Rotas criadas (Backend)**:
   - `GET /api/doem/backup/info` - Informações sobre dados para backup
   - `GET /api/doem/backup/export` - Exporta backup em JSON
     - Parâmetros: `ano` (filtrar), `incluir_pdfs` (default: true)
   - `POST /api/doem/backup/restore` - Restaura backup
     - Parâmetros: `modo` ("merge" ou "replace")
+- **Interface no Frontend** (`/app/frontend/src/pages/DOEM.jsx`):
+  - Botão "Backup" (verde) adicionado ao lado de "Newsletter" (apenas para admins)
+  - Modal completo com:
+    - Cards de estatísticas (edições, publicações, assinaturas, newsletter)
+    - Edições por status
+    - Botões de exportação: "sem PDFs", "com PDFs", "apenas ano selecionado"
+    - Upload de arquivo para restauração
+    - Avisos de segurança
 - **Funcionalidades**:
   - Exportação de edições, publicações, configurações e newsletter
   - Filtro por ano específico
