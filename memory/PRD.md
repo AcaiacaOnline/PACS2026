@@ -51,6 +51,22 @@ Sistema completo de gestão municipal que inclui:
 - **Arquivo alterado**: `/app/backend/server.py` (linha 5449-5467)
 - **Status**: IMPLEMENTADO E TESTADO
 
+#### ✅ 3. NOVO: SISTEMA DE BACKUP DEDICADO PARA O DOEM
+- **Rotas criadas**:
+  - `GET /api/doem/backup/info` - Informações sobre dados para backup
+  - `GET /api/doem/backup/export` - Exporta backup em JSON
+    - Parâmetros: `ano` (filtrar), `incluir_pdfs` (default: true)
+  - `POST /api/doem/backup/restore` - Restaura backup
+    - Parâmetros: `modo` ("merge" ou "replace")
+- **Funcionalidades**:
+  - Exportação de edições, publicações, configurações e newsletter
+  - Filtro por ano específico
+  - Opção de incluir/excluir PDFs anexados
+  - Restauração em modo merge (atualiza existentes) ou replace (substitui tudo)
+  - Estatísticas detalhadas do backup
+  - Apenas administradores podem usar
+- **Status**: IMPLEMENTADO E TESTADO
+
 ---
 
 ### Changelog - Sessão 16 (30/01/2026) - TAREFAS CRÍTICAS EXECUTADAS
