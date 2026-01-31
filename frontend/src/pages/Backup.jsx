@@ -387,7 +387,7 @@ const Backup = () => {
 
       {/* Modal de Confirmação */}
       {showConfirmRestore && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
           <div className="bg-card border border-border rounded-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-amber-100 dark:bg-amber-900/50 p-2 rounded-full">

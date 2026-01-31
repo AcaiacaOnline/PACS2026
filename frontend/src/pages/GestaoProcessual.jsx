@@ -739,7 +739,7 @@ const GestaoProcessual = () => {
 
         {/* Modal de Criação/Edição */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-foreground">
@@ -957,7 +957,7 @@ const GestaoProcessual = () => {
 
         {/* Modal de Exportação PDF */}
         {showExportModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl max-w-md w-full">
               <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-center">
@@ -997,7 +997,7 @@ const GestaoProcessual = () => {
 
         {/* Modal de Importação */}
         {showImportModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl max-w-lg w-full">
               <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-center">

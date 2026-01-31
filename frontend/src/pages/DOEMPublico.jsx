@@ -650,7 +650,7 @@ const DOEMPublico = () => {
 
       {/* ===== MODAL DE PESQUISA AVANÇADA ===== */}
       {showAdvancedSearch && searchResults && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
             <div className="bg-[#8B0000] text-white px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">

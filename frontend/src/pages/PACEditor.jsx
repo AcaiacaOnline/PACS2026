@@ -639,7 +639,7 @@ const PACEditor = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 pt-8 overflow-y-auto no-print">
           <div className="bg-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border">
             <div className="flex justify-between items-center p-6 border-b border-border sticky top-0 bg-card z-10">
               <h3 className="text-xl font-heading font-bold text-foreground">

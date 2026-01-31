@@ -990,7 +990,7 @@ const DOEM = () => {
 
         {/* Modal de Criação/Edição */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-foreground">
@@ -1175,7 +1175,7 @@ const DOEM = () => {
 
         {/* Modal de Importação RTF */}
         {showImportModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-center">
@@ -1260,7 +1260,7 @@ const DOEM = () => {
 
         {/* Modal de Upload de PDF com Assinatura Digital */}
         {showUploadPdfModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl max-w-lg w-full">
               <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-center">
@@ -1388,7 +1388,7 @@ const DOEM = () => {
 
         {/* Modal de Assinantes em Lote */}
         {showAssinantesModal && edicaoParaAssinar && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
               <div className="flex justify-between items-center p-4 border-b border-border bg-purple-50 dark:bg-purple-900/20">
                 <div>
@@ -1505,7 +1505,7 @@ const DOEM = () => {
 
         {/* Modal de Backup DOEM */}
         {showBackupModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card border border-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <h3 className="text-lg font-semibold flex items-center gap-2">

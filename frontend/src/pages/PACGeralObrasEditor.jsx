@@ -384,7 +384,7 @@ const PACGeralObrasEditor = () => {
 
         {/* Modal de Item */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
             <div className="bg-card rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4">
                 <h3 className="text-xl font-bold text-foreground">
