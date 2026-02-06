@@ -278,18 +278,6 @@ const Layout = ({ children }) => {
                   ]}
                 />
 
-                {/* Menu Diário Oficial */}
-                <DropdownMenu
-                  title="DOEM"
-                  icon={Newspaper}
-                  color="purple"
-                  isActive={isActive('/doem')}
-                  items={[
-                    { path: '/doem', label: 'Edições', icon: Newspaper },
-                    { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
-                  ]}
-                />
-
                 {/* Menu Prestação de Contas */}
                 <Link
                   to="/prestacao-contas"
