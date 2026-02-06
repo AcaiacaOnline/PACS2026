@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, List, LogOut, Building2, Users, Shield, ClipboardList, 
-  Database, Globe, Newspaper, FileSignature, ChevronDown, Hammer, DollarSign,
+  Database, Globe, FileSignature, ChevronDown, Hammer, DollarSign,
   FileText, Settings, BarChart3, Bell, User, Menu, X
 } from 'lucide-react';
 import api from '../utils/api';
