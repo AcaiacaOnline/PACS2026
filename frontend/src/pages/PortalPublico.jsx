@@ -1038,18 +1038,6 @@ const PortalPublico = () => {
                 ]}
               />
 
-              {/* Dropdown DOEM */}
-              <DropdownMenu
-                title="DOEM"
-                icon={Newspaper}
-                color="purple"
-                isActive={false}
-                onSelect={() => navigate('/doem-publico')}
-                items={[
-                  { id: 'doem', label: 'Diário Oficial', icon: Newspaper },
-                ]}
-              />
-
               {/* MROSC */}
               <button
                 onClick={() => { setActiveTab('mrosc'); setSearchTerm(''); setSelectedItem(null); setItemDetails([]); }}
