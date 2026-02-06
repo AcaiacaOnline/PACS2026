@@ -396,18 +396,6 @@ const Layout = ({ children }) => {
                   ]}
                 />
                 
-                {/* DOEM Section */}
-                <MobileMenuSection
-                  title="DOEM - Diário Oficial"
-                  icon={Newspaper}
-                  isOpen={openMobileSection === 'doem'}
-                  onToggle={() => setOpenMobileSection(openMobileSection === 'doem' ? null : 'doem')}
-                  items={[
-                    { path: '/doem', label: 'Edições', icon: Newspaper },
-                    { path: '/doem/publicacoes', label: 'Publicações', icon: FileText },
-                  ]}
-                />
-                
                 {/* MROSC */}
                 <Link 
                   to="/prestacao-contas" 
