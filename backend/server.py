@@ -3377,9 +3377,6 @@ async def export_backup(request: Request):
             'mrosc_rh': [],
             'mrosc_despesas': [],
             'mrosc_documentos': [],
-            'doem_edicoes': [],
-            'doem_config': [],
-            'doem_newsletter': [],
             'document_signatures': [],
             'user_sessions': []
         }
@@ -3398,9 +3395,6 @@ async def export_backup(request: Request):
             ('mrosc_rh', 'mrosc_rh'),
             ('mrosc_despesas', 'mrosc_despesas'),
             ('mrosc_documentos', 'mrosc_documentos'),
-            ('doem_edicoes', 'doem_edicoes'),
-            ('doem_config', 'doem_config'),
-            ('doem_newsletter', 'doem_newsletter'),
             ('document_signatures', 'document_signatures'),
         ]
         
