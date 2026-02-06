@@ -17,8 +17,6 @@ import PrestacaoContasEditor from './pages/PrestacaoContasEditor';
 import Users from './pages/Users';
 import Backup from './pages/Backup';
 import PortalPublico from './pages/PortalPublico';
-import DOEM from './pages/DOEM';
-import DOEMPublico from './pages/DOEMPublico';
 import ValidarDocumento from './pages/ValidarDocumento';
 import HistoricoAssinaturas from './pages/HistoricoAssinaturas';
 import Configuracoes from './pages/Configuracoes';
