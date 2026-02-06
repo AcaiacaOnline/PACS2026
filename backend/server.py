@@ -55,15 +55,6 @@ from models import (
     # Processo models
     Processo as ProcessoModel, ProcessoCreate as ProcessoCreateModel, ProcessoUpdate as ProcessoUpdateModel,
     PaginatedResponse as PaginatedResponseModel,
-    # DOEM models
-    DOEMPublicacao as DOEMPublicacaoModel, DOEMPublicacaoCreate as DOEMPublicacaoCreateModel,
-    DOEMAssinante as DOEMAssinanteModel, DOEMAssinatura as DOEMAssinaturaModel,
-    DOEMEdicao as DOEMEdicaoModel, DOEMEdicaoCreate as DOEMEdicaoCreateModel, DOEMEdicaoUpdate as DOEMEdicaoUpdateModel,
-    DOEMConfig as DOEMConfigModel, DOEMConfigUpdate as DOEMConfigUpdateModel,
-    DOEM_SEGMENTOS, DOEM_TIPOS_PUBLICACAO,
-    # Newsletter models
-    NewsletterInscrito as NewsletterInscritoModel, NewsletterInscricaoPublica as NewsletterInscricaoPublicaModel,
-    NewsletterInscricaoManual as NewsletterInscricaoManualModel,
     # MROSC models
     ProjetoMROSC as ProjetoMROSCModel, ProjetoMROSCCreate as ProjetoMROSCCreateModel, ProjetoMROSCUpdate as ProjetoMROSCUpdateModel,
     RecursoHumanoMROSC as RecursoHumanoMROSCModel, RecursoHumanoMROSCCreate as RecursoHumanoMROSCCreateModel,
