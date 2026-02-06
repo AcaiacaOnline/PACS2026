@@ -3680,14 +3680,12 @@ async def get_backup_info(request: Request):
     mrosc_rh_count = await db.mrosc_rh.count_documents({})
     mrosc_despesas_count = await db.mrosc_despesas.count_documents({})
     mrosc_documentos_count = await db.mrosc_documentos.count_documents({})
-    doem_edicoes_count = await db.doem_edicoes.count_documents({})
-    doem_newsletter_count = await db.doem_newsletter.count_documents({})
     document_signatures_count = await db.document_signatures.count_documents({})
     
     total = (users_count + pacs_count + pac_items_count + pacs_geral_count + 
              pac_geral_items_count + pacs_geral_obras_count + pac_geral_obras_items_count +
              processos_count + mrosc_projetos_count + mrosc_rh_count + mrosc_despesas_count +
-             mrosc_documentos_count + doem_edicoes_count + doem_newsletter_count + document_signatures_count)
+             mrosc_documentos_count + document_signatures_count)
     
     return {
         'system': 'Planejamento Acaiaca',
@@ -3705,8 +3703,6 @@ async def get_backup_info(request: Request):
             'mrosc_rh': mrosc_rh_count,
             'mrosc_despesas': mrosc_despesas_count,
             'mrosc_documentos': mrosc_documentos_count,
-            'doem_edicoes': doem_edicoes_count,
-            'doem_newsletter': doem_newsletter_count,
             'document_signatures': document_signatures_count
         },
         'total_records': total,
