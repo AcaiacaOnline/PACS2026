@@ -6246,10 +6246,6 @@ async def get_realtime_metrics(request: Request):
             'total': await db.mrosc_projetos.count_documents({}),
             'documentos': await db.mrosc_documentos.count_documents({}),
             'status': 'online'
-        },
-        'DOEM': {
-            'total': await db.doem_edicoes.count_documents({}),
-            'status': 'online'
         }
     }
     
