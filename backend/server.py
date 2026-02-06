@@ -6404,20 +6404,6 @@ async def get_alertas(request: Request):
                     'dias_aberto': dias_aberto
                 })
     
-    # ===== ALERTAS DE DOEM =====
-    edicoes = await db.doem_edicoes.find({'status': {'$ne': 'PUBLICADA'}}, {'_id': 0}).to_list(50)
-    
-    for edicao in edicoes:
-        if edicao.get('status') == 'RASCUNHO':
-            alertas.append({
-                'tipo': 'DOCUMENTO',
-                'titulo': 'Edição do DOEM em Rascunho',
-                'mensagem': f'A edição {edicao.get("numero_edicao", "")} do DOEM está em rascunho.',
-                'prioridade': 'BAIXA',
-                'modulo': 'DOEM',
-                'referencia_id': edicao.get('edicao_id')
-            })
-    
     # Ordenar por prioridade
     prioridade_ordem = {'CRITICA': 0, 'ALTA': 1, 'MEDIA': 2, 'BAIXA': 3}
     alertas.sort(key=lambda x: prioridade_ordem.get(x.get('prioridade', 'MEDIA'), 2))
