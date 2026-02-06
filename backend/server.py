@@ -737,8 +737,8 @@ def get_professional_styles():
     return custom_styles, cor_primaria, cor_secundaria, cor_destaque
 
 def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool = False):
-    """Cria cabeçalho no estilo DOEM (Diário Oficial Eletrônico Municipal)"""
-    from utils.pdf_utils import create_doem_header_elements
+    """Cria cabeçalho no estilo oficial (Diário Oficial Eletrônico Municipal)"""
+    from utils.pdf_utils import create_oficial_header_elements
     
     # Título do documento
     if is_pac_geral:
@@ -749,7 +749,7 @@ def create_professional_header(pac_data: dict, styles: dict, is_pac_geral: bool 
     ano = pac_data.get("ano", datetime.now().year)
     subtitulo = f'Exercício {ano} - Lei Federal nº 14.133/2021'
     
-    header_elements = create_doem_header_elements(
+    header_elements = create_oficial_header_elements(
         styles,
         titulo_documento=titulo,
         subtitulo=subtitulo
@@ -1426,9 +1426,9 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PAC - PLANO ANUAL DE CONTRATAÇÕES',
         subtitulo=f'Exercício {pac.get("ano", "2026")} - Lei Federal nº 14.133/2021',
         total_pages=1
@@ -1440,8 +1440,8 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
         pagesize=page_size,
         leftMargin=20*mm,
         rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=40*mm,  # Espaço para rodapé DOEM
+        topMargin=50*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=40*mm,  # Espaço para rodapé oficial
         title=f'PAC {pac["secretaria"]} {pac.get("ano", "2026")}'
     )
     
@@ -1474,8 +1474,8 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     # Seção de assinaturas
     elements.extend(create_signature_section(pac, custom_styles, is_pac_geral=False))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
@@ -2159,9 +2159,9 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES CONSOLIDADO',
         subtitulo=f'Exercício {pac.get("ano", "2026")} - Lei Federal nº 14.133/2021',
         total_pages=1
@@ -2172,8 +2172,8 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
         pagesize=page_size,
         leftMargin=20*mm,
         rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=40*mm,  # Espaço para rodapé DOEM
+        topMargin=50*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=40*mm,  # Espaço para rodapé oficial
         title=f'PAC Geral {pac.get("nome_secretaria", "")} {pac.get("ano", "2026")}'
     )
     
@@ -2261,8 +2261,8 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     # Seção de assinaturas
     elements.extend(create_signature_section(pac, custom_styles, is_pac_geral=True))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
@@ -2448,9 +2448,9 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     buffer = BytesIO()
     page_size = landscape(A4) if orientation.lower() == 'landscape' else A4
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PLANO ANUAL DE CONTRATAÇÕES - OBRAS E SERVIÇOS DE ENGENHARIA',
         subtitulo='Lei 14.133/2021 - Nova Lei de Licitações | Portaria 448/ME',
         total_pages=1
@@ -2461,8 +2461,8 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
         pagesize=page_size,
         leftMargin=20*mm,
         rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=40*mm,  # Espaço para rodapé DOEM
+        topMargin=50*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=40*mm,  # Espaço para rodapé oficial
         title=f'PAC Obras - {pac["nome_secretaria"]} {pac.get("ano", "2026")}'
     )
     
@@ -2566,8 +2566,8 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     elements.append(Paragraph(f'<b>{pac.get("secretario", "Secretário(a)")}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=9)))
     elements.append(Paragraph(f'{pac.get("nome_secretaria", "")}', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=7, textColor=colors.gray)))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f"PAC_Obras_{pac['nome_secretaria'].replace(' ', '_')}_{pac.get('ano', '2026')}.pdf"
@@ -3136,9 +3136,9 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     # 5cm (esquerda/direita), 3cm (superior/inferior)
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
         subtitulo='Lei Federal nº 14.133/2021',
         total_pages=1
@@ -3149,8 +3149,8 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
         pagesize=page_size,
         leftMargin=20*mm, 
         rightMargin=20*mm, 
-        topMargin=50*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=40*mm  # Espaço para rodapé DOEM
+        topMargin=50*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=40*mm  # Espaço para rodapé oficial
     )
     
     elements = []
@@ -3222,8 +3222,8 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     footer_text = f'<font size=6><i>Total de {len(processos)} processos</i></font>'
     elements.append(Paragraph(footer_text, ParagraphStyle('Footer', alignment=TA_CENTER, textColor=colors.grey)))
     
-    # Build com callback DOEM para cabeçalho/rodapé em todas as páginas
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial para cabeçalho/rodapé em todas as páginas
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     orientation_name = 'Paisagem' if orientation.lower() == 'landscape' else 'Retrato'
@@ -4044,9 +4044,9 @@ async def public_export_pac_pdf(pac_id: str, orientation: str = "landscape"):
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PAC - PLANO ANUAL DE CONTRATAÇÕES',
         subtitulo=f'Exercício {pac.get("ano", "2026")} - Lei Federal nº 14.133/2021',
         total_pages=1
@@ -4057,8 +4057,8 @@ async def public_export_pac_pdf(pac_id: str, orientation: str = "landscape"):
         pagesize=page_size,
         leftMargin=15*mm,
         rightMargin=15*mm,
-        topMargin=55*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=35*mm,  # Espaço para rodapé DOEM
+        topMargin=55*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=35*mm,  # Espaço para rodapé oficial
         title=f'PAC {pac.get("secretaria", "")} 2026'
     )
     
@@ -4141,8 +4141,8 @@ async def public_export_pac_pdf(pac_id: str, orientation: str = "landscape"):
     
     elements.append(table)
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f'PAC_{pac.get("secretaria", "").replace(" ", "_")}_2026.pdf'
@@ -4160,9 +4160,9 @@ async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "lan
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PAC GERAL - PLANO ANUAL DE CONTRATAÇÕES COMPARTILHADO',
         subtitulo=f'Exercício {pac_geral.get("ano", "2026")} - Lei Federal nº 14.133/2021',
         total_pages=1
@@ -4252,8 +4252,8 @@ async def public_export_pac_geral_pdf(pac_geral_id: str, orientation: str = "lan
     
     elements.append(table)
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f'PAC_Geral_{pac_geral.get("nome_secretaria", "").replace(" ", "_")}.pdf'
@@ -4296,9 +4296,9 @@ async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str 
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='PAC GERAL - OBRAS E SERVIÇOS DE ENGENHARIA',
         subtitulo=f'Lei Federal nº 14.133/2021 | {pac.get("nome_secretaria", "")}',
         total_pages=1
@@ -4363,8 +4363,8 @@ async def public_export_pac_geral_obras_pdf(pac_obras_id: str, orientation: str 
     else:
         elements.append(Paragraph('Nenhum item cadastrado.', ParagraphStyle('Center', fontSize=10, alignment=1)))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f'PAC_Obras_{pac.get("nome_secretaria", "").replace(" ", "_")}.pdf'
@@ -4378,9 +4378,9 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
     buffer = BytesIO()
     page_size = A4 if orientation.lower() == 'portrait' else landscape(A4)
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='GESTÃO PROCESSUAL - RELATÓRIO DE PROCESSOS',
         subtitulo=f'Lei Federal nº 14.133/2021 | Total: {len(processos)} processos',
         total_pages=1
@@ -4444,8 +4444,8 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
     
     elements.append(table)
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f'Processos_PAC_Acaiaca_{datetime.now().strftime("%Y%m%d")}.pdf'
@@ -5490,9 +5490,9 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
     
     buffer = BytesIO()
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='RELATÓRIO DE PRESTAÇÃO DE CONTAS',
         subtitulo='Lei 13.019/2014 - Marco Regulatório das Organizações da Sociedade Civil (MROSC)',
         total_pages=1
@@ -5503,8 +5503,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
         pagesize=A4,
         leftMargin=20*mm,
         rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho DOEM
-        bottomMargin=40*mm,  # Espaço para rodapé DOEM
+        topMargin=50*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=40*mm,  # Espaço para rodapé oficial
         title=f'Prestação de Contas - {projeto["nome_projeto"]}'
     )
     
@@ -5698,8 +5698,8 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
     elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
     elements.append(Paragraph(f'Responsável pela Prestação de Contas', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     # Adicionar assinatura digital ao PDF
@@ -6532,9 +6532,9 @@ async def export_relatorio_consolidado_pdf(request: Request):
     
     buffer = BytesIO()
     
-    # Criar callback para cabeçalho/rodapé DOEM
+    # Criar callback para cabeçalho/rodapé oficial
     from utils.pdf_utils import create_page_callback
-    doem_callback = create_page_callback(
+    oficial_callback = create_page_callback(
         titulo_documento='RELATÓRIO GERENCIAL CONSOLIDADO',
         subtitulo=f'Gerado em: {datetime.now().strftime("%d/%m/%Y às %H:%M")}',
         total_pages=1
@@ -6603,8 +6603,8 @@ async def export_relatorio_consolidado_pdf(request: Request):
     elements.append(Paragraph(f'<b>{user_name}</b>', ParagraphStyle('Assinatura', alignment=TA_CENTER, fontSize=10)))
     elements.append(Paragraph('Responsável pelo Relatório', ParagraphStyle('Cargo', alignment=TA_CENTER, fontSize=8, textColor=colors.gray)))
     
-    # Build com callback DOEM
-    doc.build(elements, onFirstPage=doem_callback, onLaterPages=doem_callback)
+    # Build com callback oficial
+    doc.build(elements, onFirstPage=oficial_callback, onLaterPages=oficial_callback)
     buffer.seek(0)
     
     filename = f"Relatorio_Consolidado_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
