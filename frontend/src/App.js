@@ -215,7 +215,6 @@ const AppRoutes = () => {
       {/* Rota Pública - Portal de Transparência (PÁGINA INICIAL) */}
       <Route path="/" element={<PortalPublico />} />
       <Route path="/transparencia" element={<PortalPublico />} />
-      <Route path="/doem-publico" element={<DOEMPublico />} />
       <Route path="/validar" element={<ValidarDocumento />} />
       
       {/* Rotas Protegidas */}
@@ -235,7 +234,6 @@ const AppRoutes = () => {
       <Route path="/processos/dashboard" element={<ProtectedRoute><DashboardProcessual /></ProtectedRoute>} />
       <Route path="/prestacao-contas" element={<ProtectedRoute><PrestacaoContasList /></ProtectedRoute>} />
       <Route path="/prestacao-contas/:id" element={<ProtectedRoute><PrestacaoContasEditor /></ProtectedRoute>} />
-      <Route path="/doem" element={<ProtectedRoute><DOEM /></ProtectedRoute>} />
       <Route path="/usuarios" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/users" element={<Navigate to="/usuarios" replace />} />
       <Route path="/backup" element={<ProtectedRoute><Backup /></ProtectedRoute>} />
