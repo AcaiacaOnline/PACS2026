@@ -3631,45 +3631,6 @@ async def restore_backup(request: Request, file: UploadFile = File(...)):
             )
             stats['mrosc_documentos'] = stats.get('mrosc_documentos', 0) + 1
         
-        # Restaurar DOEM Edições
-        for edicao in backup_data.get('doem_edicoes', []):
-            for field in ['created_at', 'updated_at', 'data_publicacao']:
-                if field in edicao and isinstance(edicao[field], str):
-                    try:
-                        edicao[field] = datetime.fromisoformat(edicao[field].replace('Z', '+00:00'))
-                    except:
-                        pass
-            await db.doem_edicoes.update_one(
-                {'edicao_id': edicao['edicao_id']},
-                {'$set': edicao},
-                upsert=True
-            )
-            stats['doem_edicoes'] = stats.get('doem_edicoes', 0) + 1
-        
-        # Restaurar DOEM Config
-        for config in backup_data.get('doem_config', []):
-            await db.doem_config.update_one(
-                {'config_id': config.get('config_id', 'doem_config_main')},
-                {'$set': config},
-                upsert=True
-            )
-            stats['doem_config'] = stats.get('doem_config', 0) + 1
-        
-        # Restaurar DOEM Newsletter
-        for news in backup_data.get('doem_newsletter', []):
-            for field in ['created_at', 'confirmed_at']:
-                if field in news and isinstance(news[field], str):
-                    try:
-                        news[field] = datetime.fromisoformat(news[field].replace('Z', '+00:00'))
-                    except:
-                        pass
-            await db.doem_newsletter.update_one(
-                {'email': news['email']},
-                {'$set': news},
-                upsert=True
-            )
-            stats['doem_newsletter'] = stats.get('doem_newsletter', 0) + 1
-        
         # Restaurar Assinaturas de Documentos
         for sig in backup_data.get('document_signatures', []):
             if 'created_at' in sig and isinstance(sig['created_at'], str):
