@@ -6839,9 +6839,6 @@ async def cancelar_inscricao(email: str):
         media_type="text/html"
     )
 
-# Registrar router Newsletter
-app.include_router(newsletter_router)
-
 # ============ MÓDULO MROSC - PRESTAÇÃO DE CONTAS (Lei 13.019/2014) ============
 mrosc_router = APIRouter(prefix="/api/mrosc", tags=["Prestação de Contas MROSC"])
 
