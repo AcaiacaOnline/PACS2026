@@ -9020,9 +9020,6 @@ async def validate_document_internal(validation_code: str) -> DocumentValidation
 
 app.include_router(validation_router)
 
-# Registrar router DOEM
-app.include_router(doem_router)
-
 # Registrar router WebSocket
 app.include_router(ws_router, prefix="/api")
 
