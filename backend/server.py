@@ -208,22 +208,6 @@ ProcessoCreate = ProcessoCreateModel
 ProcessoUpdate = ProcessoUpdateModel
 PaginatedResponse = PaginatedResponseModel
 
-# DOEM models - usando aliases do pacote models/
-DOEMPublicacao = DOEMPublicacaoModel
-DOEMPublicacaoCreate = DOEMPublicacaoCreateModel
-DOEMAssinante = DOEMAssinanteModel
-DOEMAssinatura = DOEMAssinaturaModel
-DOEMEdicao = DOEMEdicaoModel
-DOEMEdicaoCreate = DOEMEdicaoCreateModel
-DOEMEdicaoUpdate = DOEMEdicaoUpdateModel
-DOEMConfig = DOEMConfigModel
-DOEMConfigUpdate = DOEMConfigUpdateModel
-
-# Newsletter models - usando aliases do pacote models/
-NewsletterInscrito = NewsletterInscritoModel
-NewsletterInscricaoPublica = NewsletterInscricaoPublicaModel
-NewsletterInscricaoManual = NewsletterInscricaoManualModel
-
 # MROSC models - usando aliases do pacote models/
 ProjetoMROSC = ProjetoMROSCModel
 ProjetoMROSCCreate = ProjetoMROSCCreateModel
