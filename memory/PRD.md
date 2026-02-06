@@ -7,7 +7,6 @@ Sistema completo de gestão municipal que inclui:
 - **PAC Geral** - Visão consolidada de todas as secretarias
 - **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
-- **DOEM (Diário Oficial Eletrônico Municipal)** - Publicações oficiais com assinatura digital
 - **Portal de Transparência** - Acesso público com menus dropdown ✅
 - **Prestação de Contas MROSC** - Sistema completo com workflow de aprovação ✅ ATUALIZADO v3.0
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
@@ -20,14 +19,41 @@ Sistema completo de gestão municipal que inclui:
 - **Menu Configurações** - Dropdown com Assinaturas, Usuários, Backup ✅
 - **Sistema de Instalação** - Similar ao WordPress ✅ NOVO
 - **Upload de Imagens** - Suporte a PDF, JPG, PNG no MROSC ✅ NOVO
-- **Newsletter** - Sistema de notificações por email
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 - **Assinatura Digital Lei 14.063** - Página de assinaturas no estilo oficial ✅ NOVO
 - **Cabeçalho Padronizado com Brasão** - Todos os PDFs com identidade visual oficial ✅ NOVO
 
 ---
 
-## Última Atualização: 30/01/2026 (Sessão 17)
+## Última Atualização: 06/02/2026 (Sessão 18)
+
+### Changelog - Sessão 18 (06/02/2026) - REMOÇÃO DO MÓDULO DOEM
+
+#### ✅ MÓDULO DOEM REMOVIDO COMPLETAMENTE
+- **Solicitação**: Remover o módulo DOEM (Diário Oficial Eletrônico Municipal) do sistema
+- **Arquivos removidos no Frontend**:
+  - `/app/frontend/src/pages/DOEM.jsx`
+  - `/app/frontend/src/pages/DOEMPublico.jsx`
+- **Arquivos removidos no Backend**:
+  - `/app/backend/models/doem.py`
+  - `/app/backend/models/newsletter.py`
+  - `/app/backend/routes/doem.py`
+  - `/app/backend/rodape_doem*.jpg`
+  - `/app/backend/brasao_doem*.png`
+- **Rotas removidas**:
+  - Todas as rotas `/api/doem/*` (~2300 linhas)
+  - Rotas de newsletter `/api/newsletter/*`
+- **Navegação atualizada**:
+  - Removido link "DOEM" do menu principal
+  - Removido link "DOEM" do menu mobile
+  - Removidas rotas `/doem` e `/doem-publico` do App.js
+- **Modelos removidos**:
+  - Imports e exports do DOEM removidos de `/app/backend/models/__init__.py`
+- **Backup atualizado**:
+  - Removidas coleções `doem_edicoes`, `doem_config`, `doem_newsletter` do sistema de backup
+- **Status**: COMPLETAMENTE REMOVIDO E TESTADO
+
+---
 
 ### Changelog - Sessão 17 (30/01/2026) - BUG FIX CRÍTICO
 
@@ -42,12 +68,6 @@ Sistema completo de gestão municipal que inclui:
   - ✅ Criação sem ano (extração do numero_processo) - continua funcionando
   - ✅ Fallback para ano atual quando não há informação - continua funcionando
 - **Status**: RESOLVIDO E TESTADO
-
-#### ✅ 2. MELHORIA: EXCLUSÃO DE PUBLICAÇÕES DO DOEM (EDIÇÕES ANTIGAS)
-- **Solicitação**: Permitir exclusão de publicações mesmo em edições já publicadas
-- **Alteração**: Rota `DELETE /api/doem/edicoes/{edicao_id}/publicacoes/{index}` agora permite:
-  - Administradores: podem excluir de qualquer edição (rascunho ou publicada)
-  - Usuários comuns: apenas de edições em rascunho
 - **Arquivo alterado**: `/app/backend/server.py` (linha 5449-5467)
 - **Status**: IMPLEMENTADO E TESTADO
 
