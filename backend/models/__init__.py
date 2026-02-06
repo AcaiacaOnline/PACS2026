@@ -18,14 +18,6 @@ from .pac_obras import (
 from .processo import (
     Processo, ProcessoCreate, ProcessoUpdate, PaginatedResponse
 )
-from .doem import (
-    DOEMPublicacao, DOEMPublicacaoCreate, DOEMAssinante, DOEMAssinatura,
-    DOEMEdicao, DOEMEdicaoCreate, DOEMEdicaoUpdate, DOEMConfig, DOEMConfigUpdate,
-    DOEM_SEGMENTOS, DOEM_TIPOS_PUBLICACAO
-)
-from .newsletter import (
-    NewsletterInscrito, NewsletterInscricaoPublica, NewsletterInscricaoManual
-)
 from .mrosc import (
     ProjetoMROSC, ProjetoMROSCCreate, ProjetoMROSCUpdate,
     RecursoHumanoMROSC, RecursoHumanoMROSCCreate,
@@ -47,12 +39,6 @@ __all__ = [
     'CLASSIFICACAO_OBRAS_SERVICOS',
     # Processo models
     'Processo', 'ProcessoCreate', 'ProcessoUpdate', 'PaginatedResponse',
-    # DOEM models
-    'DOEMPublicacao', 'DOEMPublicacaoCreate', 'DOEMAssinante', 'DOEMAssinatura',
-    'DOEMEdicao', 'DOEMEdicaoCreate', 'DOEMEdicaoUpdate', 'DOEMConfig', 'DOEMConfigUpdate',
-    'DOEM_SEGMENTOS', 'DOEM_TIPOS_PUBLICACAO',
-    # Newsletter models
-    'NewsletterInscrito', 'NewsletterInscricaoPublica', 'NewsletterInscricaoManual',
     # MROSC models
     'ProjetoMROSC', 'ProjetoMROSCCreate', 'ProjetoMROSCUpdate',
     'RecursoHumanoMROSC', 'RecursoHumanoMROSCCreate',
