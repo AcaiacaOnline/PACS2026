@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, FileText, ClipboardList, BarChart3, Download, Printer,
-  Search, Shield, Eye, Lock, FileSpreadsheet, Newspaper, ChevronLeft, ChevronRight,
+  Search, Shield, Eye, Lock, FileSpreadsheet, ChevronLeft, ChevronRight,
   Hammer, DollarSign, FileSignature, ChevronDown
 } from 'lucide-react';
 import { 
