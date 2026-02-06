@@ -92,7 +92,6 @@ API REST completa para gestão municipal incluindo:
 - **PAC Obras** - Obras e Serviços de Engenharia
 - **Gestão Processual** - Controle de Processos Licitatórios
 - **MROSC** - Prestação de Contas de OSCs (Lei 13.019/2014)
-- **DOEM** - Diário Oficial Eletrônico Municipal
 - **Portal de Transparência** - Acesso Público aos Dados
 
 ### 🔐 Autenticação
