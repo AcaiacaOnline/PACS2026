@@ -117,7 +117,6 @@ Notificações em tempo real disponíveis em `/api/ws/notifications/{user_id}`
         {"name": "PAC Obras", "description": "Obras e serviços de engenharia"},
         {"name": "Gestão Processual", "description": "Processos licitatórios"},
         {"name": "MROSC", "description": "Prestação de Contas - Lei 13.019/2014"},
-        {"name": "DOEM", "description": "Diário Oficial Eletrônico Municipal - Gestão de edições e publicações"},
         {"name": "Portal da Transparência", "description": "Endpoints públicos para acesso cidadão"},
         {"name": "Dashboard Analítico", "description": "Estatísticas e métricas do sistema"},
         {"name": "Sistema de Alertas", "description": "Alertas e notificações automatizadas"},
