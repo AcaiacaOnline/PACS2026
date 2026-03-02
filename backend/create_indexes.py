@@ -28,8 +28,14 @@ async def create_indexes():
     # ==================== USERS ====================
     print("  → Índices de users...")
     await db.users.create_index("user_id", unique=True)
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("cpf", unique=True, sparse=True)
+    try:
+        await db.users.create_index("email", unique=True)
+    except Exception as e:
+        print(f"    ⚠️ Índice email já existe ou há duplicatas: {e}")
+    try:
+        await db.users.create_index("cpf", unique=True, sparse=True)
+    except Exception as e:
+        print(f"    ⚠️ Índice cpf: {e}")
     await db.users.create_index("is_active")
     await db.users.create_index("is_admin")
     await db.users.create_index("secretaria")
