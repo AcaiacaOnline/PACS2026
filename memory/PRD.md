@@ -22,10 +22,60 @@ Sistema completo de gestão municipal que inclui:
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 - **Assinatura Digital Lei 14.063** - Página de assinaturas no estilo oficial ✅ NOVO
 - **Cabeçalho Padronizado com Brasão** - Todos os PDFs com identidade visual oficial ✅ NOVO
+- **Instalador cPanel** - Pacote completo para deployment em servidores cPanel ✅ NOVO v2.0
 
 ---
 
-## Última Atualização: 06/02/2026 (Sessão 18)
+## Última Atualização: 02/03/2026 (Sessão 19)
+
+### Changelog - Sessão 19 (02/03/2026) - REFATORAÇÃO E INSTALADOR cPANEL
+
+#### ✅ 1. ANÁLISE E OTIMIZAÇÃO DO CÓDIGO
+- **Análise realizada**:
+  - 150 funções/endpoints identificados
+  - 286 chamadas ao banco de dados
+  - 6700+ linhas no server.py
+  - Identificados gargalos de performance em queries sem índice
+- **Otimizações implementadas**:
+  - Criado script de índices MongoDB (`/app/backend/create_indexes.py`)
+  - Implementado middleware de performance (`/app/backend/middleware/performance.py`)
+    - Rate Limiting por IP e usuário
+    - Cache de responses para endpoints públicos
+    - Headers de segurança (CSP, HSTS, X-Frame-Options)
+    - Métricas de tempo de processamento
+
+#### ✅ 2. INSTALADOR cPANEL v2.0
+- **Arquivos criados**:
+  - `/app/cpanel_installer/install.sh` - Script de instalação automatizado
+  - `/app/cpanel_installer/uninstall.sh` - Script de desinstalação
+  - `/app/cpanel_installer/build.sh` - Script de build do pacote
+  - `/app/cpanel_installer/README.md` - Documentação completa
+- **Funcionalidades**:
+  - Instalação automática de dependências Python
+  - Configuração de ambiente virtual
+  - Configuração de variáveis de ambiente
+  - Proxy reverso via .htaccess
+  - Scripts de gerenciamento (start/stop/restart/status/logs)
+- **Pacote gerado**: `planejamento-acaiaca-cpanel-v2.0.0-20260302.zip` (32MB)
+
+#### ✅ 3. MIDDLEWARE DE PERFORMANCE
+- **Rate Limiting**:
+  - Default: 100 req/min
+  - Auth: 10 req/min
+  - Upload: 20 req/min
+  - Export: 5 req/min
+  - Public: 200 req/min
+- **Cache**:
+  - TTL padrão: 5 minutos
+  - Max entries: 1000
+  - Endpoints cacheáveis: `/api/public/*`, `/api/transparencia/*`
+- **Headers de Segurança**:
+  - X-Content-Type-Options: nosniff
+  - X-Frame-Options: DENY
+  - X-XSS-Protection: 1; mode=block
+  - Referrer-Policy: strict-origin-when-cross-origin
+
+---
 
 ### Changelog - Sessão 18 (06/02/2026) - REMOÇÃO DO MÓDULO DOEM
 
