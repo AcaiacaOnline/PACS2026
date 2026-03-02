@@ -1,6 +1,7 @@
 # =============================================================================
 # Planejamento Acaiaca - cPanel Deployment Configuration
 # Este arquivo configura o deployment automático via Git Version Control do cPanel
+# Documentação: https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-deployment/
 # =============================================================================
 
 ---
@@ -11,33 +12,66 @@ deployment:
     - mkdir -p $DEPLOYPATH/backend/logs
     - mkdir -p $DEPLOYPATH/backend/uploads/mrosc
     - mkdir -p $DEPLOYPATH/backend/static
+    - mkdir -p $DEPLOYPATH/backend/scripts
+    - mkdir -p $DEPLOYPATH/backups
     - mkdir -p $DEPLOYPATH/frontend
     
     # 2. Copiar arquivos do backend
     - /bin/cp -R backend/* $DEPLOYPATH/backend/
     
-    # 3. Copiar build do frontend para public_html
+    # 3. Copiar scripts de gerenciamento
+    - /bin/cp -R cpanel_installer/manage.sh $DEPLOYPATH/ 2>/dev/null || true
+    - chmod +x $DEPLOYPATH/manage.sh 2>/dev/null || true
+    - chmod +x $DEPLOYPATH/backend/scripts/*.sh 2>/dev/null || true
+    
+    # 4. Copiar build do frontend para public_html
     - /bin/cp -R frontend/build/* /home/$USER/public_html/
     
-    # 4. Configurar permissões
+    # 5. Configurar .htaccess para proxy reverso
+    - |
+      cat > /home/$USER/public_html/.htaccess << 'HTACCESS'
+      # Planejamento Acaiaca - Proxy Reverso
+      RewriteEngine On
+      
+      # API proxy para backend
+      RewriteCond %{REQUEST_URI} ^/api/(.*)$
+      RewriteRule ^api/(.*)$ http://127.0.0.1:8001/api/$1 [P,L]
+      
+      # SPA routing - serve index.html para rotas do React
+      RewriteCond %{REQUEST_FILENAME} !-f
+      RewriteCond %{REQUEST_FILENAME} !-d
+      RewriteRule ^(.*)$ /index.html [L]
+      HTACCESS
+    
+    # 6. Configurar permissões
     - chmod -R 755 $DEPLOYPATH
     - chmod -R 777 $DEPLOYPATH/backend/logs
     - chmod -R 777 $DEPLOYPATH/backend/uploads
+    - chmod -R 777 $DEPLOYPATH/backups
     - chmod 600 $DEPLOYPATH/backend/.env 2>/dev/null || true
     
-    # 5. Instalar/atualizar dependências Python (se venv existir)
+    # 7. Instalar/atualizar dependências Python (se venv existir)
     - |
       if [ -d "$DEPLOYPATH/backend/venv" ]; then
         source $DEPLOYPATH/backend/venv/bin/activate
-        pip install -r $DEPLOYPATH/backend/requirements.txt --quiet
+        pip install -r $DEPLOYPATH/backend/requirements.txt --quiet --upgrade
         deactivate
       fi
     
-    # 6. Reiniciar aplicação (se script de gerenciamento existir)
+    # 8. Executar migrações de índices (se necessário)
+    - |
+      if [ -f "$DEPLOYPATH/backend/create_indexes.py" ] && [ -d "$DEPLOYPATH/backend/venv" ]; then
+        source $DEPLOYPATH/backend/venv/bin/activate
+        cd $DEPLOYPATH/backend
+        python create_indexes.py 2>/dev/null || true
+        deactivate
+      fi
+    
+    # 9. Reiniciar aplicação (se script de gerenciamento existir)
     - |
       if [ -f "$DEPLOYPATH/manage.sh" ]; then
         $DEPLOYPATH/manage.sh restart
       fi
     
-    # 7. Log do deployment
-    - echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment concluído" >> $DEPLOYPATH/backend/logs/deployment.log
+    # 10. Log do deployment
+    - echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment via Git concluído com sucesso" >> $DEPLOYPATH/backend/logs/deployment.log
