@@ -137,6 +137,14 @@ Notificações em tempo real disponíveis em `/api/ws/notifications/{user_id}`
     }
 )
 
+# Importar e registrar middleware de performance
+try:
+    from middleware.performance import PerformanceMiddleware, rate_limiter, response_cache
+    app.add_middleware(PerformanceMiddleware)
+    logger.info("✅ Middleware de performance carregado")
+except ImportError:
+    logger.warning("⚠️ Middleware de performance não disponível")
+
 # Importar e registrar WebSocket router
 from utils.websocket import router as ws_router, manager as ws_manager
 from utils.websocket import (
