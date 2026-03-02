@@ -137,13 +137,17 @@ Notificações em tempo real disponíveis em `/api/ws/notifications/{user_id}`
     }
 )
 
+# Importar logging primeiro
+from utils.logging_config import get_logger, log_info, log_error, request_logger
+logger = get_logger("server")
+
 # Importar e registrar middleware de performance
 try:
     from middleware.performance import PerformanceMiddleware, rate_limiter, response_cache
     app.add_middleware(PerformanceMiddleware)
     logger.info("✅ Middleware de performance carregado")
-except ImportError:
-    logger.warning("⚠️ Middleware de performance não disponível")
+except ImportError as e:
+    logger.warning(f"⚠️ Middleware de performance não disponível: {e}")
 
 # Importar e registrar WebSocket router
 from utils.websocket import router as ws_router, manager as ws_manager
@@ -153,9 +157,6 @@ from utils.websocket import (
     Notification, NotificationType
 )
 
-# Importar logging
-from utils.logging_config import get_logger, log_info, log_error, request_logger
-
 # Importar utilitários de PDF (funções refatoradas)
 from utils.pdf_utils import (
     mask_cpf as mask_cpf_util,
@@ -164,8 +165,6 @@ from utils.pdf_utils import (
     draw_signature_seal as draw_signature_seal_util,
     create_signature_page_mrosc as create_signature_page_mrosc_util
 )
-
-logger = get_logger("server")
 
 api_router = APIRouter(prefix="/api")
 
