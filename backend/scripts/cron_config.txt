@@ -1,0 +1,65 @@
+# =============================================================================
+# Planejamento Acaiaca - Configuração de Cron Jobs para cPanel
+# =============================================================================
+#
+# Para configurar no cPanel:
+# 1. Acesse cPanel > Cron Jobs
+# 2. Adicione as entradas abaixo conforme necessário
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# BACKUP DIÁRIO
+# Executa às 3:00 AM todos os dias
+# -----------------------------------------------------------------------------
+# Minuto | Hora | Dia | Mês | Dia da Semana | Comando
+0 3 * * * /home/$USER/planejamento-acaiaca/scripts/daily_backup.sh
+
+# -----------------------------------------------------------------------------
+# LIMPEZA DE LOGS (Semanal)
+# Executa aos domingos às 4:00 AM
+# Mantém apenas os últimos 30 dias de logs
+# -----------------------------------------------------------------------------
+0 4 * * 0 find /home/$USER/planejamento-acaiaca/backend/logs -name "*.log" -mtime +30 -delete
+
+# -----------------------------------------------------------------------------
+# LIMPEZA DE SESSÕES EXPIRADAS (Diário)
+# Executa às 2:00 AM todos os dias
+# Remove sessões de usuário expiradas do MongoDB
+# -----------------------------------------------------------------------------
+0 2 * * * cd /home/$USER/planejamento-acaiaca/backend && /home/$USER/planejamento-acaiaca/backend/venv/bin/python -c "
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime
+import os
+
+async def cleanup_sessions():
+    client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+    db = client[os.environ.get('DB_NAME', 'planejamento_acaiaca')]
+    result = await db.user_sessions.delete_many({'expires_at': {'\$lt': datetime.utcnow()}})
+    print(f'Sessões removidas: {result.deleted_count}')
+    client.close()
+
+asyncio.run(cleanup_sessions())
+"
+
+# -----------------------------------------------------------------------------
+# VERIFICAÇÃO DE SAÚDE (A cada 5 minutos)
+# Verifica se a aplicação está respondendo
+# Reinicia automaticamente se não estiver
+# -----------------------------------------------------------------------------
+*/5 * * * * curl -sf http://127.0.0.1:8001/api/health > /dev/null || /home/$USER/planejamento-acaiaca/manage.sh restart
+
+# -----------------------------------------------------------------------------
+# RELATÓRIO SEMANAL (Segunda às 6:00 AM)
+# Gera e envia relatório semanal por email
+# -----------------------------------------------------------------------------
+0 6 * * 1 curl -s http://127.0.0.1:8001/api/relatorios/semanal > /tmp/relatorio.json && mail -s "[Planejamento Acaiaca] Relatório Semanal" admin@exemplo.com < /tmp/relatorio.json
+
+# =============================================================================
+# NOTAS:
+# - Substitua $USER pelo seu nome de usuário do cPanel
+# - Configure as variáveis de ambiente no arquivo .env
+# - Verifique se os scripts têm permissão de execução (chmod +x)
+# - Os logs dos cron jobs ficam em /home/$USER/planejamento-acaiaca/backend/logs/
+# =============================================================================
