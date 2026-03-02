@@ -1,0 +1,43 @@
+# =============================================================================
+# Planejamento Acaiaca - cPanel Deployment Configuration
+# Este arquivo configura o deployment automático via Git Version Control do cPanel
+# =============================================================================
+
+---
+deployment:
+  tasks:
+    # 1. Criar diretórios necessários
+    - export DEPLOYPATH=/home/$USER/planejamento-acaiaca
+    - mkdir -p $DEPLOYPATH/backend/logs
+    - mkdir -p $DEPLOYPATH/backend/uploads/mrosc
+    - mkdir -p $DEPLOYPATH/backend/static
+    - mkdir -p $DEPLOYPATH/frontend
+    
+    # 2. Copiar arquivos do backend
+    - /bin/cp -R backend/* $DEPLOYPATH/backend/
+    
+    # 3. Copiar build do frontend para public_html
+    - /bin/cp -R frontend/build/* /home/$USER/public_html/
+    
+    # 4. Configurar permissões
+    - chmod -R 755 $DEPLOYPATH
+    - chmod -R 777 $DEPLOYPATH/backend/logs
+    - chmod -R 777 $DEPLOYPATH/backend/uploads
+    - chmod 600 $DEPLOYPATH/backend/.env 2>/dev/null || true
+    
+    # 5. Instalar/atualizar dependências Python (se venv existir)
+    - |
+      if [ -d "$DEPLOYPATH/backend/venv" ]; then
+        source $DEPLOYPATH/backend/venv/bin/activate
+        pip install -r $DEPLOYPATH/backend/requirements.txt --quiet
+        deactivate
+      fi
+    
+    # 6. Reiniciar aplicação (se script de gerenciamento existir)
+    - |
+      if [ -f "$DEPLOYPATH/manage.sh" ]; then
+        $DEPLOYPATH/manage.sh restart
+      fi
+    
+    # 7. Log do deployment
+    - echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment concluído" >> $DEPLOYPATH/backend/logs/deployment.log
