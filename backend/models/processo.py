@@ -32,16 +32,20 @@ class ProcessoCreate(BaseModel):
     """Process creation model"""
     numero_processo: str  # OBRIGATÓRIO *
     modalidade_contratacao: str
-    status: str
+    status: str = "Em Elaboração"
     objeto: str
-    responsavel: str
+    responsavel: Optional[str] = None
+    numero_modalidade: Optional[str] = None  # Campo para número da modalidade
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
     data_contrato: Optional[datetime] = None
-    secretaria: str
-    secretario: str
+    secretaria: Optional[str] = None
+    secretario: Optional[str] = None
     ano: Optional[int] = None  # Será extraído do numero_processo se não fornecido
     observacoes: Optional[str] = None
+    fornecedor: Optional[str] = None
+    valor_estimado: Optional[float] = None
+    valor_contratado: Optional[float] = None
 
 class ProcessoUpdate(BaseModel):
     """Process update model"""
