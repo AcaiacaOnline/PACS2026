@@ -34,14 +34,17 @@ class RateLimiter:
         self.requests: Dict[str, list] = defaultdict(list)
         self.blocked: Dict[str, datetime] = {}
         
-        # Configurações por tipo de endpoint
+        # Configurações por tipo de endpoint (AUMENTADOS para uso real)
         self.limits = {
-            'default': {'requests': 100, 'window': 60},      # 100 req/min
-            'auth': {'requests': 10, 'window': 60},          # 10 req/min
-            'upload': {'requests': 20, 'window': 60},        # 20 req/min
-            'export': {'requests': 5, 'window': 60},         # 5 req/min
-            'public': {'requests': 200, 'window': 60},       # 200 req/min
+            'default': {'requests': 300, 'window': 60},      # 300 req/min
+            'auth': {'requests': 60, 'window': 60},          # 60 req/min (1 por segundo)
+            'upload': {'requests': 30, 'window': 60},        # 30 req/min
+            'export': {'requests': 20, 'window': 60},        # 20 req/min
+            'public': {'requests': 500, 'window': 60},       # 500 req/min
         }
+        
+        # IPs que ignoram rate limiting (localhost, rede interna)
+        self.whitelist = ['127.0.0.1', 'localhost', '::1']
     
     def _get_endpoint_type(self, path: str) -> str:
         """Determina o tipo de endpoint baseado no path"""
