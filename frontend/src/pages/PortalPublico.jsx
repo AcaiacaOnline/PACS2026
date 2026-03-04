@@ -835,12 +835,14 @@ const PortalPublico = () => {
   );
 
   const renderProcessos = () => {
-    // Filtrar processos
-    const filteredProcessos = processos.filter(p => 
-      p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.secretaria?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filtrar processos pelo ano selecionado e termo de busca
+    const filteredProcessos = processos.filter(p => {
+      const matchesSearch = !searchTerm || 
+        p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.objeto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.secretaria?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
     
     // Paginação
     const totalProcessos = filteredProcessos.length;
@@ -848,8 +850,51 @@ const PortalPublico = () => {
     const startIndex = (processosPage - 1) * processosPageSize;
     const paginatedProcessos = filteredProcessos.slice(startIndex, startIndex + processosPageSize);
     
+    // Função para trocar o ano
+    const handleAnoChange = async (novoAno) => {
+      setAnoSelecionadoProcessos(novoAno);
+      setProcessosPage(1);
+      setLoading(true);
+      try {
+        const params = novoAno ? `?ano=${novoAno}` : '';
+        const response = await publicApi.get(`/api/public/processos${params}`);
+        setProcessos(response.data.data || response.data || []);
+      } catch (error) {
+        console.error('Erro ao buscar processos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     return (
     <div className="space-y-4">
+      {/* Seletor de Ano */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-4 shadow-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <FileText size={24} />
+            <div>
+              <h2 className="text-xl font-bold">Processos Licitatórios</h2>
+              <p className="text-blue-100 text-sm">Portal de Transparência</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-white font-medium">Ano:</label>
+            <select
+              value={anoSelecionadoProcessos || ''}
+              onChange={(e) => handleAnoChange(e.target.value ? parseInt(e.target.value) : null)}
+              className="bg-white text-gray-800 border-0 rounded-lg px-4 py-2 font-semibold shadow-inner focus:ring-2 focus:ring-blue-300 min-w-[120px]"
+              data-testid="processos-ano-selector"
+            >
+              <option value="">Todos os anos</option>
+              {anosProcessos.map(ano => (
+                <option key={ano} value={ano}>{ano}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
