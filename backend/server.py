@@ -3340,17 +3340,26 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
         alignment=TA_CENTER, fontName='Helvetica-Bold'
     )
     
-    # Tabela de processos - campos COMPLETOS
+    # Tabela de processos - campos COMPLETOS com truncamento para evitar overflow
+    def truncate_text(text, max_chars=100):
+        """Trunca texto longo para evitar overflow no PDF"""
+        if not text:
+            return ''
+        text = str(text)
+        if len(text) > max_chars:
+            return text[:max_chars-3] + '...'
+        return text
+    
     if orientation.lower() == 'portrait':
         table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Secretaria']]
         for idx, p in enumerate(processos, start=1):
             table_data.append([
                 str(idx),
-                p.get('numero_processo', ''),  # COMPLETO
-                p.get('status', ''),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal'])  # COMPLETO
+                p.get('numero_processo', ''),
+                p.get('status', ''),
+                Paragraph(f"<font size=6>{truncate_text(p.get('modalidade', ''), 30)}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{truncate_text(p.get('objeto', ''), 80)}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{truncate_text(p.get('secretaria', ''), 40)}</font>", styles['Normal'])
             ])
         col_widths = [0.5*cm, 2*cm, 1.8*cm, 3*cm, 5.5*cm, 3.5*cm]
     else:
@@ -3358,13 +3367,13 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
         for idx, p in enumerate(processos, start=1):
             table_data.append([
                 str(idx),
-                p.get('numero_processo', ''),  # COMPLETO
-                p.get('status', ''),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),  # COMPLETO
-                p.get('responsavel', ''),  # COMPLETO
-                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal']),  # COMPLETO
-                Paragraph(f"<font size=5>{p.get('observacoes', '')}</font>", styles['Normal'])  # COMPLETO
+                p.get('numero_processo', ''),
+                p.get('status', ''),
+                Paragraph(f"<font size=6>{truncate_text(p.get('modalidade', ''), 25)}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{truncate_text(p.get('objeto', ''), 100)}</font>", styles['Normal']),
+                truncate_text(p.get('responsavel', ''), 20),
+                Paragraph(f"<font size=6>{truncate_text(p.get('secretaria', ''), 40)}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{truncate_text(p.get('observacoes', ''), 60)}</font>", styles['Normal'])
             ])
         col_widths = [0.5*cm, 2.2*cm, 1.6*cm, 2.5*cm, 6.5*cm, 2*cm, 4*cm, 4*cm]
     
@@ -4557,6 +4566,15 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
     elements = []
     styles = getSampleStyleSheet()
     
+    # Função para truncar texto
+    def truncate_text(text, max_chars=100):
+        if not text:
+            return ''
+        text = str(text)
+        if len(text) > max_chars:
+            return text[:max_chars-3] + '...'
+        return text
+    
     # Tabela de processos
     if orientation.lower() == 'portrait':
         table_data = [['#', 'Processo', 'Status', 'Modalidade', 'Objeto', 'Secretaria']]
@@ -4565,9 +4583,9 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
                 str(idx),
                 p.get('numero_processo', ''),
                 p.get('status', ''),
-                Paragraph(f"<font size=5>{p.get('modalidade', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=5>{p.get('objeto', '')[:50]}</font>", styles['Normal']),
-                Paragraph(f"<font size=5>{p.get('secretaria', '')}</font>", styles['Normal'])
+                Paragraph(f"<font size=5>{truncate_text(p.get('modalidade', ''), 30)}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{truncate_text(p.get('objeto', ''), 60)}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{truncate_text(p.get('secretaria', ''), 35)}</font>", styles['Normal'])
             ])
         col_widths = [0.5*cm, 1.8*cm, 1.5*cm, 2.5*cm, 5*cm, 3*cm]
     else:
@@ -4577,11 +4595,11 @@ async def public_export_processos_pdf(orientation: str = "landscape"):
                 str(idx),
                 p.get('numero_processo', ''),
                 p.get('status', ''),
-                Paragraph(f"<font size=6>{p.get('modalidade', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=6>{p.get('objeto', '')}</font>", styles['Normal']),
-                p.get('responsavel', ''),
-                Paragraph(f"<font size=6>{p.get('secretaria', '')}</font>", styles['Normal']),
-                Paragraph(f"<font size=5>{p.get('observacoes', '')}</font>", styles['Normal'])
+                Paragraph(f"<font size=6>{truncate_text(p.get('modalidade', ''), 25)}</font>", styles['Normal']),
+                Paragraph(f"<font size=6>{truncate_text(p.get('objeto', ''), 80)}</font>", styles['Normal']),
+                truncate_text(p.get('responsavel', ''), 20),
+                Paragraph(f"<font size=6>{truncate_text(p.get('secretaria', ''), 40)}</font>", styles['Normal']),
+                Paragraph(f"<font size=5>{truncate_text(p.get('observacoes', ''), 50)}</font>", styles['Normal'])
             ])
         col_widths = [0.5*cm, 2.2*cm, 1.6*cm, 2.5*cm, 6.5*cm, 2*cm, 4*cm, 4*cm]
     

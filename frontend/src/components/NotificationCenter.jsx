@@ -125,18 +125,18 @@ const NotificationCenter = ({ userId }) => {
       };
       
       ws.onclose = () => {
-        console.log('WebSocket desconectado');
+        // Silenciar log - WebSocket não configurado no servidor
         setIsConnected(false);
         clearInterval(ws.pingInterval);
         
-        // Tentar reconectar após 5 segundos
+        // Tentar reconectar após 30 segundos (aumentado para evitar spam)
         reconnectTimeoutRef.current = setTimeout(() => {
           connectWebSocket();
-        }, 5000);
+        }, 30000);
       };
       
-      ws.onerror = (error) => {
-        console.error('Erro WebSocket:', error);
+      ws.onerror = () => {
+        // Silenciar erro - WebSocket não configurado no servidor
         setIsConnected(false);
       };
       
