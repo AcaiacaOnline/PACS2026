@@ -2625,20 +2625,16 @@ async def get_processos_anos(request: Request):
             if match:
                 anos.add(int(match.group(1)))
     
-    # Garantir que 2025 e o ano atual estejam na lista
+    # Garantir que o ano atual esteja na lista
     ano_atual = datetime.now().year
-    anos_base = list(range(2025, ano_atual + 1))
-    
-    for ano in anos_base:
-        anos.add(ano)
+    anos.add(ano_atual)
     
     anos_list = sorted(list(anos), reverse=True)
     
-    # Definir o ano padrão como o mais recente que tenha processos
-    ano_padrao = anos_list[0] if anos_list else ano_atual
-    # Se existem processos em 2025 mas não em 2026, selecionar 2025
-    if 2025 in anos and processos:
-        ano_padrao = 2025
+    # Definir o ano padrão como o ano corrente (se tiver dados) ou o mais recente com dados
+    ano_padrao = ano_atual
+    if ano_atual not in anos and anos_list:
+        ano_padrao = anos_list[0]  # Ano mais recente com dados
     
     return {'anos': anos_list, 'ano_atual': ano_padrao}
 
