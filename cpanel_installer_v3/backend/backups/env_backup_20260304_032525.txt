@@ -1,0 +1,8 @@
+MONGO_URL="mongodb://localhost:27017"
+DB_NAME="test_database"
+CORS_ORIGINS="*"
+SMTP_SERVER="mail.acaiaca.mg.gov.br"
+SMTP_PORT="465"
+SMTP_EMAIL="naoresponda@acaiaca.mg.gov.br"
+SMTP_PASSWORD="Pma@3120"
+SMTP_USE_SSL="true"

@@ -21,6 +21,7 @@ import ValidarDocumento from './pages/ValidarDocumento';
 import HistoricoAssinaturas from './pages/HistoricoAssinaturas';
 import Configuracoes from './pages/Configuracoes';
 import ProtectedRoute from './components/ProtectedRoute';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
 import api from './utils/api';
@@ -275,6 +276,7 @@ function App() {
     <ThemeProvider>
       <div className="App">
         <Toaster position="top-right" />
+        <PWAInstallPrompt />
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>

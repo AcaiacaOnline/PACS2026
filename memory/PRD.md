@@ -22,12 +22,53 @@ Sistema completo de gestão municipal que inclui:
 - **Histórico de Assinaturas** - Visualização de documentos assinados
 - **Assinatura Digital Lei 14.063** - Página de assinaturas no estilo oficial ✅ NOVO
 - **Cabeçalho Padronizado com Brasão** - Todos os PDFs com identidade visual oficial ✅ NOVO
-- **Instalador cPanel** - Pacote completo para deployment em servidores cPanel ✅ NOVO v2.0
+- **Instalador cPanel v3.0** - Pacote completo para deployment em servidores cPanel ✅ REFATORADO
 - **Classificação Orçamentária com Portaria 448** - Referência completa à Portaria STN nº 448/2002 ✅ NOVO
+- **PWA (Progressive Web App)** - Instalável em PC, celular e tablet ✅ NOVO
 
 ---
 
-## Última Atualização: 04/03/2026 (Sessão 20 - Continuação)
+## Última Atualização: 04/03/2026 (Sessão 20 - PWA e Instalador)
+
+### Changelog - Sessão 20.2 (04/03/2026) - PWA E NOVO INSTALADOR
+
+#### ✅ 11. PWA (Progressive Web App) IMPLEMENTADO
+- **Funcionalidade**: Sistema agora é instalável como aplicativo nativo
+- **Recursos implementados**:
+  - `manifest.json` com ícones em múltiplos tamanhos (16x16 até 512x512)
+  - Service Worker com cache offline
+  - Componente `PWAInstallPrompt` para guiar instalação
+  - Meta tags Apple (iOS) e Microsoft
+  - Atalhos rápidos (Dashboard, Portal, PACs)
+  - Notificações push (estrutura pronta)
+- **Arquivos criados/modificados**:
+  - `/app/frontend/public/manifest.json`
+  - `/app/frontend/public/service-worker.js`
+  - `/app/frontend/public/index.html` (meta tags PWA)
+  - `/app/frontend/public/icons/` (10 tamanhos de ícone)
+  - `/app/frontend/src/components/PWAInstallPrompt.jsx`
+  - `/app/frontend/src/App.js` (integração do prompt)
+  - `/app/frontend/src/App.css` (animação slide-up)
+
+#### ✅ 12. INSTALADOR cPANEL v3.0 REFATORADO
+- **Melhorias implementadas**:
+  - Suporte a MongoDB Atlas (cloud) - ideal para cPanel compartilhado
+  - Suporte a MongoDB local
+  - Suporte a SQLite (modo simplificado)
+  - Detecção automática de painel (cPanel, Plesk, DirectAdmin, VPS)
+  - Script de gerenciamento completo (start/stop/restart/status/logs/backup)
+  - Configuração automática de proxy reverso
+  - Interface interativa colorida
+- **Arquivos criados**:
+  - `/app/cpanel_installer_v3/install.sh` - Instalador principal
+  - `/app/cpanel_installer_v3/build.sh` - Gerador de pacote
+  - `/app/cpanel_installer_v3/uninstall.sh` - Desinstalador
+  - `/app/cpanel_installer_v3/docs/INSTALACAO.md` - Documentação completa
+- **Pacotes gerados**:
+  - `planejamento-acaiaca-v3.0.0.tar.gz` (49MB)
+  - `planejamento-acaiaca-v3.0.0.zip` (49MB)
+
+---
 
 ### Changelog - Sessão 20 Continuação (04/03/2026) - CORREÇÕES COMPLETAS
 
