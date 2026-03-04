@@ -1445,10 +1445,10 @@ async def export_pdf(pac_id: str, request: Request, orientation: str = "landscap
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho oficial
-        bottomMargin=40*mm,  # Espaço para rodapé oficial
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=35*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=25*mm,  # Espaço para rodapé oficial
         title=f'PAC {pac["secretaria"]} {pac.get("ano", "2026")}'
     )
     
@@ -2177,10 +2177,10 @@ async def export_pac_geral_pdf(pac_geral_id: str, request: Request, orientation:
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho oficial
-        bottomMargin=40*mm,  # Espaço para rodapé oficial
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=35*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=25*mm,  # Espaço para rodapé oficial
         title=f'PAC Geral {pac.get("nome_secretaria", "")} {pac.get("ano", "2026")}'
     )
     
@@ -2466,10 +2466,10 @@ async def export_pac_geral_obras_pdf(pac_obras_id: str, request: Request, orient
     doc = SimpleDocTemplate(
         buffer,
         pagesize=page_size,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho oficial
-        bottomMargin=40*mm,  # Espaço para rodapé oficial
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=35*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=25*mm,  # Espaço para rodapé oficial
         title=f'PAC Obras - {pac["nome_secretaria"]} {pac.get("ano", "2026")}'
     )
     
@@ -3154,10 +3154,10 @@ async def export_processos_pdf(request: Request, orientation: str = "landscape",
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=page_size,
-        leftMargin=20*mm, 
-        rightMargin=20*mm, 
-        topMargin=50*mm,  # Espaço para cabeçalho oficial
-        bottomMargin=40*mm  # Espaço para rodapé oficial
+        leftMargin=15*mm, 
+        rightMargin=15*mm, 
+        topMargin=35*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=25*mm  # Espaço para rodapé oficial
     )
     
     elements = []
@@ -5459,10 +5459,10 @@ async def export_relatorio_mrosc_pdf(projeto_id: str, request: Request, assinar:
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=50*mm,  # Espaço para cabeçalho oficial
-        bottomMargin=40*mm,  # Espaço para rodapé oficial
+        leftMargin=15*mm,
+        rightMargin=15*mm,
+        topMargin=35*mm,  # Espaço para cabeçalho oficial
+        bottomMargin=25*mm,  # Espaço para rodapé oficial
         title=f'Prestação de Contas - {projeto["nome_projeto"]}'
     )
     
@@ -6480,7 +6480,7 @@ async def export_relatorio_consolidado_pdf(request: Request):
         total_pages=1
     )
     
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=50*mm, bottomMargin=40*mm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=15*mm, rightMargin=15*mm, topMargin=35*mm, bottomMargin=25*mm)
     
     elements = []
     styles = getSampleStyleSheet()
