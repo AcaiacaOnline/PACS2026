@@ -25,125 +25,137 @@ async def create_indexes():
     
     print("🔧 Criando índices do MongoDB...")
     
+    async def safe_create_index(collection, *args, **kwargs):
+        """Cria índice de forma segura, ignorando erros de duplicata"""
+        try:
+            await collection.create_index(*args, **kwargs)
+            return True
+        except Exception as e:
+            if "duplicate" in str(e).lower() or "11000" in str(e):
+                print(f"    ⚠️ Índice já existe ou há duplicatas em {collection.name}")
+            else:
+                print(f"    ❌ Erro: {e}")
+            return False
+    
     # ==================== USERS ====================
     print("  → Índices de users...")
-    await db.users.create_index("user_id", unique=True)
-    try:
-        await db.users.create_index("email", unique=True)
-    except Exception as e:
-        print(f"    ⚠️ Índice email já existe ou há duplicatas: {e}")
-    try:
-        await db.users.create_index("cpf", unique=True, sparse=True)
-    except Exception as e:
-        print(f"    ⚠️ Índice cpf: {e}")
-    await db.users.create_index("is_active")
-    await db.users.create_index("is_admin")
-    await db.users.create_index("secretaria")
+    await safe_create_index(db.users, "user_id", unique=True)
+    await safe_create_index(db.users, "email", unique=True)
+    await safe_create_index(db.users, "cpf", unique=True, sparse=True)
+    await safe_create_index(db.users, "is_active")
+    await safe_create_index(db.users, "is_admin")
+    await safe_create_index(db.users, "secretaria")
     
     # ==================== PACs ====================
     print("  → Índices de PACs...")
-    await db.pacs.create_index("pac_id", unique=True)
-    await db.pacs.create_index("ano")
-    await db.pacs.create_index("secretaria")
-    await db.pacs.create_index("status")
-    await db.pacs.create_index([("ano", -1), ("secretaria", 1)])
-    await db.pacs.create_index("created_by")
+    await safe_create_index(db.pacs, "pac_id", unique=True)
+    await safe_create_index(db.pacs, "ano")
+    await safe_create_index(db.pacs, "secretaria")
+    await safe_create_index(db.pacs, "status")
+    await safe_create_index(db.pacs, [("ano", -1), ("secretaria", 1)])
+    await safe_create_index(db.pacs, "created_by")
     
-    await db.pac_items.create_index("item_id", unique=True)
-    await db.pac_items.create_index("pac_id")
-    await db.pac_items.create_index("status")
-    await db.pac_items.create_index([("pac_id", 1), ("status", 1)])
+    await safe_create_index(db.pac_items, "item_id", unique=True)
+    await safe_create_index(db.pac_items, "pac_id")
+    await safe_create_index(db.pac_items, "status")
+    await safe_create_index(db.pac_items, [("pac_id", 1), ("status", 1)])
     
     # ==================== PAC Geral ====================
     print("  → Índices de PAC Geral...")
-    await db.pacs_geral.create_index("pac_id", unique=True)
-    await db.pacs_geral.create_index("ano")
-    await db.pacs_geral.create_index("status")
-    await db.pacs_geral.create_index([("ano", -1), ("status", 1)])
+    await safe_create_index(db.pacs_geral, "pac_id", unique=True)
+    await safe_create_index(db.pacs_geral, "ano")
+    await safe_create_index(db.pacs_geral, "status")
+    await safe_create_index(db.pacs_geral, [("ano", -1), ("status", 1)])
     
-    await db.pac_geral_items.create_index("item_id", unique=True)
-    await db.pac_geral_items.create_index("pac_id")
-    await db.pac_geral_items.create_index("classificacao_item")
-    await db.pac_geral_items.create_index([("pac_id", 1), ("classificacao_item", 1)])
+    await safe_create_index(db.pac_geral_items, "item_id", unique=True)
+    await safe_create_index(db.pac_geral_items, "pac_id")
+    await safe_create_index(db.pac_geral_items, "classificacao_item")
+    await safe_create_index(db.pac_geral_items, [("pac_id", 1), ("classificacao_item", 1)])
     
     # ==================== PAC Obras ====================
     print("  → Índices de PAC Obras...")
-    await db.pacs_geral_obras.create_index("pac_id", unique=True)
-    await db.pacs_geral_obras.create_index("ano")
-    await db.pacs_geral_obras.create_index("status")
-    await db.pacs_geral_obras.create_index([("ano", -1), ("status", 1)])
+    await safe_create_index(db.pacs_geral_obras, "pac_id", unique=True)
+    await safe_create_index(db.pacs_geral_obras, "ano")
+    await safe_create_index(db.pacs_geral_obras, "status")
+    await safe_create_index(db.pacs_geral_obras, [("ano", -1), ("status", 1)])
     
-    await db.pac_geral_obras_items.create_index("item_id", unique=True)
-    await db.pac_geral_obras_items.create_index("pac_id")
-    await db.pac_geral_obras_items.create_index("classificacao_obras")
+    await safe_create_index(db.pac_geral_obras_items, "item_id", unique=True)
+    await safe_create_index(db.pac_geral_obras_items, "pac_id")
+    await safe_create_index(db.pac_geral_obras_items, "classificacao_obras")
     
     # ==================== Processos ====================
     print("  → Índices de Processos...")
-    await db.processos.create_index("processo_id", unique=True)
-    await db.processos.create_index("numero_processo")
-    await db.processos.create_index("ano")
-    await db.processos.create_index("status")
-    await db.processos.create_index("modalidade_contratacao")
-    await db.processos.create_index("secretaria")
-    await db.processos.create_index("created_by")
-    await db.processos.create_index([("ano", -1), ("status", 1)])
-    await db.processos.create_index([("ano", -1), ("modalidade_contratacao", 1)])
-    await db.processos.create_index([("ano", -1), ("secretaria", 1)])
+    await safe_create_index(db.processos, "processo_id", unique=True)
+    await safe_create_index(db.processos, "numero_processo")
+    await safe_create_index(db.processos, "ano")
+    await safe_create_index(db.processos, "status")
+    await safe_create_index(db.processos, "modalidade_contratacao")
+    await safe_create_index(db.processos, "secretaria")
+    await safe_create_index(db.processos, "created_by")
+    await safe_create_index(db.processos, [("ano", -1), ("status", 1)])
+    await safe_create_index(db.processos, [("ano", -1), ("modalidade_contratacao", 1)])
+    await safe_create_index(db.processos, [("ano", -1), ("secretaria", 1)])
     # Índice de texto para busca
-    await db.processos.create_index([
-        ("numero_processo", "text"),
-        ("objeto", "text"),
-        ("fornecedor", "text")
-    ])
+    try:
+        await db.processos.create_index([
+            ("numero_processo", "text"),
+            ("objeto", "text"),
+            ("fornecedor", "text")
+        ])
+    except Exception as e:
+        print(f"    ⚠️ Índice de texto em processos: {e}")
     
     # ==================== MROSC ====================
     print("  → Índices de MROSC...")
-    await db.mrosc_projetos.create_index("projeto_id", unique=True)
-    await db.mrosc_projetos.create_index("status")
-    await db.mrosc_projetos.create_index("created_by")
-    await db.mrosc_projetos.create_index("cnpj_osc")
-    await db.mrosc_projetos.create_index([("status", 1), ("created_at", -1)])
+    await safe_create_index(db.mrosc_projetos, "projeto_id", unique=True)
+    await safe_create_index(db.mrosc_projetos, "status")
+    await safe_create_index(db.mrosc_projetos, "created_by")
+    await safe_create_index(db.mrosc_projetos, "cnpj_osc")
+    await safe_create_index(db.mrosc_projetos, [("status", 1), ("created_at", -1)])
     
-    await db.mrosc_rh.create_index("rh_id", unique=True)
-    await db.mrosc_rh.create_index("projeto_id")
+    await safe_create_index(db.mrosc_rh, "rh_id", unique=True)
+    await safe_create_index(db.mrosc_rh, "projeto_id")
     
-    await db.mrosc_despesas.create_index("despesa_id", unique=True)
-    await db.mrosc_despesas.create_index("projeto_id")
-    await db.mrosc_despesas.create_index("natureza")
+    await safe_create_index(db.mrosc_despesas, "despesa_id", unique=True)
+    await safe_create_index(db.mrosc_despesas, "projeto_id")
+    await safe_create_index(db.mrosc_despesas, "natureza")
     
-    await db.mrosc_documentos.create_index("documento_id", unique=True)
-    await db.mrosc_documentos.create_index("projeto_id")
-    await db.mrosc_documentos.create_index("tipo")
+    await safe_create_index(db.mrosc_documentos, "documento_id", unique=True)
+    await safe_create_index(db.mrosc_documentos, "projeto_id")
+    await safe_create_index(db.mrosc_documentos, "tipo")
     
     # ==================== Assinaturas ====================
     print("  → Índices de Assinaturas...")
-    await db.document_signatures.create_index("signature_id", unique=True)
-    await db.document_signatures.create_index("validation_code", unique=True)
-    await db.document_signatures.create_index("document_type")
-    await db.document_signatures.create_index("created_at")
-    await db.document_signatures.create_index("signers.email")
-    await db.document_signatures.create_index([("document_type", 1), ("created_at", -1)])
+    await safe_create_index(db.document_signatures, "signature_id", unique=True)
+    await safe_create_index(db.document_signatures, "validation_code", unique=True)
+    await safe_create_index(db.document_signatures, "document_type")
+    await safe_create_index(db.document_signatures, "created_at")
+    await safe_create_index(db.document_signatures, "signers.email")
+    await safe_create_index(db.document_signatures, [("document_type", 1), ("created_at", -1)])
     
     # ==================== Sessions ====================
     print("  → Índices de Sessions...")
-    await db.user_sessions.create_index("session_id", unique=True)
-    await db.user_sessions.create_index("user_id")
-    await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)  # TTL index
+    await safe_create_index(db.user_sessions, "session_id", unique=True)
+    await safe_create_index(db.user_sessions, "user_id")
+    try:
+        await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)  # TTL index
+    except Exception as e:
+        print(f"    ⚠️ TTL index em sessions: {e}")
     
     # ==================== Analytics ====================
     print("  → Índices de Analytics...")
-    await db.analytics_events.create_index("event_id", unique=True)
-    await db.analytics_events.create_index("event_type")
-    await db.analytics_events.create_index("timestamp")
-    await db.analytics_events.create_index("user_id")
-    await db.analytics_events.create_index([("event_type", 1), ("timestamp", -1)])
+    await safe_create_index(db.analytics_events, "event_id", unique=True)
+    await safe_create_index(db.analytics_events, "event_type")
+    await safe_create_index(db.analytics_events, "timestamp")
+    await safe_create_index(db.analytics_events, "user_id")
+    await safe_create_index(db.analytics_events, [("event_type", 1), ("timestamp", -1)])
     
     # ==================== System Config ====================
     print("  → Índices de Configuração...")
-    await db.system_config.create_index("config_id", unique=True)
+    await safe_create_index(db.system_config, "config_id", unique=True)
     
     client.close()
-    print("✅ Todos os índices foram criados com sucesso!")
+    print("✅ Processo de criação de índices finalizado!")
 
 
 async def drop_all_indexes():
