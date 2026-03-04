@@ -70,41 +70,6 @@ SMTP_EMAIL = os.environ.get('SMTP_EMAIL', 'naoresponda@acaiaca.mg.gov.br')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', 'true').lower() == 'true'
 
-def enviar_email_smtp(destinatario: str, assunto: str, corpo_html: str) -> bool:
-    """
-    Envia email via SMTP.
-    Retorna True se enviou com sucesso, False caso contrário.
-    """
-    try:
-        if not SMTP_PASSWORD:
-            logging.warning("SMTP_PASSWORD não configurado - email não enviado")
-            return False
-        
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = assunto
-        msg['From'] = SMTP_EMAIL
-        msg['To'] = destinatario
-        
-        html_part = MIMEText(corpo_html, 'html')
-        msg.attach(html_part)
-        
-        if SMTP_USE_SSL:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
-                server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, destinatario, msg.as_string())
-        else:
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls()
-                server.login(SMTP_EMAIL, SMTP_PASSWORD)
-                server.sendmail(SMTP_EMAIL, destinatario, msg.as_string())
-        
-        logging.info(f"Email enviado para {destinatario}: {assunto}")
-        return True
-    except Exception as e:
-        logging.error(f"Erro ao enviar email: {e}")
-        return False
-
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -202,24 +167,6 @@ from utils.pdf_utils import (
 )
 
 api_router = APIRouter(prefix="/api")
-
-# ============ HEALTH CHECK ============
-@api_router.get("/health", tags=["Sistema"])
-async def health_check():
-    """Verificação de saúde da API"""
-    try:
-        await db.command('ping')
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "version": "3.0.0"
-        }
-    except Exception as e:
-        return {
-            "status": "unhealthy",
-            "database": "disconnected",
-            "error": str(e)
-        }
 
 # Models
 # NOTA: Modelos refatorados agora são importados do pacote 'models/'
@@ -2330,7 +2277,7 @@ async def import_pac_geral_items(
             try:
                 qtd_total = float(str(qtd_total).replace(',', '.').replace('R$', '').strip()) if qtd_total else 0
                 valor_unit = float(str(valor_unit).replace(',', '.').replace('R$', '').strip()) if valor_unit else 0
-            except (ValueError, TypeError, AttributeError):
+            except:
                 qtd_total = 0
                 valor_unit = 0
             
@@ -5132,7 +5079,13 @@ async def get_resumo_orcamentario_mrosc(projeto_id: str, request: Request):
 UPLOAD_DIR = ROOT_DIR / "uploads" / "mrosc"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-# Nota: DocumentoMROSCCreate já definido em models/ e importado no início do arquivo
+class DocumentoMROSCCreate(BaseModel):
+    tipo_documento: str  # NOTA_FISCAL, RECIBO, CONTRATO, COMPROVANTE, OUTRO
+    numero_documento: str
+    data_documento: datetime
+    valor: float
+    despesa_id: Optional[str] = None
+    observacoes: Optional[str] = None
 
 @mrosc_router.get("/projetos/{projeto_id}/documentos")
 async def get_documentos_mrosc(projeto_id: str, request: Request):
@@ -5174,7 +5127,7 @@ async def upload_documento_mrosc(
     if extensao not in extensoes_permitidas:
         raise HTTPException(
             status_code=400, 
-            detail="Tipo de arquivo não permitido. Permitidos: PDF, JPG, JPEG, PNG"
+            detail=f"Tipo de arquivo não permitido. Permitidos: PDF, JPG, JPEG, PNG"
         )
     
     # Define o content-type baseado na extensão
@@ -5207,7 +5160,7 @@ async def upload_documento_mrosc(
             dt_documento = datetime.fromisoformat(data_documento.replace('Z', '+00:00'))
         else:
             dt_documento = datetime.now(timezone.utc)
-    except (ValueError, TypeError):
+    except:
         dt_documento = datetime.now(timezone.utc)
     
     # Cria o registro no banco
@@ -5967,7 +5920,7 @@ async def gerar_relatorio_consolidado_mrosc(projeto_id: str, request: Request, a
     """
     from PyPDF2 import PdfMerger
     from PIL import Image as PILImage
-    # PageBreak já importado no topo do arquivo
+    from reportlab.platypus import PageBreak
     
     user = await get_current_user(request)
     
