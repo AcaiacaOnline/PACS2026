@@ -91,6 +91,10 @@ const PortalPublico = () => {
   const [itemDetails, setItemDetails] = useState([]);
   const [exporting, setExporting] = useState(false);
   
+  // Seletor de Ano para Processos
+  const [anosProcessos, setAnosProcessos] = useState([]);
+  const [anoSelecionadoProcessos, setAnoSelecionadoProcessos] = useState(new Date().getFullYear());
+  
   // Paginação para Processos
   const [processosPage, setProcessosPage] = useState(1);
   const [processosPageSize, setProcessosPageSize] = useState(20);
