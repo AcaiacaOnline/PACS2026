@@ -2659,7 +2659,7 @@ async def get_processos(request: Request, ano: int = None):
             if match:
                 p['ano'] = int(match.group(1))
             else:
-                p['ano'] = 2025  # Ano padrão
+                p['ano'] = datetime.now().year  # Ano atual como padrão
     
     # Aplicar filtro de ano após extração
     if ano:
