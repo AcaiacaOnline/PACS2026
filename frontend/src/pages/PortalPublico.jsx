@@ -122,8 +122,26 @@ const PortalPublico = () => {
         const response = await publicApi.get('/api/public/pacs-geral-obras');
         setPacsGeralObras(response.data.data);
       } else if (activeTab === 'processos') {
-        const response = await publicApi.get('/api/public/processos');
-        setProcessos(response.data.data);
+        // Buscar anos disponíveis
+        try {
+          const anosResponse = await publicApi.get('/api/public/processos/anos');
+          const anos = anosResponse.data.anos || [];
+          setAnosProcessos(anos);
+          // Definir ano atual como padrão se disponível
+          const anoCorrente = new Date().getFullYear();
+          if (anos.includes(anoCorrente)) {
+            setAnoSelecionadoProcessos(anoCorrente);
+          } else if (anos.length > 0) {
+            setAnoSelecionadoProcessos(Math.max(...anos));
+          }
+        } catch (e) {
+          console.error('Erro ao buscar anos:', e);
+        }
+        
+        // Buscar processos
+        const params = anoSelecionadoProcessos ? `?ano=${anoSelecionadoProcessos}` : '';
+        const response = await publicApi.get(`/api/public/processos${params}`);
+        setProcessos(response.data.data || response.data || []);
       } else if (activeTab === 'mrosc') {
         const [projetosRes, statsRes] = await Promise.all([
           publicApi.get('/api/public/mrosc/projetos'),
