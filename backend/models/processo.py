@@ -54,6 +54,7 @@ class ProcessoUpdate(BaseModel):
     status: Optional[str] = None
     objeto: Optional[str] = None
     responsavel: Optional[str] = None
+    numero_modalidade: Optional[str] = None
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
     data_contrato: Optional[datetime] = None
@@ -61,6 +62,9 @@ class ProcessoUpdate(BaseModel):
     secretario: Optional[str] = None
     ano: Optional[int] = None
     observacoes: Optional[str] = None
+    fornecedor: Optional[str] = None
+    valor_estimado: Optional[float] = None
+    valor_contratado: Optional[float] = None
 
 class PaginatedResponse(BaseModel):
     """Generic paginated response model"""
