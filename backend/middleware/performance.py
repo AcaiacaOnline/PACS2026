@@ -92,6 +92,12 @@ class RateLimiter:
         Retorna (allowed, headers)
         """
         client_id = self._get_client_id(request)
+        
+        # Bypass para IPs na whitelist
+        ip = request.headers.get('x-forwarded-for', '').split(',')[0] or (request.client.host if request.client else '')
+        if ip in self.whitelist or ip.startswith('10.') or ip.startswith('192.168.'):
+            return True, {'X-RateLimit-Bypass': 'whitelist'}
+        
         endpoint_type = self._get_endpoint_type(request.url.path)
         limit_config = self.limits[endpoint_type]
         
