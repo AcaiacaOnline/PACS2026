@@ -7,7 +7,7 @@ Sistema completo de gestão municipal que inclui:
 - **PAC Geral** - Visão consolidada de todas as secretarias
 - **PAC Geral Obras e Serviços** - Módulo específico para obras e serviços de engenharia ✅
 - **Gestão Processual** - Controle de processos licitatórios com campos atualizados ✅
-- **Portal de Transparência** - Acesso público com menus dropdown ✅
+- **Portal de Transparência** - Acesso público com menus dropdown e seletor de ano ✅ ATUALIZADO
 - **Prestação de Contas MROSC** - Sistema completo com workflow de aprovação ✅ ATUALIZADO v3.0
 - **Dashboard Analítico** - Visão consolidada com gráficos e KPIs ✅
 - **Sistema de Alertas** - Monitoramento de prazos e pendências ✅
@@ -23,10 +23,47 @@ Sistema completo de gestão municipal que inclui:
 - **Assinatura Digital Lei 14.063** - Página de assinaturas no estilo oficial ✅ NOVO
 - **Cabeçalho Padronizado com Brasão** - Todos os PDFs com identidade visual oficial ✅ NOVO
 - **Instalador cPanel** - Pacote completo para deployment em servidores cPanel ✅ NOVO v2.0
+- **Classificação Orçamentária com Portaria 448** - Referência completa à Portaria STN nº 448/2002 ✅ NOVO
 
 ---
 
-## Última Atualização: 02/03/2026 (Sessão 19)
+## Última Atualização: 04/03/2026 (Sessão 20)
+
+### Changelog - Sessão 20 (04/03/2026) - CORREÇÃO DE BUGS E OTIMIZAÇÕES
+
+#### ✅ 1. SELETOR DE ANO NO PORTAL PÚBLICO
+- **Problema**: Usuário reportou que o seletor de ano não aparecia na página de Processos do Portal da Transparência
+- **Solução**: O seletor já estava implementado corretamente, apenas verificação realizada
+- **Localização**: `/app/frontend/src/pages/PortalPublico.jsx` - função `renderProcessos()` linha 871
+- **data-testid**: `processos-ano-selector`
+- **Anos disponíveis**: 2024, 2025, 2026, 2030 + "Todos os anos"
+
+#### ✅ 2. ROTA /portal-publico ADICIONADA
+- **Problema**: A rota `/portal-publico` não existia, causando erro "No routes matched"
+- **Solução**: Adicionada rota em `/app/frontend/src/App.js` linha 218
+- **Rotas públicas disponíveis**: `/`, `/transparencia`, `/portal-publico`
+
+#### ✅ 3. PORTARIA 448/2002 NOS CÓDIGOS DE CLASSIFICAÇÃO
+- **Problema**: Usuário solicitou referência à "PORTARIA Nº 448, DE 13 DE SETEMBRO DE 2002" nos códigos de classificação
+- **Solução**: Atualizado o endpoint `/api/classificacao/codigos` para incluir "(Portaria STN nº 448/2002)" no nome de todos os códigos
+- **Códigos atualizados**:
+  - 339030: Material de Consumo (Portaria STN nº 448/2002)
+  - 339036: Outros Serviços de Terceiros - Pessoa Física (Portaria STN nº 448/2002)
+  - 339039: Outros Serviços de Terceiros - Pessoa Jurídica (Portaria STN nº 448/2002)
+  - 449052: Equipamentos e Material Permanente (Portaria STN nº 448/2002)
+
+#### ✅ 4. VERIFICAÇÃO DE CAMPOS NO CADASTRO DE PROCESSOS
+- **Problema**: Relato de que alguns campos não estavam sendo salvos no cadastro de processo
+- **Verificação**: Testado via API e confirmado que todos os campos estão funcionando corretamente
+- **Campos verificados**: `secretaria`, `secretario`, `responsavel`, `observacoes`
+- **Endpoint**: `POST /api/processos`
+
+#### 🔧 TESTES REALIZADOS
+- **Backend**: 8/8 testes passaram (100%)
+- **Frontend**: Verificação visual via Playwright
+- **Arquivo de teste**: `/app/tests/test_bug_fixes.py`
+
+---
 
 ### Changelog - Sessão 19 (02/03/2026) - REFATORAÇÃO E INSTALADOR cPANEL
 
