@@ -215,6 +215,7 @@ const AppRoutes = () => {
       {/* Rota Pública - Portal de Transparência (PÁGINA INICIAL) */}
       <Route path="/" element={<PortalPublico />} />
       <Route path="/transparencia" element={<PortalPublico />} />
+      <Route path="/portal-publico" element={<PortalPublico />} />
       <Route path="/validar" element={<ValidarDocumento />} />
       
       {/* Rotas Protegidas */}

@@ -423,11 +423,13 @@ async def logout(request: Request, response: Response):
 @api_router.get("/classificacao/codigos")
 async def get_classificacao_codigos():
     """
-    Retorna todos os códigos de classificação orçamentária conforme Lei 14.133/2021
+    Retorna todos os códigos de classificação orçamentária conforme:
+    - Lei 14.133/2021 (Nova Lei de Licitações)
+    - PORTARIA Nº 448, DE 13 DE SETEMBRO DE 2002 (STN - Secretaria do Tesouro Nacional)
     """
     codigos = {
         "339030": {
-            "nome": "Material de Consumo",
+            "nome": "Material de Consumo (Portaria STN nº 448/2002)",
             "subitens": [
                 "Material de Consumo - Combustíveis e Lubrificantes Automotivos",
                 "Combustíveis e Lubrificantes de Aviação",
@@ -463,7 +465,7 @@ async def get_classificacao_codigos():
             ]
         },
         "339036": {
-            "nome": "Outros Serviços de Terceiros (Pessoa Física)",
+            "nome": "Outros Serviços de Terceiros - Pessoa Física (Portaria STN nº 448/2002)",
             "subitens": [
                 "Diárias a Colaboradores Eventuais",
                 "Serviços Técnicos Profissionais",
@@ -482,7 +484,7 @@ async def get_classificacao_codigos():
             ]
         },
         "339039": {
-            "nome": "Outros Serviços de Terceiros (Pessoa Jurídica)",
+            "nome": "Outros Serviços de Terceiros - Pessoa Jurídica (Portaria STN nº 448/2002)",
             "subitens": [
                 "Assinaturas de Periódicos",
                 "Condomínios",
@@ -509,7 +511,7 @@ async def get_classificacao_codigos():
             ]
         },
         "449052": {
-            "nome": "Equipamentos e Material Permanente",
+            "nome": "Equipamentos e Material Permanente (Portaria STN nº 448/2002)",
             "subitens": [
                 "Aparelhos de Medição e Orientação",
                 "Aparelhos e Equipamentos de Comunicação",
@@ -3964,7 +3966,7 @@ async def public_get_classificacoes():
     """Retorna os códigos de classificação orçamentária (público)."""
     codigos = {
         "339030": {
-            "nome": "Material de Consumo",
+            "nome": "Material de Consumo (Portaria STN nº 448/2002)",
             "subitens": [
                 "Material de Consumo - Combustíveis e Lubrificantes Automotivos",
                 "Gás Engarrafado",
@@ -3982,7 +3984,7 @@ async def public_get_classificacoes():
             ]
         },
         "339036": {
-            "nome": "Outros Serviços de Terceiros (Pessoa Física)",
+            "nome": "Outros Serviços de Terceiros - Pessoa Física (Portaria STN nº 448/2002)",
             "subitens": [
                 "Serviços Técnicos Profissionais",
                 "Manutenção e Conservação de Equipamentos",
@@ -3992,7 +3994,7 @@ async def public_get_classificacoes():
             ]
         },
         "339039": {
-            "nome": "Outros Serviços de Terceiros (Pessoa Jurídica)",
+            "nome": "Outros Serviços de Terceiros - Pessoa Jurídica (Portaria STN nº 448/2002)",
             "subitens": [
                 "Serviços Técnicos Profissionais",
                 "Manutenção de Software",
@@ -4004,7 +4006,7 @@ async def public_get_classificacoes():
             ]
         },
         "449052": {
-            "nome": "Equipamentos e Material Permanente",
+            "nome": "Equipamentos e Material Permanente (Portaria STN nº 448/2002)",
             "subitens": [
                 "Aparelhos e Equipamentos de Comunicação",
                 "Equipamentos Médico-Hospitalares",
@@ -5098,7 +5100,7 @@ def enviar_notificacao_mrosc(destinatario: str, assunto: str, projeto_nome: str,
                     <p style="margin: 0; color: #666;"><strong>Ação:</strong> {acao}</p>
                 </div>
                 <p style="font-size: 12px; color: #888;">
-                    Acesse o sistema para mais detalhes: <a href="https://structurefix-1.preview.emergentagent.com/prestacao-contas">Planejamento Acaiaca</a>
+                    Acesse o sistema para mais detalhes: <a href="https://municipal-refactor.preview.emergentagent.com/prestacao-contas">Planejamento Acaiaca</a>
                 </p>
             </div>
             <div style="background: #1F4E78; color: white; padding: 10px; text-align: center; font-size: 12px;">

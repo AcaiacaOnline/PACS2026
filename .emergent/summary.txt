@@ -1,135 +1,185 @@
 <analysis>**original_problem_statement:**
-O usuário, agindo como um especialista sênior, solicitou uma série de tarefas críticas:
-1.  **Correção de Responsividade do Menu:** Garantir que o menu funcione em todos os dispositivos.
-2.  **Migração Gradual do :** Refatorar o  monolítico para uma estrutura modular.
-3.  **Documentação Swagger:** Revisar e atualizar a documentação da API.
-4.  **Nova Funcionalidade (DOEM):** Implementar a exclusão de publicações.
-5.  **Nova Funcionalidade (DOEM):** Implementar a publicação de um PDF anexado com adição de assinatura digital, preservando o conteúdo original do PDF.
-6.  **Correção de Bug (Processos):** Corrigir um bug onde processos criados para anos como 2026 ou anteriores são incorretamente salvos no ano de 2025.
-7.  **Correção de Bug (Google Auth):** Corrigir múltiplos erros que impediam o login com Google, incluindo tela branca e erros de sessão.
-8.  **Nova Funcionalidade (Tema):** Adicionar um novo tema ao sistema com cores laranja, dourado e vermelho.
+O usuário, agindo como um engenheiro de software sênior e gerente de produto, apresentou uma série de tarefas abrangentes para refatorar, otimizar e adicionar funcionalidades a uma aplicação de gestão municipal.
+
+As principais solicitações incluem:
+1.  **Remoção Completa do Módulo DOEM:** O usuário solicitou a remoção completa do Diário Oficial Eletrônico Municipal (DOEM) e de todas as funcionalidades relacionadas (backend e frontend).
+2.  **Refatoração e Otimização Geral:** Revisar todo o código para melhorar desempenho, legibilidade e manutenibilidade.
+3.  **Criação de Instalador cPanel:** Gerar um pacote de instalação compatível com cPanel, incluindo scripts de automação e configuração (, cron jobs).
+4.  **Correções de UI/UX e Bugs:**
+    *   Adicionar um seletor de ano às telas de processo (tanto na área administrativa quanto no portal público), com o ano mais recente como padrão.
+    *   Corrigir um bug onde alguns campos no formulário de criação de processos não eram salvos.
+    *   Garantir que a opção PORTARIA Nº 448... esteja disponível no cadastro de itens do PAC.
+    *   Resolver erros de login, incluindo o erro Too many requests.
+    *   Otimizar o layout dos PDFs gerados para um formato mais clean e com melhor aproveitamento de margens.
 
 **User's preferred language**: Portuguese (Brazil)
 
 **what currently exists?**
-Uma aplicação full-stack (React/FastAPI/MongoDB). O agente anterior concluiu uma série de tarefas de alta prioridade. A funcionalidade de geração de PDF foi completamente corrigida e padronizada em todo o sistema, e o tamanho dos arquivos foi drasticamente reduzido com a otimização de uma imagem. O sistema de temas do frontend foi consertado e um novo tema foi adicionado. O fluxo de autenticação com Google, que estava quebrado, foi totalmente corrigido. Novas funcionalidades foram adicionadas ao módulo DOEM, incluindo a capacidade de excluir publicações e fazer upload de um PDF para ser assinado e publicado. A responsividade do menu principal também foi melhorada. Atualmente, o agente começou a investigar um bug crítico no módulo de Processos.
+Uma aplicação full-stack com frontend React e backend FastAPI/MongoDB. O agente anterior realizou uma remoção massiva do módulo DOEM, que era uma parte central do sistema. Isso incluiu a exclusão de rotas, modelos, componentes de frontend e links de navegação, reduzindo o  em mais de 2.000 linhas. Adicionalmente, o agente implementou um pacote de instalação para cPanel, adicionou middleware de performance (cache e rate-limiting), criou scripts para indexação de banco de dados e backups diários, e corrigiu vários bugs, incluindo o erro Too many requests e um problema com o ano padrão na listagem de processos.
 
 **Last working item**:
--   **Last item agent was working**: Investigando um bug no módulo de Processos onde o sistema salva processos no ano incorreto (2025) em vez do ano especificado pelo usuário (ex: 2026). O agente localizou a função  em  e identificou código que parece ignorar o ano fornecido pelo usuário, usando um valor padrão ou o ano atual.
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**: backend testing agent. O teste deve consistir em chamar a API para criar um processo com um ano específico (ex: 2026) e depois verificar se o processo foi salvo com o ano correto no banco de dados.
+-   **Last item agent was working**: Implementando um seletor de ano na página de Processos do **Portal da Transparência** (página pública), conforme solicitado pelo usuário através de uma imagem. O seletor estava ausente nesta visualização.
+-   **Status**: USER VERIFICATION PENDING
+-   **Agent Testing Done**: Y (O agente recompilou o frontend e reiniciou o backend com sucesso após as alterações, mas não realizou uma verificação visual final com uma captura de tela.)
+-   **Which testing method agent to use?**: screenshot tool. O agente deve navegar até a página de processos no portal público (não administrativo) para confirmar visualmente que o novo seletor de ano está presente e funcionando.
 -   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Bug na Criação de Processos com Ano Incorreto (P0 - CRITICAL)**
-    -   **Description**: A função de criação de processos () ignora o ano fornecido no payload (ex: 2026) e salva o processo com o ano incorreto, parecendo usar um valor padrão de 2025 ou o ano atual.
-    -   **Attempted fixes**: A investigação inicial no arquivo  identificou a função  (linha 2939) como a provável fonte do erro. A análise de  também revelou o uso de  em outras partes do código.
+-   **Issue 1: Campos não salvos no cadastro de processo (P1 - CRITICAL)**
+    -   **Description**: O usuário relatou que alguns campos no formulário de criação de processo não estão sendo salvos corretamente. O agente tentou uma correção tornando alguns campos do modelo no backend opcionais, mas isso não foi verificado e pode não resolver o problema por completo.
+    -   **Attempted fixes**: Tornou os campos , , e  opcionais no modelo Pydantic  em .
     -   **Next debug checklist**:
-        1.  Revisar a lógica da função  em  (a partir da linha 2939).
-        2.  Localizar a linha onde o campo  do documento do processo é definido. É provável que  (linha ~2960) esteja sobrescrevendo o valor do payload .
-        3.  Corrigir a lógica para usar  se ele for fornecido. Apenas se não for fornecido, deve-se usar um valor padrão (o ano atual).
-        4.  Após a correção, testar usando  para chamar o endpoint  com um payload contendo  e verificar se o objeto retornado e salvo no banco de dados reflete o ano correto.
-    -   **Why fix this issue and what will be achieved with the fix?**: Corrigir este bug é crucial para a integridade dos dados e a organização dos processos. Sem a correção, os usuários não conseguem arquivar ou localizar seus processos corretamente por ano.
+        1.  Tentar criar um processo através da interface do usuário, preenchendo todos os campos.
+        2.  Usar as ferramentas de desenvolvedor do navegador para inspecionar o payload da requisição  e confirmar se todos os dados do formulário estão sendo enviados.
+        3.  Verificar o documento salvo no banco de dados MongoDB para ver quais campos foram realmente persistidos.
+        4.  Se os dados não estiverem no payload, o problema está no frontend, na função  em .
+        5.  Se os dados estiverem no payload, mas não no banco de dados, o problema está no backend, na função  em .
     -   **Status**: IN PROGRESS
     -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: backend
-    -   **Blocked on other issue**: Não. Este é o bloqueador atual.
+    -   **Should Test frontend/backend/both after fix?**: both
+    -   **Blocked on other issue**: Não.
+
+-   **Issue 2: Opção ausente no cadastro de itens do PAC (P1)**
+    -   **Description**: O usuário solicitou que a opção PORTARIA Nº 448, DE 13 DE SETEMBRO DE 2002... estivesse disponível para seleção no cadastro de itens do PAC. O agente investigou e concluiu que as classificações já existentes eram baseadas nesta portaria, mas não fez nenhuma alteração para garantir que o texto exato estivesse visível para o usuário.
+    -   **Attempted fixes**: Nenhuma. O agente apenas investigou o código.
+    -   **Next debug checklist**:
+        1.  Executar a aplicação e navegar para a tela de edição/criação de itens do PAC.
+        2.  Verificar as opções no seletor de classificação ().
+        3.  Se a descrição completa da Portaria 448 estiver ausente, editar o endpoint  em  para incluir o texto solicitado nas descrições dos códigos de classificação relevantes.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Blocked on other issue**: Não.
+
+-   **Issue 3: Fragilidade no fluxo de login (P2)**
+    -   **Description**: Apesar de o login via  funcionar e o erro de Too many requests ter sido corrigido, a ferramenta de automação (Playwright) falhou repetidamente ao tentar fazer login, exibindo uma mensagem de Erro ao autenticar. Isso pode indicar uma condição de corrida ou um bug sutil na interface de login.
+    -   **Attempted fixes**: Corrigido o erro de rate limit.
+    -   **Next debug checklist**:
+        1.  Analisar o componente  e o manipulador de estado de autenticação em .
+        2.  Investigar possíveis condições de corrida onde a interface do usuário pode exibir um erro momentâneo mesmo com um login bem-sucedido.
+        3.  Verificar o componente de input com máscara (), que foi apontado como uma possível causa de problemas para a automação.
+    -   **Status**: IN PROGRESS
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: frontend
+    -   **Blocked on other issue**: Não.
 
 **In progress Task List**:
 -   **Task 1: Concluir a refatoração do  (P1)**
-    -   **Where to resume**: O agente já iniciou a refatoração, criando o módulo . O próximo passo é continuar movendo os grupos de rotas restantes (AUTH, USERS, PAC, PROCESSOS, etc.) do arquivo monolítico  para seus próprios arquivos modulares dentro do diretório .
-    -   **What will be achieved with this?**: A conclusão desta tarefa eliminará uma dívida técnica significativa, resultando em um backend mais limpo, modular, escalável e de fácil manutenção.
-    -   **Status**: BLOCKED (pelo Issue 1)
-    -   **Should Test frontend/backend/both after fix?**: backend (requer testes de regressão extensivos)
-    -   **Blocked on something**: Sim, na resolução do bug P0 na criação de processos.
+    -   **Where to resume**: O arquivo monolítico  ainda contém aproximadamente 6.700 linhas, apesar da remoção do módulo DOEM. A tarefa é mover a lógica de endpoints restantes (processos, auth, pac, etc.) para seus respectivos arquivos modulares no diretório . Esses arquivos já existem, mas estão incompletos ou desatualizados. A lógica atual e funcional do  deve ser migrada para eles.
+    -   **What will be achieved with this?**: Melhorar drasticamente a manutenibilidade, legibilidade e escalabilidade do backend, eliminando uma grande dívida técnica.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: backend (teste de regressão completo)
+    -   **Blocked on something**: Não.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    *   (P1) **Documentação Swagger Completa:** Realizar uma revisão completa e detalhada da documentação da API para garantir que todos os 133 endpoints estejam corretamente descritos, com exemplos e schemas atualizados.
+    *   **(P1) Otimização da Geração de PDF:** O usuário pediu um layout clean e melhor uso de margens. O agente fez um ajuste inicial nas margens, mas a tarefa é subjetiva e pode exigir mais ajustes e, idealmente, feedback do usuário.
+    *   **(P2) Atualização da Documentação Swagger:** Com a remoção do DOEM e outras alterações de API, a documentação gerada pelo FastAPI está desatualizada e precisa de revisão.
+
 -   **Future Tasks:**
-    *   (P2) **Testes Unitários e de Integração:** Escrever testes para cobrir as novas funcionalidades implementadas (exclusão de publicação, upload de PDF no DOEM) e as correções de bugs críticas.
+    *   **(P2) Criação de Testes Unitários e de Integração:** Adicionar cobertura de testes para o backend, especialmente para as funcionalidades críticas e as que foram alteradas recentemente.
 
 **Completed work in this session**
--   **Correção de PDFs (RESOLVED):** A geração de PDFs em todo o sistema foi padronizada e corrigida, correspondendo exatamente ao layout do arquivo .
--   **Otimização de Performance (DONE):** A imagem do brasão foi otimizada, reduzindo o tamanho dos arquivos PDF de ~23MB para ~234KB (uma redução de 99%).
--   **Correção de Login com Google (RESOLVED):** O fluxo de autenticação com Google, que resultava em tela branca e erros de sessão, foi completamente consertado.
--   **Correção de Temas (RESOLVED):** O sistema de temas do frontend foi corrigido para aplicar as cores corretamente em toda a aplicação.
--   **Nova Funcionalidade: Tema Pôr do Sol (DONE):** Um novo tema com cores laranja e dourado foi adicionado.
--   **Novas Funcionalidades (DOEM) (DONE):**
-    -   Implementada a exclusão de publicações de uma edição do DOEM.
-    -   Implementada a capacidade de importar um arquivo PDF, que é então publicado com uma assinatura digital.
--   **Melhora na Responsividade do Menu (DONE):** O menu principal foi ajustado para funcionar corretamente em dispositivos móveis e tablets.
--   **Início da Refatoração do Backend (IN PROGRESS):** A refatoração do  foi iniciada com a criação do módulo .
-
-**Earlier issues found/mentioned but not fixed**
--   A refatoração completa do  foi iniciada, mas está incompleta.
-
-**Known issue recurrence from previous fork**
--   **Falha na Implementação do Layout de PDF**: Este problema recorrente foi **RESOLVIDO** nesta sessão.
+-   **Remoção do Módulo DOEM**: O módulo DOEM e a funcionalidade de Newsletter foram completamente removidos do frontend e do backend.
+-   **Correção de Bug (Processos)**: Corrigido o bug que salvava processos com um ano hardcoded (2025).
+-   **Correção de Bug (Rate Limit)**: Resolvido o erro Too many requests ajustando o middleware de performance.
+-   **Funcionalidade (Seletor de Ano)**: Adicionado um seletor de ano na página de Processos do Portal Público.
+-   **Correção (Backend)**: O endpoint que lista os anos dos processos foi corrigido para usar o ano atual do sistema como padrão, em vez de um valor fixo.
+-   **Melhora de UI**: Todos os modais da aplicação foram padronizados para abrir centralizados no topo da tela.
+-   **DevOps/Otimização**:
+    -   Criado um pacote completo de instalação para cPanel ().
+    -   Implementado um script para criação de índices no MongoDB () e executado com sucesso.
+    -   Criado um script de backup diário ([2026-03-04 03:25:25] ========== Iniciando backup ==========
+[2026-03-04 03:25:25] Diretório: /app
+[2026-03-04 03:25:25] Fazendo backup via API...
+[2026-03-04 03:25:25] ⚠️ ADMIN_EMAIL/ADMIN_PASSWORD não configurados
+[2026-03-04 03:25:25] Fazendo backup dos uploads...
+[2026-03-04 03:25:25] ✅ Backup uploads: uploads_20260304_032525.tar.gz
+[2026-03-04 03:25:25] Fazendo backup das configurações...
+[2026-03-04 03:25:25] ✅ Backup .env: env_backup_20260304_032525.txt
+[2026-03-04 03:25:25] Limpando backups com mais de 7 dias...
+[2026-03-04 03:25:25] ========== Backup concluído ==========
+[2026-03-04 03:25:25] Total de arquivos: 5
+[2026-03-04 03:25:25] Tamanho total: 116K
+[2026-03-04 03:25:25] 
+[2026-03-04 03:25:25] Backups disponíveis:
+[2026-03-04 03:25:25]   total 112K
+[2026-03-04 03:25:25]   -rw-r--r-- 1 root root  94K Mar  4 03:14 backup_api_20260304_031454.json.gz
+[2026-03-04 03:25:25]   -rw-r--r-- 1 root root  219 Mar  4 03:14 env_backup_20260304_031454.txt
+[2026-03-04 03:25:25]   -rw-r--r-- 1 root root  219 Mar  4 03:25 env_backup_20260304_032525.txt
+[2026-03-04 03:25:25]   -rw-r--r-- 1 root root 1.1K Mar  4 03:14 uploads_20260304_031454.tar.gz
+[2026-03-04 03:25:25]   -rw-r--r-- 1 root root 1.1K Mar  4 03:25 uploads_20260304_032525.tar.gz) e um arquivo  para automação de deploy.
+    -   As margens dos PDFs foram levemente otimizadas.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend**: FastAPI, ReportLab (para PDFs), JWT.
--   **Frontend**: React, React Router, Axios, TailwindCSS.
--   **Autenticação**: JWT (usuário/senha) e Emergent-managed Google Auth.
--   **Arquitetura**: Aplicação monolítica (backend) em processo de refatoração para uma arquitetura modular baseada em routers.
+-   **Backend**: FastAPI, Pydantic, Motor (MongoDB assíncrono), Redis (para cache e rate limit).
+-   **Frontend**: React, React Router, Axios, TailwindCSS, Sonner (toasts).
+-   **Banco de Dados**: MongoDB.
+-   **DevOps**: Bash scripting, YAML para configuração de CI/CD (cPanel).
 
 **key DB schema**
 -   Nenhuma alteração de esquema nesta sessão.
 
-**changes in tech stack**
--   Nenhuma.
-
 **All files of reference**
--   : Arquivo principal que contém o bug a ser corrigido e o restante do código a ser refatorado.
--   : Diretório onde os novos módulos de rotas devem ser criados/movidos.
--   : Novo módulo de rotas criado nesta sessão.
--   : Arquivo do frontend com as novas funcionalidades de importação de PDF e exclusão de publicações.
--   : Contém a lógica corrigida para o callback do Google OAuth.
--   : Contém as correções de responsividade do menu.
--   : Contém as correções do sistema de temas e o novo tema.
+-   : Arquivo principal do backend, ainda monolítico e alvo da principal refatoração.
+-   : Página de gerenciamento de processos onde o bug de salvamento de campos persiste.
+-   : Página do portal da transparência onde o seletor de ano foi adicionado.
+-   : Modelo Pydantic para processos, onde uma correção parcial foi tentada.
+-   : Novo middleware de cache e rate limiting.
+-   : Diretório com os novos scripts de instalação para cPanel.
 
 **Areas that need refactoring**:
--   : A principal prioridade é continuar e concluir a migração de suas mais de 8.500 linhas para módulos de rotas específicos.
+-   : A principal prioridade de refatoração. A lógica de endpoints precisa ser migrada para os módulos em .
 
 **key api endpoints**
--   : Endpoint com o bug de criação no ano incorreto.
--   : Novo endpoint para excluir uma publicação.
--   : Novo endpoint para anexar um PDF a uma edição do DOEM.
--   : Endpoint do OAuth que foi corrigido.
+-   : Endpoint para criação de processos (com bug de campos não salvos).
+-   : Endpoint que fornece a lista de anos disponíveis para processos.
+-   : Endpoint público para listar processos (agora com filtro de ano).
+-   : Novo endpoint para listar anos de processos públicos.
 
 **Critical Info for New Agent**
--   **PRIORIDADE MÁXIMA:** Corrija o bug no módulo de Processos (Issue 1). É um problema de integridade de dados que impede o uso correto da funcionalidade.
--   **Próxima Tarefa Crítica:** Continue a refatoração do . O usuário aprovou uma refatoração completa (todos de uma vez). A base para isso já foi estabelecida.
--   **Não revisite problemas resolvidos:** Os problemas com geração de PDF, login com Google e temas do frontend foram extensivamente trabalhados e estão resolvidos. Não mexa neles a menos que o usuário reporte um novo bug específico.
+-   A tarefa mais importante e de maior impacto é a **refatoração do **. O usuário já aprovou esta tarefa e ela foi iniciada, mas está longe de ser concluída.
+-   Existem **três bugs/problemas funcionais de alta prioridade** que não foram totalmente resolvidos e devem ser abordados antes de continuar com novas funcionalidades: o salvamento de campos do processo, a opção ausente no PAC e a fragilidade do login.
+-   O **módulo DOEM foi completamente removido**. Não tente restaurar ou adicionar funcionalidades a ele. Qualquer referência restante é lixo e deve ser removida.
+-   O usuário atua como um engenheiro sênior, portanto, espera-se uma abordagem técnica, detalhada e eficiente. Justifique suas decisões de implementação.
 
 **documents and test reports created in this job**
--   : Relatório de testes que validou a correção completa dos layouts de PDF.
--   : Playbook de teste para a autenticação, salvo durante a depuração do OAuth.
+-   : Instruções para o instalador cPanel.
+-   : Exemplo de configuração de cron job para backup.
+-   : Relatório de alterações criado pelo agente.
+-   : Atualizado com as últimas funcionalidades e remoções.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Message 564):** Reporta bug: Processos criados para 2026 (ou anterior) são salvos incorretamente em 2025. Pede a correção.
-2.  **Agent (Message 565-571):** Inicia a investigação, localizando a função  em  e identificando o uso de um ano padrão ().
-3.  **User (Message 572):** Diz Continue.
+1.  **User (Message 558):** Envia imagem mostrando que o seletor de ano não aparece no Portal da Transparência e pede para corrigir. (PENDING VERIFICATION)
+2.  **User (Message 557):** Finaliza a tarefa.
+3.  **User (Message 556):** Finaliza a tarefa.
+4.  **User (Message 533):** Reporta que o seletor de ano não está aparecendo na Gestão Processual do backend. (RESOLVED)
+5.  **User (Message 532):** Finaliza a tarefa.
+6.  **User (Message 516):** Pede para executar os scripts  e configurar o cron job. (RESOLVED)
+7.  **User (Message 453):** Envia uma longa lista de tarefas de correção e otimização. (IN PROGRESS)
+8.  **User (Message 432):** Pede para criar um arquivo  e configurar um cron job. (RESOLVED)
+9.  **User (Message 372):** Envia uma longa lista de tarefas de refatoração e criação de instalador cPanel. (IN PROGRESS)
+10. **User (Message 355):** Reporta que o DOEM ainda existe no frontend (no portal público). (RESOLVED)
 
 **Project Health Check:**
--   **Broken**: Sim. O módulo Processos possui um bug crítico de integridade de dados que impede seu funcionamento correto.
+-   **Broken**: Sim. A funcionalidade de criação de processos está parcialmente quebrada (campos não salvam), e a de cadastro de itens do PAC não atende aos requisitos.
 -   **Mocked**: Não.
--   **Technical Debt**: **HIGH**. Apesar do início da refatoração, o  continua sendo um grande monólito e representa um risco significativo para a manutenibilidade do projeto.
+-   **Technical Debt**: **HIGH**. O  com 6700 linhas é a principal fonte de débito técnico e risco para a manutenção do projeto.
 
 **3rd Party Integrations**
 -   : Geração de PDF.
 -   : Manipulação de Excel.
 -   : Autenticação social.
+-   : Usado para cache e rate limiting pelo novo middleware de performance.
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (Para validar as correções de PDF).
+-   **Testing agent used after significant changes**: NO (O agente fez auto-teste com ,  e ).
 -   **Troubleshoot agent used after agent stuck in loop**: NO
 -   **Test files created**: Não.
--   **Known regressions**: Sim, o bug na criação de processos é uma regressão ou um bug antigo que se tornou visível.
+-   **Known regressions**: Não identificadas, mas a remoção massiva do DOEM e as alterações no  aumentam o risco de regressões não detectadas.
 
 **Credentials to test flow:**
 -   **Admin**:
@@ -137,4 +187,6 @@ Uma aplicação full-stack (React/FastAPI/MongoDB). O agente anterior concluiu u
     -   **Senha**: 
 
 **What agent forgot to execute**
--   O agente não esqueceu tarefas, mas priorizou as solicitações do usuário, deixando a refatoração completa do  como uma tarefa em progresso, mas bloqueada.</analysis>
+-   O agente não resolveu completamente o problema dos campos que não salvam no formulário de processos, aplicando apenas uma correção parcial no backend sem verificar a causa raiz.
+-   O agente não atendeu à solicitação de adicionar o texto completo da PORTARIA Nº 448... no dropdown do PAC.
+-   O agente não verificou visualmente a última alteração que fez (o seletor de ano no portal público) antes de concluir a tarefa.</analysis>

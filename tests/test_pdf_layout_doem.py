@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_PYPDF2 = False
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://structurefix-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://municipal-refactor.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "cristiano.abdo@acaiaca.mg.gov.br"
