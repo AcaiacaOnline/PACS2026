@@ -120,16 +120,17 @@ const GestaoProcessual = () => {
       const response = await api.get('/processos/anos');
       const anos = response.data.anos;
       setAnos(anos);
-      // Selecionar o primeiro ano disponível (mais recente com dados)
+      // Selecionar o ano corrente se existir, senão o mais recente com dados
+      const anoCorrente = new Date().getFullYear();
       if (anos && anos.length > 0) {
-        // Se existem processos em 2025, selecionar 2025
-        if (anos.includes(2025)) {
-          setAnoSelecionado(2025);
+        if (anos.includes(anoCorrente)) {
+          setAnoSelecionado(anoCorrente);
         } else {
-          setAnoSelecionado(anos[0]);
+          // Selecionar o ano mais recente disponível
+          setAnoSelecionado(Math.max(...anos));
         }
       } else {
-        setAnoSelecionado(new Date().getFullYear());
+        setAnoSelecionado(anoCorrente);
       }
     } catch (error) {
       console.error('Erro ao carregar anos:', error);
