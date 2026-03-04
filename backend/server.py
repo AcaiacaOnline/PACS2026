@@ -938,6 +938,172 @@ def create_total_row(total_value: float, styles: dict, orientation: str = 'lands
     
     return total_table
 
+# ===== FUNÇÕES DE ASSINATURA DIGITAL =====
+
+async def save_document_signature(doc_id: str, doc_type: str, signers: list, hash_doc: str, validation_code: str = None) -> dict:
+    """Salva a assinatura do documento no banco de dados para validação posterior"""
+    if not validation_code:
+        validation_code = generate_validation_code_util()
+    signature_record = {
+        'signature_id': str(uuid.uuid4()),
+        'document_id': doc_id,
+        'document_type': doc_type,
+        'validation_code': validation_code,
+        'hash_document': hash_doc,
+        'signers': signers,
+        'created_at': datetime.now(timezone.utc),
+        'is_valid': True
+    }
+    await db.document_signatures.insert_one(signature_record)
+    return {'validation_code': validation_code, 'signature_id': signature_record['signature_id']}
+
+
+async def add_signature_to_pdf(pdf_buffer: BytesIO, user: User, doc_type: str, doc_id: str, doc_info: dict = None, signature_date: str = None) -> tuple:
+    """
+    Adiciona assinatura digital a qualquer PDF gerado pelo sistema.
+    Para documentos MROSC, adiciona uma página de assinaturas no estilo da Lei 14.063.
+    Retorna o buffer modificado e o código de validação.
+    
+    Args:
+        pdf_buffer: Buffer do PDF original
+        user: Usuário que está assinando
+        doc_type: Tipo do documento
+        doc_id: ID do documento
+        doc_info: Informações adicionais do documento
+        signature_date: Data da assinatura (formato DD/MM/YYYY HH:MM:SS) - se não informada, usa data atual
+    
+    IMPORTANTE: Requer que o usuário tenha CPF e Cargo preenchidos.
+    """
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from PyPDF2 import PdfReader, PdfWriter
+    
+    # Buscar dados de assinatura do usuário
+    user_doc = await db.users.find_one({'user_id': user.user_id}, {'_id': 0})
+    user_signature = user_doc.get('signature_data') or {} if user_doc else {}
+    
+    # Validar campos obrigatórios para assinatura
+    cpf = user_signature.get('cpf', '').strip()
+    cargo = user_signature.get('cargo', '').strip()
+    
+    if not cpf:
+        raise HTTPException(
+            status_code=400, 
+            detail="CPF é obrigatório para assinar documentos. Por favor, atualize seu perfil com o CPF."
+        )
+    
+    if not cargo:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cargo é obrigatório para assinar documentos. Por favor, atualize seu perfil com seu cargo."
+        )
+    
+    # Usar a data fornecida ou a atual
+    if signature_date:
+        data_hora = signature_date
+    else:
+        data_hora = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')
+    
+    signer = {
+        'nome': user.name,
+        'cpf': cpf,
+        'cargo': cargo,
+        'email': user.email,
+        'data_hora': data_hora
+    }
+    
+    # Gerar código de validação
+    validation_code = generate_validation_code_util()
+    
+    # Calcular hash do documento original
+    pdf_buffer.seek(0)
+    hash_doc = hashlib.sha256(pdf_buffer.read()).hexdigest()
+    pdf_buffer.seek(0)
+    
+    # Salvar registro de assinatura
+    await save_document_signature(
+        doc_id=doc_id,
+        doc_type=doc_type,
+        signers=[signer],
+        hash_doc=hash_doc,
+        validation_code=validation_code
+    )
+    
+    # Verificar se é documento MROSC para usar página de assinaturas estilo Lei 14.063
+    is_mrosc = 'MROSC' in doc_type.upper()
+    
+    if is_mrosc:
+        # Para MROSC: adicionar página de assinaturas no final
+        reader = PdfReader(pdf_buffer)
+        writer = PdfWriter()
+        
+        # Copiar todas as páginas originais com selo no rodapé
+        for page in reader.pages:
+            overlay_buffer = BytesIO()
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+            
+            overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
+            draw_signature_seal_util(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url, data_hora)
+            overlay_canvas.save()
+            overlay_buffer.seek(0)
+            
+            overlay_reader = PdfReader(overlay_buffer)
+            if len(overlay_reader.pages) > 0:
+                page.merge_page(overlay_reader.pages[0])
+            
+            writer.add_page(page)
+        
+        # Criar e adicionar página de assinaturas estilo Lei 14.063
+        signature_page_buffer = create_signature_page_mrosc_util(
+            signers=[signer],
+            validation_code=validation_code,
+            doc_info=doc_info or {
+                'tipo': doc_type,
+                'id': doc_id,
+                'titulo': f'Documento {doc_type}'
+            }
+        )
+        
+        sig_reader = PdfReader(signature_page_buffer)
+        for sig_page in sig_reader.pages:
+            writer.add_page(sig_page)
+        
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+        
+        return output_buffer, validation_code
+    else:
+        # Para outros documentos: selo no rodapé em todas as páginas
+        reader = PdfReader(pdf_buffer)
+        writer = PdfWriter()
+        
+        for page in reader.pages:
+            overlay_buffer = BytesIO()
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+            
+            overlay_canvas = pdf_canvas.Canvas(overlay_buffer, pagesize=(page_width, page_height))
+            qr_url = f"https://pac.acaiaca.mg.gov.br/validar?code={validation_code}"
+            draw_signature_seal_util(overlay_canvas, page_width, page_height, [signer], validation_code, qr_url, data_hora)
+            overlay_canvas.save()
+            overlay_buffer.seek(0)
+            
+            overlay_reader = PdfReader(overlay_buffer)
+            if len(overlay_reader.pages) > 0:
+                page.merge_page(overlay_reader.pages[0])
+            
+            writer.add_page(page)
+        
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+        
+        return output_buffer, validation_code
+
+# ===== FIM FUNÇÕES DE ASSINATURA =====
+
 def create_signature_section(pac_data: dict, styles: dict, is_pac_geral: bool = False):
     """Cria seção de assinaturas profissional"""
     elements = []

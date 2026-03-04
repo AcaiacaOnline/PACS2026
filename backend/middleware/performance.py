@@ -39,7 +39,7 @@ class RateLimiter:
             'default': {'requests': 300, 'window': 60},      # 300 req/min
             'auth': {'requests': 60, 'window': 60},          # 60 req/min (1 por segundo)
             'upload': {'requests': 30, 'window': 60},        # 30 req/min
-            'export': {'requests': 20, 'window': 60},        # 20 req/min
+            'export': {'requests': 60, 'window': 60},        # 60 req/min (aumentado)
             'public': {'requests': 500, 'window': 60},       # 500 req/min
         }
         
