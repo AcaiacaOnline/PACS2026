@@ -14,7 +14,6 @@ from .gestao_processual import router as processos_router, setup_processos_route
 from .public import router as public_router, setup_public_routes
 from .mrosc import router as mrosc_router, setup_mrosc_routes, NATUREZAS_DESPESA_MROSC
 from .analytics import analytics_router, alertas_router, relatorios_router, setup_analytics_routes, setup_alertas_routes, setup_relatorios_routes
-from .doem import router as doem_router, public_router as doem_public_router, setup_doem_routes, DOEM_SEGMENTOS, DOEM_TIPOS_PUBLICACAO
 
 __all__ = [
     # Auth
@@ -42,6 +41,4 @@ __all__ = [
     # Analytics
     'analytics_router', 'alertas_router', 'relatorios_router',
     'setup_analytics_routes', 'setup_alertas_routes', 'setup_relatorios_routes',
-    # DOEM
-    'doem_router', 'doem_public_router', 'setup_doem_routes', 'DOEM_SEGMENTOS', 'DOEM_TIPOS_PUBLICACAO',
 ]

@@ -12,16 +12,20 @@ class Processo(BaseModel):
     user_id: str
     numero_processo: str  # Ex: PRC - 0006/2025 (OBRIGATÓRIO)
     modalidade_contratacao: Optional[str] = None  # Pregão Eletrônico, Dispensa, Inexigibilidade, etc.
+    numero_modalidade: Optional[str] = None  # Número da modalidade (Ex: PE 001/2026)
     status: Optional[str] = None  # Em Elaboração, Aprovado, Em Licitação, Homologado, Contratado, Concluído
     objeto: str  # Descrição do processo
-    responsavel: str
+    responsavel: Optional[str] = None
     data_inicio: Optional[datetime] = None
     data_autuacao: Optional[datetime] = None
     data_contrato: Optional[datetime] = None
-    secretaria: str
-    secretario: str
+    secretaria: Optional[str] = None
+    secretario: Optional[str] = None
     ano: int = 2025  # Ano do processo
     observacoes: Optional[str] = None
+    fornecedor: Optional[str] = None
+    valor_estimado: Optional[float] = None
+    valor_contratado: Optional[float] = None
     created_at: datetime
     updated_at: datetime
     # Campos legados para compatibilidade (serão removidos em versão futura)

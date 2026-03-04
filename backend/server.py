@@ -639,11 +639,12 @@ async def delete_user_admin(user_id: str, request: Request):
 # ============ PAC ROUTES (WITH PERMISSIONS) ============
 
 # ===== CONSTANTES DE MARGENS PADRONIZADAS (Lei 14.133/2021) =====
-# Margens: 5cm (esquerda/direita), 3cm (superior/inferior)
-REPORT_MARGIN_LEFT = 50*mm    # 5cm
-REPORT_MARGIN_RIGHT = 50*mm   # 5cm
-REPORT_MARGIN_TOP = 30*mm     # 3cm
-REPORT_MARGIN_BOTTOM = 30*mm  # 3cm
+# Margens otimizadas para melhor aproveitamento de espaço
+# Layout "clean" com margens reduzidas mantendo legibilidade
+REPORT_MARGIN_LEFT = 20*mm    # 2cm (reduzido de 5cm)
+REPORT_MARGIN_RIGHT = 20*mm   # 2cm (reduzido de 5cm)
+REPORT_MARGIN_TOP = 25*mm     # 2.5cm (levemente reduzido)
+REPORT_MARGIN_BOTTOM = 20*mm  # 2cm (reduzido de 3cm)
 
 # ===== CONSTANTES PARA PAGINAÇÃO DE ITENS =====
 ITEMS_PER_PAGE = 15  # Máximo de 15 itens por página conforme solicitado

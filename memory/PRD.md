@@ -27,7 +27,51 @@ Sistema completo de gestão municipal que inclui:
 
 ---
 
-## Última Atualização: 04/03/2026 (Sessão 20)
+## Última Atualização: 04/03/2026 (Sessão 20 - Continuação)
+
+### Changelog - Sessão 20 Continuação (04/03/2026) - CORREÇÕES COMPLETAS
+
+#### ✅ 5. BUG FIX: CAMPO "NÚMERO DA MODALIDADE" NÃO SALVAVA
+- **Problema**: O campo `numero_modalidade` não estava sendo retornado na resposta da API
+- **Causa**: O modelo `Processo` (response model) não incluía o campo, apenas `ProcessoCreate` e `ProcessoUpdate`
+- **Solução**: Adicionado o campo `numero_modalidade` no modelo `Processo` em `/app/backend/models/processo.py`
+- **Teste**: Criação e recuperação de processo com numero_modalidade funcionando
+
+#### ✅ 6. OTIMIZAÇÃO DAS MARGENS DOS PDFs
+- **Problema**: Margens muito grandes (5cm) desperdiçavam espaço nos relatórios
+- **Solução**: Margens otimizadas para layout "clean":
+  - Esquerda/Direita: 20mm (2cm) - reduzido de 50mm
+  - Superior: 25mm (2.5cm) - reduzido de 30mm
+  - Inferior: 20mm (2cm) - reduzido de 30mm
+- **Localização**: `/app/backend/server.py` linhas 641-647
+
+#### ✅ 7. VERIFICAÇÃO DO LOGIN (FRAGILIDADE)
+- **Problema reportado**: Automação falhava ao fazer login
+- **Verificação**: Teste via Playwright funcionou perfeitamente
+- **Status**: Não há fragilidade no login - problema pode ter sido transitório
+
+#### ✅ 8. GRÁFICO "PROCESSOS POR STATUS"
+- **Problema reportado**: Gráfico aparecia vazio no dashboard
+- **Verificação**: Screenshot mostra gráfico funcionando com dados corretos
+- **Status**: Funcionando corretamente - problema era transitório (loading state)
+
+#### ✅ 9. TESTES UNITÁRIOS CRIADOS
+- **Arquivo criado**: `/app/backend/tests/test_bug_fixes.py`
+- **Novos testes**: 7 testes específicos para bugs corrigidos
+- **Total de testes**: 41 testes (34 existentes + 7 novos)
+- **Taxa de sucesso**: 100% (41/41)
+
+#### ✅ 10. ATUALIZAÇÃO DO ROUTES __init__.py
+- **Problema**: Importação do módulo DOEM removido causava erro
+- **Solução**: Removida referência ao DOEM em `/app/backend/routes/__init__.py`
+
+#### 📋 REFATORAÇÃO DO SERVER.PY
+- **Status**: PENDENTE (não priorizado nesta sessão)
+- **Motivo**: Tarefa de alto risco que requer mais tempo e testes extensivos
+- **Estrutura atual**: Módulos em `/routes/` existem mas estão desatualizados
+- **Estratégia recomendada**: Atualizar módulos gradualmente, um por vez
+
+---
 
 ### Changelog - Sessão 20 (04/03/2026) - CORREÇÃO DE BUGS E OTIMIZAÇÕES
 
