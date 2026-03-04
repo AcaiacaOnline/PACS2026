@@ -2695,7 +2695,7 @@ async def get_processos_paginado(
             if match:
                 p['ano'] = int(match.group(1))
             else:
-                p['ano'] = 2025
+                p['ano'] = datetime.now().year  # Ano atual
     
     # Aplicar filtros
     if ano:
