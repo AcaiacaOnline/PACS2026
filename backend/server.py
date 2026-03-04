@@ -3814,8 +3814,39 @@ async def public_get_pac_geral_items(pac_geral_id: str):
     items = await db.pac_geral_items.find({'pac_geral_id': pac_geral_id}, {'_id': 0}).to_list(1000)
     return {'success': True, 'data': items, 'total': len(items)}
 
+@public_router.get("/processos/anos")
+async def public_get_processos_anos():
+    """
+    Lista de anos disponíveis nos processos - Portal de Transparência.
+    Não requer autenticação.
+    """
+    processos = await db.processos.find({}, {'numero_processo': 1, 'ano': 1}).to_list(10000)
+    
+    anos = set()
+    for p in processos:
+        if p.get('ano'):
+            anos.add(int(p['ano']))
+        else:
+            numero = p.get('numero_processo', '')
+            match = re.search(r'/(\d{4})$', numero)
+            if match:
+                anos.add(int(match.group(1)))
+    
+    ano_atual = datetime.now().year
+    anos.add(ano_atual)
+    
+    anos_list = sorted(list(anos), reverse=True)
+    
+    return {
+        'success': True,
+        'anos': anos_list,
+        'ano_atual': ano_atual
+    }
+
+
 @public_router.get("/processos")
 async def public_get_processos(
+    ano: int = None,
     status: str = None,
     modalidade: str = None,
     secretaria: str = None,
@@ -3827,6 +3858,11 @@ async def public_get_processos(
     Não requer autenticação - Portal de Transparência.
     """
     query = {}
+    
+    # Filtro por ano
+    if ano:
+        query['ano'] = ano
+    
     if status:
         query['status'] = {'$regex': status, '$options': 'i'}
     if modalidade:
@@ -3840,7 +3876,7 @@ async def public_get_processos(
     processos = await db.processos.find(query, {
         '_id': 0,
         'user_id': 0
-    }).skip(skip).limit(limit).to_list(limit)
+    }).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
     
     return {
         'success': True,
